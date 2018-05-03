@@ -35,9 +35,16 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonReader;
+import javax.json.JsonString;
+import javax.json.JsonValue;
 
 public class FeatureProcessor {
 
@@ -113,19 +120,35 @@ public class FeatureProcessor {
                     final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
                     config.getInstallation().addInstallableArtifact(handler.getFile());
                 }
-            } else {
-                if ( ext.getName().equals(FeatureConstants.EXTENSION_NAME_REPOINIT) ) {
-                    if ( ext.getType() != ExtensionType.TEXT ) {
-                        throw new Exception(FeatureConstants.EXTENSION_NAME_REPOINIT + " extension must be of type text and not json");
+            } else if ( ext.getName().equals(FeatureConstants.EXTENSION_NAME_REPOINIT) ) {
+                    String text;
+                    if ( ext.getType() == ExtensionType.TEXT ) {
+                        text = ext.getText();
+                    }
+                    else if (ext.getType() == ExtensionType.JSON) {
+                        try (JsonReader reader = Json.createReader(new StringReader(ext.getJSON()))){
+                            JsonArray array = reader.readArray();
+                            if (array.size() > 0) {
+                                text = array.getString(0);
+                                for (int i = 1; i < array.size(); i++) {
+                                    text += "\n" + array.getString(i);
+                                }
+                            }
+                            else {
+                                text = "";
+                            }
+                        }
+                    }
+                    else {
+                        throw new Exception(FeatureConstants.EXTENSION_NAME_REPOINIT + " extension must be of type text or json");
                     }
                     final Configuration cfg = new Configuration("org.apache.sling.jcr.repoinit.RepositoryInitializer", "repoinit" + String.valueOf(index));
                     index++;
-                    cfg.getProperties().put("scripts", ext.getText());
+                    cfg.getProperties().put("scripts", text);
                     config.getInstallation().addConfiguration(cfg.getName(), cfg.getFactoryPid(), cfg.getProperties());
-                } else {
-                    if ( ext.isRequired() ) {
-                        throw new Exception("Unknown required extension " + ext.getName());
-                    }
+            } else {
+                if ( ext.isRequired() ) {
+                    throw new Exception("Unknown required extension " + ext.getName());
                 }
             }
         }
