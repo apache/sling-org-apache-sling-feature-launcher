@@ -33,9 +33,9 @@
     </properties>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/sling/trunk/tooling/support/feature-launcher</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/sling/trunk/tooling/support/feature-launcher</developerConnection>
-        <url>http://svn.apache.org/viewvc/sling/trunk/tooling/support/feature-launcher</url>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</developerConnection>
+        <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-feature-launcher.git</url>
     </scm>
 
     <build>
