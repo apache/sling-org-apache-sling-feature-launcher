@@ -16,7 +16,9 @@
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
+import org.apache.sling.feature.launcher.impl.Main;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
 
@@ -56,8 +58,18 @@ public class FrameworkRunner extends AbstractRunner {
             public void run() {
                 try {
                     framework.stop();
-                } catch (final BundleException e) {
-                    // ignore
+                    FrameworkEvent waitForStop = framework.waitForStop(10000);
+                    if (waitForStop.getType() != FrameworkEvent.STOPPED)
+                    {
+                        Main.LOG().warn("Framework stopped with: " + waitForStop.getType(), waitForStop.getThrowable());
+                    }
+                    else
+                    {
+                        Main.LOG().info("Framework stopped");
+                    }
+                } catch (BundleException | InterruptedException e)
+                {
+                    Main.LOG().warn("Exception stopping the framework in shutdown hook", e);
                 }
             }
         });

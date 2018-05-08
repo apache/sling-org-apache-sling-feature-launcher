@@ -98,5 +98,6 @@ public class FrameworkLauncher implements Launcher {
 
         Main.LOG().debug("Startup took: " + (System.currentTimeMillis() - time));
         // nothing else to do, constructor starts everything
+        // TODO: wait for stop and restart framework when necessary
     }
 }
