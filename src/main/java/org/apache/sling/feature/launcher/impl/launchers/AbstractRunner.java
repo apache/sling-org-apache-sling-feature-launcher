@@ -24,7 +24,6 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
-import org.osgi.framework.wiring.FrameworkWiring;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
@@ -191,25 +190,13 @@ public class AbstractRunner {
                 // use reference protocol. This avoids copying the binary to the cache directory
                 // of the framework
                 final Bundle bundle = bc.installBundle("reference:" + file.toURI().toURL(), null);
-                if ( startLevel > 0 ) {
-                    bundle.adapt(BundleStartLevel.class).setStartLevel(startLevel);
-                }
 
                 // fragment?
-                if ( !isSystemBundleFragment(bundle) ) {
-                    final String fragmentHostHeader = getFragmentHostHeader(bundle);
-                    if (fragmentHostHeader != null) {
-                        for (final Bundle b : bc.getBundles()) {
-                            if (fragmentHostHeader.equals(b.getSymbolicName())) {
-                                final FrameworkWiring fw = framework.adapt(FrameworkWiring.class);
-                                fw.refreshBundles(Collections.singleton(b));
-                                break;
-                            }
-                        }
-
-                    } else {
-                        bundle.start();
+                if ( !isSystemBundleFragment(bundle) && getFragmentHostHeader(bundle) == null ) {
+                    if ( startLevel > 0 ) {
+                        bundle.adapt(BundleStartLevel.class).setStartLevel(startLevel);
                     }
+                    bundle.start();
                 }
             }
         }
