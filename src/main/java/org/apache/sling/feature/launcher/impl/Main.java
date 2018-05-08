@@ -71,7 +71,6 @@ public class Main {
      * @return Configuration object.
      */
     private static void parseArgs(final LauncherConfig config, final String[] args) {
-        Main.LOG().info("Assembling configuration...");
         final Options options = new Options();
 
         final Option repoOption =  new Option("u", true, "Set repository url");
@@ -79,9 +78,9 @@ public class Main {
         final Option appOption =  new Option("a", true, "Set application file");
         final Option fwkProperties = new Option("D", true, "Set framework properties");
         fwkProperties.setArgs(20);
-        final Option debugOption = new Option("v", true, "Verbose");
+        final Option debugOption = new Option("v", false, "Verbose");
         debugOption.setArgs(0);
-        final Option installerOption = new Option("I", true, "Use OSGi installer for additional artifacts.");
+        final Option installerOption = new Option("I", false, "Use OSGi installer for additional artifacts.");
         installerOption.setArgs(0);
         options.addOption(repoOption);
         options.addOption(appOption);
@@ -111,7 +110,6 @@ public class Main {
             }
             if ( cl.hasOption(debugOption.getOpt()) ) {
                 System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
-                LOGGER = null;
             }
             if ( cl.hasOption(installerOption.getOpt()) ) {
                 config.setUseInstaller();
@@ -131,13 +129,15 @@ public class Main {
         System.setProperty("org.slf4j.simpleLogger.showThreadName", "false");
         System.setProperty("org.slf4j.simpleLogger.levelInBrackets", "true");
         System.setProperty("org.slf4j.simpleLogger.showLogName", "false");
-        Main.LOG().info("");
-        Main.LOG().info("Apache Sling Application Launcher");
-        Main.LOG().info("---------------------------------");
 
         // check if launcher has already been created
         final LauncherConfig launcherConfig = new LauncherConfig();
         parseArgs(launcherConfig, args);
+
+
+        Main.LOG().info("");
+        Main.LOG().info("Apache Sling Application Launcher");
+        Main.LOG().info("---------------------------------");
 
         ArtifactManager artifactManager = null;
         try {
