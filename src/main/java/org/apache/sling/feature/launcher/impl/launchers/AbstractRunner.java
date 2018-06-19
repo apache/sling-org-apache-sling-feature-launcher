@@ -256,10 +256,14 @@ public class AbstractRunner {
         } catch ( final Exception e) {
             Main.LOG().error("Unable to contact installer and install additional artifacts", e);
             throw new RuntimeException(e);
+        } finally  {
+            final Thread t = new Thread(() -> {
+                installerTracker.close();
+                installerTracker = null;
+            });
+            t.setDaemon(false);
+            t.start();
+            this.installables.clear();
         }
-        final Thread t = new Thread(() -> { installerTracker.close(); installerTracker = null; });
-        t.setDaemon(false);
-        t.start();
-        this.installables.clear();
     }
 }
