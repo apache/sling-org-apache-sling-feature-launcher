@@ -48,6 +48,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -67,6 +70,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
     private final int targetStartlevel;
 
     private final AtomicInteger waitRequested = new AtomicInteger(0);
+
+    private volatile boolean install;
 
     public AbstractRunner(final Map<String, String> frameworkProperties, final List<Object[]> configurations, final List<File> installables) {
         this.configurations = new ArrayList<>(configurations);
@@ -155,6 +160,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
             throw new BundleException("Unable to install bundles.", ioe);
         }
 
+        // TODO: double check bundles and take installables into account
+        install = framework.getBundleContext().getBundles().length != bundleCount;
         try
         {
             // TODO: double check bundles and take installables into account
@@ -192,33 +199,46 @@ public abstract class AbstractRunner implements Callable<Integer> {
     protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException
     {
         CountDownLatch latch = new CountDownLatch(1);
+
+        final Executor executor = Executors.newSingleThreadExecutor();
+
         FrameworkListener listener = new FrameworkListener()
         {
             @Override
             public void frameworkEvent(FrameworkEvent frameworkEvent)
             {
                 if (frameworkEvent.getType() == FrameworkEvent.STARTED || frameworkEvent.getType() == FrameworkEvent.STARTLEVEL_CHANGED) {
-                    if (framework.getState() == Framework.ACTIVE && targetStartlevel > framework.adapt(FrameworkStartLevel.class).getStartLevel())
-                    {
-                        if (waitRequested.get() == 0) {
-                            try {
-                                Thread.sleep(2000);
-                            } catch (InterruptedException e)
+                    if (framework.getState() == Framework.ACTIVE && targetStartlevel > framework.adapt(FrameworkStartLevel.class).getStartLevel()) {
+                        if (install) {
+                            executor.execute(() ->
                             {
-                                e.printStackTrace();
-                            }
+                                if (waitRequested.get() == 0) {
+                                    try {
+                                        Thread.sleep(2000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                while (waitRequested.get() > 0) {
+                                    try {
+                                        Thread.sleep(500);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                try {
+                                    framework.adapt(FrameworkStartLevel.class).setStartLevel(framework.adapt(FrameworkStartLevel.class).getStartLevel() + 1);
+                                } catch (Exception ex) {
+                                    latch.countDown();
+                                }
+                            });
                         }
-                        while (waitRequested.get() > 0) {
+                        else {
                             try {
-                                Thread.sleep(500);
-                            }  catch (InterruptedException e) {
-                                e.printStackTrace();
+                                framework.adapt(FrameworkStartLevel.class).setStartLevel(targetStartlevel);
+                            } catch (Exception ex) {
+                                latch.countDown();
                             }
-                        }
-                        try {
-                            framework.adapt(FrameworkStartLevel.class).setStartLevel(framework.adapt(FrameworkStartLevel.class).getStartLevel() + 1);
-                        } catch (Exception ex) {
-                            latch.countDown();
                         }
                     }
                     else {
@@ -235,6 +255,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
         try {
             return latch.await(timeout, unit);
         } finally {
+            ((ExecutorService) executor).shutdownNow();
             framework.getBundleContext().removeFrameworkListener(listener);
         }
     }
