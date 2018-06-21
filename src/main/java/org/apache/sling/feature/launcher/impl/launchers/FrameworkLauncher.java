@@ -19,16 +19,20 @@ package org.apache.sling.feature.launcher.impl.launchers;
 import org.apache.commons.lang.text.StrLookup;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.sling.feature.Application;
+import org.apache.sling.feature.Artifact;
+import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.launcher.impl.Main;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
+import org.osgi.framework.Constants;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Launcher directly using the OSGi launcher API.
@@ -39,14 +43,23 @@ public class FrameworkLauncher implements Launcher {
     @Override
     public void prepare(final LauncherPrepareContext context, final Application app) throws Exception {
         context.addAppJar(context.getArtifactFile(app.getFramework()));
+        ArtifactId api = ArtifactId.fromMvnId("org.apache.sling:org.apache.sling.launchpad.api:1.2.0");
+        Artifact artifact = app.getBundles().getSame(api);
+        if (artifact != null)
+        {
+            api = artifact.getId();
+            context.addAppJar(context.getArtifactFile(api));
+            app.getBundles().removeExact(api);
+            app.getFrameworkProperties().put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "org.apache.sling.launchpad.api;version=\"" + api.getOSGiVersion() + "\"");
+        }
     }
 
     /**
      * Run the launcher
-     * @throws If anything goes wrong
+     * @throws Exception If anything goes wrong
      */
     @Override
-    public void run(final LauncherRunContext context, final ClassLoader cl) throws Exception {
+    public int run(final LauncherRunContext context, final ClassLoader cl) throws Exception {
         StrSubstitutor ss = new StrSubstitutor(new StrLookup() {
             @Override
             public String lookup(String key) {
@@ -62,7 +75,7 @@ public class FrameworkLauncher implements Launcher {
 
         Map<String, String> properties = new HashMap<>();
         context.getFrameworkProperties().forEach((key, value) -> {
-            properties.put(key, ss.replace(value));
+            properties.put(key, ss.replace(value).replace("{dollar}", "$"));
         });
         if ( Main.LOG().isDebugEnabled() ) {
             Main.LOG().debug("Bundles:");
@@ -86,18 +99,16 @@ public class FrameworkLauncher implements Launcher {
             }
             Main.LOG().debug("");
         }
-        long time = System.currentTimeMillis();
 
-        final Class<?> runnerClass = cl.loadClass(this.getClass().getPackage().getName() + ".FrameworkRunner");
+        final Class<?> runnerClass = cl.loadClass(FrameworkRunner.class.getName());
         final Constructor<?> constructor = runnerClass.getDeclaredConstructor(Map.class, Map.class, List.class, List.class);
         constructor.setAccessible(true);
-        constructor.newInstance(properties,
+        Callable<Integer> restart = (Callable<Integer>) constructor.newInstance(properties,
                 context.getBundleMap(),
                 context.getConfigurations(),
                 context.getInstallableArtifacts());
 
-        Main.LOG().debug("Startup took: " + (System.currentTimeMillis() - time));
+        return restart.call();
         // nothing else to do, constructor starts everything
-        // TODO: wait for stop and restart framework when necessary
     }
 }

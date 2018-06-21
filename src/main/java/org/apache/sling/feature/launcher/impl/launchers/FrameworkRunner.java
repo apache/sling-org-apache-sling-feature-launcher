@@ -26,17 +26,21 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Launcher directly using the OSGi launcher API.
  */
 public class FrameworkRunner extends AbstractRunner {
 
+    private volatile int type = -1;
+
     public FrameworkRunner(final Map<String, String> frameworkProperties,
             final Map<Integer, List<File>> bundlesMap,
             final List<Object[]> configurations,
             final List<File> installables) throws Exception {
-        super(configurations, installables);
+        super(frameworkProperties, configurations, installables);
 
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);
         FrameworkFactory factory = null;
@@ -58,7 +62,7 @@ public class FrameworkRunner extends AbstractRunner {
             public void run() {
                 try {
                     framework.stop();
-                    FrameworkEvent waitForStop = framework.waitForStop(10000);
+                    FrameworkEvent waitForStop = framework.waitForStop(60 * 1000);
                     if (waitForStop.getType() != FrameworkEvent.STOPPED)
                     {
                         Main.LOG().warn("Framework stopped with: " + waitForStop.getType(), waitForStop.getThrowable());
@@ -76,7 +80,27 @@ public class FrameworkRunner extends AbstractRunner {
 
         this.setupFramework(framework, bundlesMap);
 
+
+        long time = System.currentTimeMillis();
+
         // finally start
-        framework.start();
+        if (!this.startFramework(framework, 10, TimeUnit.MINUTES)) {
+            throw new TimeoutException("Waited for more than 10 minutes to startup framework.");
+        }
+
+        Main.LOG().debug("Startup took: " + (System.currentTimeMillis() - time));
+
+        while ((type = framework.waitForStop(Long.MAX_VALUE).getType()) == FrameworkEvent.STOPPED_UPDATE) {
+            Main.LOG().info("Framework restart due to update");
+            time = System.currentTimeMillis();
+            if (!this.startFramework(framework, 10, TimeUnit.MINUTES)) {
+                throw new TimeoutException("Waited for more than 10 minutes to startup framework.");
+            }
+            Main.LOG().debug("Restart took: " + (System.currentTimeMillis() - time));
+        }
+    }
+
+    public Integer call() {
+        return type;
     }
 }

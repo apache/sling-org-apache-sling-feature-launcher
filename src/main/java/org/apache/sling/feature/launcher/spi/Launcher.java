@@ -22,5 +22,5 @@ public interface Launcher {
 
     void prepare(LauncherPrepareContext context, Application app) throws Exception;
 
-    void run(LauncherRunContext context, ClassLoader cl) throws Exception;
+    int run(LauncherRunContext context, ClassLoader cl) throws Exception;
 }

@@ -38,6 +38,7 @@ import org.apache.sling.feature.io.ArtifactManager;
 import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
+import org.osgi.framework.FrameworkEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,9 +234,9 @@ public class Main {
         }
 
         final Launcher launcher = new FrameworkLauncher();
-        launcher.run(installation, createClassLoader(installation));
-
-        config.clear();
+        while (launcher.run(installation, createClassLoader(installation)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
+            Main.LOG().info("Framework restart due to extension refresh");
+        }
     }
 
     /**

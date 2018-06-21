@@ -17,13 +17,18 @@
 package org.apache.sling.feature.launcher.impl.launchers;
 
 import org.apache.sling.feature.launcher.impl.Main;
+import org.apache.sling.launchpad.api.StartupHandler;
+import org.apache.sling.launchpad.api.StartupMode;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.framework.startlevel.FrameworkStartLevel;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
@@ -41,11 +46,15 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Common functionality for the framework start.
  */
-public class AbstractRunner {
+public abstract class AbstractRunner implements Callable<Integer> {
 
     private volatile ServiceTracker<Object, Object> configAdminTracker;
 
@@ -55,9 +64,22 @@ public class AbstractRunner {
 
     private final List<File> installables;
 
-    public AbstractRunner(final List<Object[]> configurations, final List<File> installables) {
+    private final int targetStartlevel;
+
+    private final AtomicInteger waitRequested = new AtomicInteger(0);
+
+    public AbstractRunner(final Map<String, String> frameworkProperties, final List<Object[]> configurations, final List<File> installables) {
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
+        String target = frameworkProperties.get(Constants.FRAMEWORK_BEGINNING_STARTLEVEL);
+        if (target != null) {
+            targetStartlevel = Integer.parseInt(target);
+        } else {
+            targetStartlevel = 1;
+        }
+        if ("true".equalsIgnoreCase(frameworkProperties.get("sling.framework.install.incremental"))) {
+            frameworkProperties.put(Constants.FRAMEWORK_BEGINNING_STARTLEVEL, "1");
+        }
     }
 
     protected void setupFramework(final Framework framework, final Map<Integer, List<File>> bundlesMap)
@@ -124,10 +146,96 @@ public class AbstractRunner {
             });
             this.installerTracker.open();
         }
+
+        int bundleCount = framework.getBundleContext().getBundles().length;
+
         try {
             this.install(framework, bundlesMap);
         } catch ( final IOException ioe) {
             throw new BundleException("Unable to install bundles.", ioe);
+        }
+
+        try
+        {
+            // TODO: double check bundles and take installables into account
+            final StartupMode mode = framework.getBundleContext().getBundles().length == bundleCount ? StartupMode.RESTART :
+                bundleCount > 1 ? StartupMode.UPDATE : StartupMode.INSTALL;
+
+            framework.getBundleContext().registerService(StartupHandler.class, new StartupHandler()
+            {
+                @Override
+                public StartupMode getMode()
+                {
+                    return mode;
+                }
+
+                @Override
+                public boolean isFinished() {
+                    return framework.getState() == Framework.ACTIVE && targetStartlevel > framework.adapt(FrameworkStartLevel.class).getStartLevel();
+                }
+
+                @Override
+                public void waitWithStartup(boolean b) {
+                    if (b) {
+                        waitRequested.incrementAndGet();
+                    }
+                    else {
+                        waitRequested.decrementAndGet();
+                    }
+                }
+            }, null);
+        } catch (NoClassDefFoundError ex) {
+            // Ignore, we don't have the launchpad.api
+        }
+    }
+
+    protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException
+    {
+        CountDownLatch latch = new CountDownLatch(1);
+        FrameworkListener listener = new FrameworkListener()
+        {
+            @Override
+            public void frameworkEvent(FrameworkEvent frameworkEvent)
+            {
+                if (frameworkEvent.getType() == FrameworkEvent.STARTED || frameworkEvent.getType() == FrameworkEvent.STARTLEVEL_CHANGED) {
+                    if (framework.getState() == Framework.ACTIVE && targetStartlevel > framework.adapt(FrameworkStartLevel.class).getStartLevel())
+                    {
+                        if (waitRequested.get() == 0) {
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException e)
+                            {
+                                e.printStackTrace();
+                            }
+                        }
+                        while (waitRequested.get() > 0) {
+                            try {
+                                Thread.sleep(500);
+                            }  catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        try {
+                            framework.adapt(FrameworkStartLevel.class).setStartLevel(framework.adapt(FrameworkStartLevel.class).getStartLevel() + 1);
+                        } catch (Exception ex) {
+                            latch.countDown();
+                        }
+                    }
+                    else {
+                        latch.countDown();
+                    }
+                }
+            }
+        };
+
+        framework.getBundleContext().addFrameworkListener(listener);
+
+        framework.start();
+
+        try {
+            return latch.await(timeout, unit);
+        } finally {
+            framework.getBundleContext().removeFrameworkListener(listener);
         }
     }
 
