@@ -23,7 +23,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -129,6 +128,7 @@ public class Main {
             System.exit(1);
         }
     }
+
 
     public static void main(final String[] args) {
         // setup logging

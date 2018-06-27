@@ -55,7 +55,7 @@
                         <outputDirectory>${project.build.directory}/classes</outputDirectory>
                         <overWriteReleases>false</overWriteReleases>
                         <overWriteSnapshots>true</overWriteSnapshots>
-                        <includeArtifactIds>org.apache.sling.feature.analyser,osgi.core,org.apache.sling.feature.resolver,org.apache.felix.utils,commons-lang,org.apache.sling.feature,org.apache.sling.feature.io,org.apache.sling.commons.johnzon,org.apache.felix.converter,commons-cli,slf4j-api,slf4j-simple,osgi.core</includeArtifactIds>
+                        <includeArtifactIds>osgi.core,commons-lang,org.apache.sling.feature,org.apache.sling.feature.io,org.apache.sling.commons.johnzon,org.apache.felix.converter,commons-cli,slf4j-api,slf4j-simple</includeArtifactIds>
                     </configuration>
                 </execution>
             </executions>
@@ -109,25 +109,13 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
+            <version>0.1.3-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature.io</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.feature.resolver</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.feature.analyser</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
+            <version>0.1.3-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

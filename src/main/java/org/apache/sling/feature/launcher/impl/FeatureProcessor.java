@@ -27,24 +27,17 @@ import org.apache.sling.feature.io.ArtifactManager;
 import org.apache.sling.feature.io.json.ApplicationJSONReader;
 import org.apache.sling.feature.io.json.ApplicationJSONWriter;
 import org.apache.sling.feature.launcher.impl.LauncherConfig.StartupMode;
-import org.apache.sling.feature.resolver.ApplicationResolverAssembler;
-import org.apache.sling.feature.resolver.FeatureResolver;
-import org.apache.sling.feature.resolver.FrameworkResolver;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonReader;
-import javax.json.JsonString;
-import javax.json.JsonValue;
 
 public class FeatureProcessor {
 
@@ -69,14 +62,6 @@ public class FeatureProcessor {
                 app = ApplicationJSONReader.read(r);
             }
 
-        } else {
-            try (FeatureResolver resolver = new FrameworkResolver(artifactManager, Collections.emptyMap())) {
-                app = ApplicationResolverAssembler.assembleApplication(null, artifactManager, resolver,
-                       org.apache.sling.feature.io.IOUtils.getFeatureFiles(config.getHomeDirectory(), config.getFeatureFiles()).toArray(new String[0]));
-            } catch (Exception ex) {
-                Main.LOG().error("Error while assembling application: {}", ex.getMessage(), ex);
-                System.exit(1);
-            }
         }
 
         // write application back

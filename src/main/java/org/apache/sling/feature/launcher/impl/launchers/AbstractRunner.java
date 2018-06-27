@@ -290,7 +290,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                             {
                                 if (waitRequested.get() == 0) {
                                     try {
-                                        Thread.sleep(50);
+                                        Thread.sleep(500);
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
