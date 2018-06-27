@@ -83,12 +83,14 @@ public class Main {
         debugOption.setArgs(0);
         final Option installerOption = new Option("I", false, "Use OSGi installer for additional artifacts.");
         installerOption.setArgs(0);
+        final Option cacheOption = new Option("c", true, "Set cache dir");
         options.addOption(repoOption);
         options.addOption(appOption);
         options.addOption(modelOption);
         options.addOption(fwkProperties);
         options.addOption(debugOption);
         options.addOption(installerOption);
+        options.addOption(cacheOption);
 
         final CommandLineParser clp = new BasicParser();
         try {
@@ -117,6 +119,10 @@ public class Main {
             }
             if ( cl.hasOption(appOption.getOpt()) ) {
                 config.setApplicationFile(cl.getOptionValue(appOption.getOpt()));
+            }
+
+            if (cl.hasOption(cacheOption.getOpt())) {
+                config.setCacheDirectory(new File(cl.getOptionValue(cacheOption.getOpt())));
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
