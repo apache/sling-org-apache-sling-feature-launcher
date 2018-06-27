@@ -17,6 +17,7 @@
 package org.apache.sling.feature.launcher.impl.launchers;
 
 import org.apache.sling.feature.launcher.impl.Main;
+import org.apache.sling.launchpad.api.LaunchpadContentProvider;
 import org.apache.sling.launchpad.api.StartupHandler;
 import org.apache.sling.launchpad.api.StartupMode;
 import org.osgi.framework.Bundle;
@@ -39,11 +40,16 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -53,6 +59,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 
 /**
  * Common functionality for the framework start.
@@ -152,8 +161,6 @@ public abstract class AbstractRunner implements Callable<Integer> {
             this.installerTracker.open();
         }
 
-        int bundleCount = framework.getBundleContext().getBundles().length;
-
         try {
             this.install(framework, bundlesMap);
         } catch ( final IOException ioe) {
@@ -161,12 +168,11 @@ public abstract class AbstractRunner implements Callable<Integer> {
         }
 
         // TODO: double check bundles and take installables into account
-        install = framework.getBundleContext().getBundles().length != bundleCount;
+        install = !framework.getBundleContext().getDataFile("INSTALLED").exists();
         try
         {
             // TODO: double check bundles and take installables into account
-            final StartupMode mode = framework.getBundleContext().getBundles().length == bundleCount ? StartupMode.RESTART :
-                bundleCount > 1 ? StartupMode.UPDATE : StartupMode.INSTALL;
+            final StartupMode mode = !install ? StartupMode.RESTART : StartupMode.INSTALL;
 
             framework.getBundleContext().registerService(StartupHandler.class, new StartupHandler()
             {
@@ -189,6 +195,76 @@ public abstract class AbstractRunner implements Callable<Integer> {
                     else {
                         waitRequested.decrementAndGet();
                     }
+                }
+            }, null);
+
+            framework.getBundleContext().registerService(LaunchpadContentProvider.class, new LaunchpadContentProvider()
+            {
+                @Override
+                public Iterator<String> getChildren(String path) {
+                    List<String> children;
+
+                    // Guard against extra trailing slashes
+                    if(path.endsWith("/") && path.length() > 1) {
+                        path = path.substring(0, path.length()-1);
+                    }
+
+                    URL url = this.getClass().getResource(path);
+                    if (url != null) {
+                        Pattern pathPattern = Pattern.compile("^" + path + "/[^/]+/?$");
+
+                        children = new ArrayList<String>();
+                        try {
+                            URLConnection conn = url.openConnection();
+                            if (conn instanceof JarURLConnection) {
+                                JarFile jar = ((JarURLConnection) conn).getJarFile();
+                                Enumeration<JarEntry> entries = jar.entries();
+                                while (entries.hasMoreElements()) {
+                                    String entry = entries.nextElement().getName();
+                                    if (pathPattern.matcher(entry).matches()) {
+                                        children.add(entry);
+                                    }
+                                }
+                            }
+                        } catch (IOException ioe) {
+                            // ignore for now
+                        }
+                    } else {
+                        children = Collections.emptyList();
+                    }
+
+                    return children.iterator();
+                }
+
+                @Override
+                public URL getResource(String path) {
+                    // ensure path
+                    if (path == null || path.length() == 0) {
+                        return null;
+                    }
+
+                    // remove leading slash
+                    if (path.charAt(0) == '/') {
+                        path = path.substring(1);
+                    }
+
+                    return this.getResource(path);
+                }
+
+                @Override
+                public InputStream getResourceAsStream(String path) {
+                    URL res = this.getResource(path);
+                    if (res != null) {
+                        try {
+                            return res.openStream();
+                        } catch (IOException ioe) {
+                            // ignore this one
+                        }
+                    }
+
+                    // no resource
+                    return null;
+
                 }
             }, null);
         } catch (NoClassDefFoundError ex) {
@@ -214,7 +290,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                             {
                                 if (waitRequested.get() == 0) {
                                     try {
-                                        Thread.sleep(2000);
+                                        Thread.sleep(50);
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
@@ -242,6 +318,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                         }
                     }
                     else {
+                        framework.getBundleContext().getDataFile("INSTALLED").mkdirs();
                         latch.countDown();
                     }
                 }
