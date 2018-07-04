@@ -88,11 +88,15 @@ public abstract class AbstractRunner implements Callable<Integer> {
         String target = frameworkProperties.get(Constants.FRAMEWORK_BEGINNING_STARTLEVEL);
         if (target != null) {
             targetStartlevel = Integer.parseInt(target);
-        } else {
+        }
+        else {
             targetStartlevel = 1;
         }
-        if ("true".equalsIgnoreCase(frameworkProperties.get("sling.framework.install.incremental"))) {
-            frameworkProperties.put(Constants.FRAMEWORK_BEGINNING_STARTLEVEL, "1");
+        if (!this.installables.isEmpty()) {
+            if ("true".equalsIgnoreCase(frameworkProperties.get("sling.framework.install.incremental")))
+            {
+                frameworkProperties.put(Constants.FRAMEWORK_BEGINNING_STARTLEVEL, "1");
+            }
         }
     }
 
@@ -129,7 +133,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
             });
             this.configAdminTracker.open();
         }
-        if ( installables != null && !installables.isEmpty() ) {
+        if ( !installables.isEmpty() ) {
             this.installerTracker = new ServiceTracker<>(framework.getBundleContext(),
                     "org.apache.sling.installer.api.OsgiInstaller",
                     new ServiceTrackerCustomizer<Object, Object>() {
@@ -168,7 +172,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
         }
 
         // TODO: double check bundles and take installables into account
-        install = !framework.getBundleContext().getDataFile("INSTALLED").exists();
+        install = !this.configurations.isEmpty() || !this.installables.isEmpty() || !bundlesMap.isEmpty();
         try
         {
             // TODO: double check bundles and take installables into account

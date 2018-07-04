@@ -50,7 +50,15 @@ public class FrameworkLauncher implements Launcher {
             api = artifact.getId();
             context.addAppJar(context.getArtifactFile(api));
             app.getBundles().removeExact(api);
-            app.getFrameworkProperties().put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, "org.apache.sling.launchpad.api;version=\"" + api.getOSGiVersion() + "\"");
+            String extra = app.getFrameworkProperties().get(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA);
+            if (extra != null && !extra.trim().isEmpty()) {
+                extra = extra + ",";
+            }
+            else {
+                extra = "";
+            }
+            extra = extra + "org.apache.sling.launchpad.api;version=\"" + api.getOSGiVersion() + "\"";
+            app.getFrameworkProperties().put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, extra);
         }
     }
 

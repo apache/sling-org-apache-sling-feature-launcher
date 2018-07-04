@@ -48,6 +48,7 @@ public class LauncherConfig
 
     private final Installation installation = new Installation();
 
+    private volatile File home = new File(HOME);
     /**
      * Create a new configuration object.
      * Set the default values
@@ -90,9 +91,12 @@ public class LauncherConfig
      * @return The home directory.
      */
     public File getHomeDirectory() {
-        return new File(HOME);
+        return this.home;
     }
 
+    public void setHomeDirectory(File file) {
+        this.home = file;
+    }
     /**
      * Get the startup mode.
      *

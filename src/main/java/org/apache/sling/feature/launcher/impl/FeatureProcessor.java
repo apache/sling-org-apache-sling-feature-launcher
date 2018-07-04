@@ -52,32 +52,35 @@ public class FeatureProcessor {
     throws IOException {
         Application app = null;
         if ( config.getApplicationFile() != null ) {
-            String absoluteArg = config.getApplicationFile();
-            if ( absoluteArg.indexOf(":") < 2 ) {
-                absoluteArg = new File(absoluteArg).getAbsolutePath();
-            }
-            final ArtifactHandler appArtifact = artifactManager.getArtifactHandler(absoluteArg);
+            app = read(config.getApplicationFile(), artifactManager);
+            // write application back
+            final File file = new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
+            file.getParentFile().mkdirs();
 
-            try (final FileReader r = new FileReader(appArtifact.getFile())) {
-                app = ApplicationJSONReader.read(r);
+            try (final FileWriter writer = new FileWriter(file)) {
+                ApplicationJSONWriter.write(writer, app);
+            } catch ( final IOException ioe) {
+                Main.LOG().error("Error while writing application file: {}", ioe.getMessage(), ioe);
+                System.exit(1);
             }
-
         }
-
-        // write application back
-        final File file = new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
-        file.getParentFile().mkdirs();
-
-        try (final FileWriter writer = new FileWriter(file)) {
-            ApplicationJSONWriter.write(writer, app);
-        } catch ( final IOException ioe) {
-            Main.LOG().error("Error while writing application file: {}", ioe.getMessage(), ioe);
-            System.exit(1);
+        else {
+            app = read(new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json").getPath(), artifactManager);
         }
 
         return app;
     }
 
+    private static Application read(String absoluteArg, ArtifactManager artifactManager) throws IOException {
+        if ( absoluteArg.indexOf(":") < 2 ) {
+            absoluteArg = new File(absoluteArg).getAbsolutePath();
+        }
+        final ArtifactHandler appArtifact = artifactManager.getArtifactHandler(absoluteArg);
+
+        try (final FileReader r = new FileReader(appArtifact.getFile())) {
+            return ApplicationJSONReader.read(r);
+        }
+    }
     /**
      * Prepare the launcher
      * - add all bundles to the bundle map of the installation object

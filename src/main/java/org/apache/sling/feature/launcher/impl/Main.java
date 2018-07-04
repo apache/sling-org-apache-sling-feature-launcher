@@ -74,7 +74,6 @@ public class Main {
         final Options options = new Options();
 
         final Option repoOption =  new Option("u", true, "Set repository url");
-        final Option modelOption =  new Option("f", true, "Set feature files/directories");
         final Option appOption =  new Option("a", true, "Set application file");
         final Option fwkProperties = new Option("D", true, "Set framework properties");
         fwkProperties.setArgs(20);
@@ -83,13 +82,14 @@ public class Main {
         final Option installerOption = new Option("I", false, "Use OSGi installer for additional artifacts.");
         installerOption.setArgs(0);
         final Option cacheOption = new Option("c", true, "Set cache dir");
+        final Option homeOption = new Option("p", true, "Set home dir");
         options.addOption(repoOption);
         options.addOption(appOption);
-        options.addOption(modelOption);
         options.addOption(fwkProperties);
         options.addOption(debugOption);
         options.addOption(installerOption);
         options.addOption(cacheOption);
+        options.addOption(homeOption);
 
         final CommandLineParser clp = new BasicParser();
         try {
@@ -98,10 +98,6 @@ public class Main {
             if ( cl.hasOption(repoOption.getOpt()) ) {
                 final String value = cl.getOptionValue(repoOption.getOpt());
                 config.setRepositoryUrls(value.split(","));
-            }
-            if ( cl.hasOption(modelOption.getOpt()) ) {
-                final String value = cl.getOptionValue(modelOption.getOpt());
-                config.setFeatureFiles(value.split(","));
             }
             if ( cl.hasOption(fwkProperties.getOpt()) ) {
                 for(final String value : cl.getOptionValues(fwkProperties.getOpt())) {
@@ -119,9 +115,11 @@ public class Main {
             if ( cl.hasOption(appOption.getOpt()) ) {
                 config.setApplicationFile(cl.getOptionValue(appOption.getOpt()));
             }
-
             if (cl.hasOption(cacheOption.getOpt())) {
                 config.setCacheDirectory(new File(cl.getOptionValue(cacheOption.getOpt())));
+            }
+            if (cl.hasOption(homeOption.getOpt())) {
+                config.setHomeDirectory(new File(cl.getOptionValue(homeOption.getOpt())));
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
@@ -196,6 +194,11 @@ public class Main {
             }
         }
 
+        if (launcherConfig.getApplicationFile() == null) {
+            launcherConfig.getInstallation().getBundleMap().clear();
+            launcherConfig.getInstallation().getConfigurations().clear();
+            launcherConfig.getInstallation().getInstallableArtifacts().clear();
+        }
         try {
             run(launcherConfig);
         } catch ( final Exception iae) {
