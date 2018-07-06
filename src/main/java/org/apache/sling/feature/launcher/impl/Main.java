@@ -152,6 +152,11 @@ public class Main {
         final LauncherConfig launcherConfig = new LauncherConfig();
         parseArgs(launcherConfig, args);
 
+        launcherConfig.getVariables().put("sling.home", launcherConfig.getHomeDirectory().getAbsolutePath());
+        if (!launcherConfig.getVariables().containsKey("repository.home")) {
+            launcherConfig.getVariables().put("repository.home", launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
+        }
+        launcherConfig.getVariables().put("sling.launchpad", launcherConfig.getHomeDirectory().getAbsolutePath() + "/launchpad");
 
         Main.LOG().info("");
         Main.LOG().info("Apache Sling Application Launcher");
@@ -242,6 +247,9 @@ public class Main {
         // set sling home, and use separate locations for launchpad and properties
         installation.getFrameworkProperties().put("sling.home", config.getHomeDirectory().getAbsolutePath());
         installation.getFrameworkProperties().put("sling.launchpad", config.getHomeDirectory().getAbsolutePath() + "/launchpad");
+        if (!installation.getFrameworkProperties().containsKey("repository.home")) {
+            installation.getFrameworkProperties().put("repository.home", config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
+        }
         installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
 
 
