@@ -21,6 +21,8 @@ import org.apache.sling.feature.io.spi.ArtifactProviderContext;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class holds the configuration of the launcher.
@@ -49,6 +51,9 @@ public class LauncherConfig
     private final Installation installation = new Installation();
 
     private volatile File home = new File(HOME);
+
+    private final Map<String, String> variables = new HashMap<>();
+
     /**
      * Create a new configuration object.
      * Set the default values
@@ -122,5 +127,9 @@ public class LauncherConfig
      */
     public void clear() {
         this.installation.clear();
+    }
+
+    public Map<String, String> getVariables() {
+        return this.variables;
     }
 }

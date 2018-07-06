@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonReader;
@@ -52,7 +53,7 @@ public class FeatureProcessor {
     throws IOException {
         Application app = null;
         if ( config.getApplicationFile() != null ) {
-            app = read(config.getApplicationFile(), artifactManager);
+            app = read(config.getApplicationFile(), artifactManager, config.getVariables());
             // write application back
             final File file = new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
             file.getParentFile().mkdirs();
@@ -65,20 +66,22 @@ public class FeatureProcessor {
             }
         }
         else {
-            app = read(new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json").getPath(), artifactManager);
+            app = read(new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json").getPath(),
+                    artifactManager, config.getVariables());
         }
 
         return app;
     }
 
-    private static Application read(String absoluteArg, ArtifactManager artifactManager) throws IOException {
+    private static Application read(String absoluteArg, ArtifactManager artifactManager,
+            Map<String, String> overriddenVars) throws IOException {
         if ( absoluteArg.indexOf(":") < 2 ) {
             absoluteArg = new File(absoluteArg).getAbsolutePath();
         }
         final ArtifactHandler appArtifact = artifactManager.getArtifactHandler(absoluteArg);
 
         try (final FileReader r = new FileReader(appArtifact.getFile())) {
-            return ApplicationJSONReader.read(r);
+            return ApplicationJSONReader.read(r, overriddenVars);
         }
     }
     /**

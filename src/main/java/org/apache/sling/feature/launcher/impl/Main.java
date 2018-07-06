@@ -16,17 +16,10 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -40,6 +33,14 @@ import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.osgi.framework.FrameworkEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This is the launcher main class.
@@ -76,7 +77,7 @@ public class Main {
         final Option repoOption =  new Option("u", true, "Set repository url");
         final Option appOption =  new Option("a", true, "Set application file");
         final Option fwkProperties = new Option("D", true, "Set framework properties");
-        fwkProperties.setArgs(20);
+        final Option varValue = new Option("V", true, "Set variable value");
         final Option debugOption = new Option("v", false, "Verbose");
         debugOption.setArgs(0);
         final Option installerOption = new Option("I", false, "Use OSGi installer for additional artifacts.");
@@ -86,6 +87,7 @@ public class Main {
         options.addOption(repoOption);
         options.addOption(appOption);
         options.addOption(fwkProperties);
+        options.addOption(varValue);
         options.addOption(debugOption);
         options.addOption(installerOption);
         options.addOption(cacheOption);
@@ -106,6 +108,13 @@ public class Main {
                     config.getInstallation().getFrameworkProperties().put(keyVal[0], keyVal[1]);
                 }
             }
+            if ( cl.hasOption(varValue.getOpt()) ) {
+                for(final String optVal : cl.getOptionValues(varValue.getOpt())) {
+                    final String[] keyVal = split(optVal);
+
+                    config.getVariables().put(keyVal[0], keyVal[1]);
+                }
+            }
             if ( cl.hasOption(debugOption.getOpt()) ) {
                 System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
             }
@@ -123,6 +132,10 @@ public class Main {
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
+
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("launcher", options);
+
             System.exit(1);
         }
     }
