@@ -24,6 +24,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.sling.feature.Application;
+import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
@@ -38,9 +39,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This is the launcher main class.
@@ -56,6 +60,8 @@ public class Main {
         }
         return LOGGER;
     }
+
+    private static volatile File m_populate;
 
     /** Split a string into key and value */
     private static String[] split(final String val) {
@@ -84,6 +90,8 @@ public class Main {
         installerOption.setArgs(0);
         final Option cacheOption = new Option("c", true, "Set cache dir");
         final Option homeOption = new Option("p", true, "Set home dir");
+        final Option populateOption = new Option("dao", true, "Only download required artifacts into directory");
+
         options.addOption(repoOption);
         options.addOption(appOption);
         options.addOption(fwkProperties);
@@ -92,6 +100,7 @@ public class Main {
         options.addOption(installerOption);
         options.addOption(cacheOption);
         options.addOption(homeOption);
+        options.addOption(populateOption);
 
         final CommandLineParser clp = new BasicParser();
         try {
@@ -129,6 +138,12 @@ public class Main {
             }
             if (cl.hasOption(homeOption.getOpt())) {
                 config.setHomeDirectory(new File(cl.getOptionValue(homeOption.getOpt())));
+            }
+            if (cl.hasOption(populateOption.getOpt())) {
+                m_populate = new File(cl.getOptionValue(populateOption.getOpt()));
+                if (!m_populate.isDirectory() && !m_populate.mkdirs()) {
+                    throw new ParseException("Bad dao directory");
+                }
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
@@ -187,6 +202,18 @@ public class Main {
                     @Override
                     public File getArtifactFile(final ArtifactId artifact) throws IOException {
                         final ArtifactHandler handler = aMgr.getArtifactHandler(":" + artifact.toMvnPath());
+                        if (m_populate != null) {
+                            File source = handler.getFile();
+                            File target = new File(m_populate, artifact.toMvnPath().replace('/', File.separatorChar));
+
+                            if (!target.isFile()) {
+                                if (Main.LOG().isDebugEnabled()) {
+                                    Main.LOG().debug("Populating {} with {}", target.getAbsolutePath(), source.getAbsolutePath());
+                                }
+                                target.getParentFile().mkdirs();
+                                Files.copy(source.toPath(), target.toPath());
+                            }
+                        }
                         return handler.getFile();
                     }
 
@@ -199,13 +226,30 @@ public class Main {
 
                 FeatureProcessor.prepareLauncher(launcherConfig, artifactManager, app);
 
+                Main.LOG().info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
+                    launcherConfig.getLocalArtifacts(), launcherConfig.getCachedArtifacts(), launcherConfig.getDownloadedArtifacts());
+
+                if (m_populate != null) {
+                    Map<Artifact, File> local = FeatureProcessor.calculateArtifacts(artifactManager, app);
+                    for (Map.Entry<Artifact, File> entry : local.entrySet()) {
+                        File source = entry.getValue();
+                        File target = new File(m_populate, entry.getKey().getId().toMvnPath().replace('/', File.separatorChar));
+
+                        if (!target.isFile()) {
+                            if (Main.LOG().isDebugEnabled()) {
+                                Main.LOG().debug("Populating {} with {}", target.getAbsolutePath(), source.getAbsolutePath());
+                            }
+                            target.getParentFile().mkdirs();
+                            Files.copy(source.toPath(), target.toPath());
+                        }
+                    }
+                    return;
+                }
+
             } catch ( final Exception iae) {
                 Main.LOG().error("Error while assembling launcher: {}", iae.getMessage(), iae);
                 System.exit(1);
             }
-
-            Main.LOG().info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
-                    launcherConfig.getLocalArtifacts(), launcherConfig.getCachedArtifacts(), launcherConfig.getDownloadedArtifacts());
         } finally {
             if ( artifactManager != null ) {
                 artifactManager.shutdown();

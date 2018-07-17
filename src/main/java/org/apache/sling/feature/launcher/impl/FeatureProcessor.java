@@ -33,6 +33,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -157,5 +158,38 @@ public class FeatureProcessor {
                 config.getInstallation().getFrameworkProperties().put(prop.getKey(), prop.getValue());
             }
         }
+    }
+
+    /**
+     * Prepare the cache
+     * - add all bundles
+     * - add all other artifacts (only if startup mode is INSTALL)
+     */
+    public static Map<Artifact, File> calculateArtifacts(final ArtifactManager artifactManager,
+        final Application app) throws Exception
+    {
+        Map<Artifact, File> result = new HashMap<>();
+        for (final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet())
+        {
+            for (final Artifact a : entry.getValue())
+            {
+                final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
+                final File artifactFile = handler.getFile();
+
+                result.put(a, artifactFile);
+            }
+        }
+        for (final Extension ext : app.getExtensions())
+        {
+            if (ext.getType() == ExtensionType.ARTIFACTS)
+            {
+                for (final Artifact a : ext.getArtifacts())
+                {
+                    final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
+                    result.put(a, handler.getFile());
+                }
+            }
+        }
+        return result;
     }
 }
