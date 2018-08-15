@@ -16,6 +16,16 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -23,9 +33,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.sling.feature.Application;
 import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
+import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
 import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
@@ -34,17 +44,6 @@ import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.osgi.framework.FrameworkEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This is the launcher main class.
@@ -168,7 +167,7 @@ public class Main {
         parseArgs(launcherConfig, args);
 
         launcherConfig.getVariables().put("sling.home", launcherConfig.getHomeDirectory().getAbsolutePath());
-        if (!launcherConfig.getVariables().containsKey("repository.home")) {
+        if (launcherConfig.getVariables().get("repository.home") == null ) {
             launcherConfig.getVariables().put("repository.home", launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
         }
         launcherConfig.getVariables().put("sling.launchpad", launcherConfig.getHomeDirectory().getAbsolutePath() + "/launchpad");
@@ -192,7 +191,7 @@ public class Main {
 
             try {
                 final Launcher launcher = new FrameworkLauncher();
-                final Application app = FeatureProcessor.createApplication(launcherConfig, artifactManager);
+                final Feature app = FeatureProcessor.createApplication(launcherConfig, artifactManager);
 
                 Main.LOG().info("");
                 Main.LOG().info("Assembling launcher...");

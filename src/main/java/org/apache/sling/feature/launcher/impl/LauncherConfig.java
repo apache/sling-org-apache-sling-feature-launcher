@@ -16,13 +16,12 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import org.apache.sling.feature.io.ArtifactManagerConfig;
-import org.apache.sling.feature.io.spi.ArtifactProviderContext;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
+import org.apache.sling.feature.KeyValueMap;
+import org.apache.sling.feature.io.ArtifactManagerConfig;
+import org.apache.sling.feature.io.spi.ArtifactProviderContext;
 
 /**
  * This class holds the configuration of the launcher.
@@ -52,7 +51,7 @@ public class LauncherConfig
 
     private volatile File home = new File(HOME);
 
-    private final Map<String, String> variables = new HashMap<>();
+    private final KeyValueMap variables = new KeyValueMap();
 
     /**
      * Create a new configuration object.
@@ -129,7 +128,7 @@ public class LauncherConfig
         this.installation.clear();
     }
 
-    public Map<String, String> getVariables() {
+    public KeyValueMap getVariables() {
         return this.variables;
     }
 }

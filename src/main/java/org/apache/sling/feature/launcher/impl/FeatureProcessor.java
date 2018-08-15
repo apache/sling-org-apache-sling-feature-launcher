@@ -16,18 +16,6 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import org.apache.sling.feature.Application;
-import org.apache.sling.feature.Artifact;
-import org.apache.sling.feature.Configuration;
-import org.apache.sling.feature.Extension;
-import org.apache.sling.feature.ExtensionType;
-import org.apache.sling.feature.FeatureConstants;
-import org.apache.sling.feature.io.ArtifactHandler;
-import org.apache.sling.feature.io.ArtifactManager;
-import org.apache.sling.feature.io.json.ApplicationJSONReader;
-import org.apache.sling.feature.io.json.ApplicationJSONWriter;
-import org.apache.sling.feature.launcher.impl.LauncherConfig.StartupMode;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -41,6 +29,21 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonReader;
 
+import org.apache.sling.feature.Artifact;
+import org.apache.sling.feature.Configuration;
+import org.apache.sling.feature.Extension;
+import org.apache.sling.feature.ExtensionType;
+import org.apache.sling.feature.Feature;
+import org.apache.sling.feature.FeatureConstants;
+import org.apache.sling.feature.KeyValueMap;
+import org.apache.sling.feature.builder.FeatureBuilder;
+import org.apache.sling.feature.io.ArtifactHandler;
+import org.apache.sling.feature.io.ArtifactManager;
+import org.apache.sling.feature.io.IOUtils;
+import org.apache.sling.feature.io.json.FeatureJSONReader;
+import org.apache.sling.feature.io.json.FeatureJSONWriter;
+import org.apache.sling.feature.launcher.impl.LauncherConfig.StartupMode;
+
 public class FeatureProcessor {
 
     /**
@@ -49,10 +52,10 @@ public class FeatureProcessor {
      * @param config The current configuration
      * @param artifactManager The artifact manager
      */
-    public static Application createApplication(final LauncherConfig config,
+    public static Feature createApplication(final LauncherConfig config,
             final ArtifactManager artifactManager)
     throws IOException {
-        Application app = null;
+        Feature app = null;
         if ( config.getApplicationFile() != null ) {
             app = read(config.getApplicationFile(), artifactManager, config.getVariables());
             // write application back
@@ -60,7 +63,7 @@ public class FeatureProcessor {
             file.getParentFile().mkdirs();
 
             try (final FileWriter writer = new FileWriter(file)) {
-                ApplicationJSONWriter.write(writer, app);
+                FeatureJSONWriter.write(writer, app);
             } catch ( final IOException ioe) {
                 Main.LOG().error("Error while writing application file: {}", ioe.getMessage(), ioe);
                 System.exit(1);
@@ -71,18 +74,36 @@ public class FeatureProcessor {
                     artifactManager, config.getVariables());
         }
 
+        // check framework
+        if ( app.getExtensions().getByName(FeatureConstants.EXTENSION_NAME_FRAMEWORK) == null ) {
+
+            // use hard coded Apache Felix
+            final Extension fwk = new Extension(ExtensionType.JSON, FeatureConstants.EXTENSION_NAME_FRAMEWORK, false);
+            fwk.getArtifacts().add(new Artifact(IOUtils.getFelixFrameworkId(null)));
+            app.getExtensions().add(fwk);
+        }
+
+        for (Artifact bundle : app.getBundles()) {
+            if ( bundle.getStartOrder() == 0) {
+                final int so = bundle.getMetadata().get("start-level") != null ? Integer.parseInt(bundle.getMetadata().get("start-level")) : 1;
+                bundle.setStartOrder(so);
+            }
+        }
+
         return app;
     }
 
-    private static Application read(String absoluteArg, ArtifactManager artifactManager,
-            Map<String, String> overriddenVars) throws IOException {
+    private static Feature read(String absoluteArg, ArtifactManager artifactManager,
+            KeyValueMap overriddenVars) throws IOException {
         if ( absoluteArg.indexOf(":") < 2 ) {
             absoluteArg = new File(absoluteArg).getAbsolutePath();
         }
         final ArtifactHandler appArtifact = artifactManager.getArtifactHandler(absoluteArg);
 
         try (final FileReader r = new FileReader(appArtifact.getFile())) {
-            return ApplicationJSONReader.read(r, overriddenVars);
+            final Feature f = FeatureJSONReader.read(r, appArtifact.getUrl());
+            FeatureBuilder.resolveVariables(f, overriddenVars);
+            return f;
         }
     }
     /**
@@ -93,7 +114,7 @@ public class FeatureProcessor {
      */
     public static void prepareLauncher(final LauncherConfig config,
             final ArtifactManager artifactManager,
-            final Application app) throws Exception {
+            final Feature app) throws Exception {
         for(final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet()) {
             for(final Artifact a : entry.getValue()) {
                 final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
@@ -166,7 +187,7 @@ public class FeatureProcessor {
      * - add all other artifacts (only if startup mode is INSTALL)
      */
     public static Map<Artifact, File> calculateArtifacts(final ArtifactManager artifactManager,
-        final Application app) throws Exception
+        final Feature app) throws Exception
     {
         Map<Artifact, File> result = new HashMap<>();
         for (final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet())
