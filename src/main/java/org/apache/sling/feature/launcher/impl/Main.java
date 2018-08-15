@@ -63,6 +63,8 @@ public class Main {
 
     private static volatile File m_populate;
 
+    private static volatile String m_frameworkVersion = null; // DEFAULT is null
+
     /** Split a string into key and value */
     private static String[] split(final String val) {
         final int pos = val.indexOf('=');
@@ -92,6 +94,8 @@ public class Main {
         final Option homeOption = new Option("p", true, "Set home dir");
         final Option populateOption = new Option("dao", true, "Only download required artifacts into directory");
 
+        final Option frameworkOption = new Option("fv", true, "Set felix framework version");
+
         options.addOption(repoOption);
         options.addOption(appOption);
         options.addOption(fwkProperties);
@@ -101,6 +105,7 @@ public class Main {
         options.addOption(cacheOption);
         options.addOption(homeOption);
         options.addOption(populateOption);
+        options.addOption(frameworkOption);
 
         final CommandLineParser clp = new BasicParser();
         try {
@@ -144,6 +149,9 @@ public class Main {
                 if (!m_populate.isDirectory() && !m_populate.mkdirs()) {
                     throw new ParseException("Bad dao directory");
                 }
+            }
+            if (cl.hasOption(frameworkOption.getOpt())) {
+                m_frameworkVersion = cl.getOptionValue(frameworkOption.getOpt());
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
@@ -224,7 +232,7 @@ public class Main {
                 };
 
                 // use hard coded Apache Felix
-                launcher.prepare(ctx, IOUtils.getFelixFrameworkId(null), app);
+                launcher.prepare(ctx, IOUtils.getFelixFrameworkId(m_frameworkVersion), app);
 
                 FeatureProcessor.prepareLauncher(launcherConfig, artifactManager, app);
 
