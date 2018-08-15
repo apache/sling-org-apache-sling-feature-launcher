@@ -27,10 +27,7 @@ import org.apache.commons.lang.text.StrLookup;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
-import org.apache.sling.feature.Extension;
-import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.FeatureConstants;
 import org.apache.sling.feature.launcher.impl.Main;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
@@ -44,12 +41,10 @@ public class FrameworkLauncher implements Launcher {
 
 
     @Override
-    public void prepare(final LauncherPrepareContext context, final Feature app) throws Exception {
-        final Extension fwk = app.getExtensions().getByName(FeatureConstants.EXTENSION_NAME_FRAMEWORK);
-        if ( fwk == null || fwk.getType() != ExtensionType.ARTIFACTS || fwk.getArtifacts().size() != 1 ) {
-            throw new Exception("Framework definition is wrong!");
-        }
-        context.addAppJar(context.getArtifactFile(fwk.getArtifacts().get(0).getId()));
+    public void prepare(final LauncherPrepareContext context,
+            final ArtifactId frameworkId,
+            final Feature app) throws Exception {
+        context.addAppJar(context.getArtifactFile(frameworkId));
         ArtifactId api = ArtifactId.fromMvnId("org.apache.sling:org.apache.sling.launchpad.api:1.2.0");
         Artifact artifact = app.getBundles().getSame(api);
         if (artifact != null)

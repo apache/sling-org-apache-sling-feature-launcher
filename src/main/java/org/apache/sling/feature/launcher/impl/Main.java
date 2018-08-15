@@ -38,6 +38,7 @@ import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
+import org.apache.sling.feature.io.IOUtils;
 import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
@@ -221,7 +222,9 @@ public class Main {
                         launcherConfig.getInstallation().addAppJar(jar);
                     }
                 };
-                launcher.prepare(ctx, app);
+
+                // use hard coded Apache Felix
+                launcher.prepare(ctx, IOUtils.getFelixFrameworkId(null), app);
 
                 FeatureProcessor.prepareLauncher(launcherConfig, artifactManager, app);
 

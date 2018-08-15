@@ -39,7 +39,6 @@ import org.apache.sling.feature.KeyValueMap;
 import org.apache.sling.feature.builder.FeatureBuilder;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
-import org.apache.sling.feature.io.IOUtils;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.impl.LauncherConfig.StartupMode;
@@ -72,15 +71,6 @@ public class FeatureProcessor {
         else {
             app = read(new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json").getPath(),
                     artifactManager, config.getVariables());
-        }
-
-        // check framework
-        if ( app.getExtensions().getByName(FeatureConstants.EXTENSION_NAME_FRAMEWORK) == null ) {
-
-            // use hard coded Apache Felix
-            final Extension fwk = new Extension(ExtensionType.JSON, FeatureConstants.EXTENSION_NAME_FRAMEWORK, false);
-            fwk.getArtifacts().add(new Artifact(IOUtils.getFelixFrameworkId(null)));
-            app.getExtensions().add(fwk);
         }
 
         for (Artifact bundle : app.getBundles()) {

@@ -16,11 +16,12 @@
  */
 package org.apache.sling.feature.launcher.spi;
 
+import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 
 public interface Launcher {
 
-    void prepare(LauncherPrepareContext context, Feature app) throws Exception;
+    void prepare(LauncherPrepareContext context, ArtifactId frameworkId, Feature app) throws Exception;
 
     int run(LauncherRunContext context, ClassLoader cl) throws Exception;
 }
