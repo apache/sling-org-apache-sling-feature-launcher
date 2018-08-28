@@ -17,7 +17,9 @@
 package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -39,6 +41,7 @@ import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
 import org.apache.sling.feature.io.IOUtils;
+import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
@@ -83,7 +86,7 @@ public class Main {
         final Options options = new Options();
 
         final Option repoOption =  new Option("u", true, "Set repository url");
-        final Option appOption =  new Option("a", true, "Set application file");
+        final Option featureOption =  new Option("f", true, "Set feature files");
         final Option fwkProperties = new Option("D", true, "Set framework properties");
         final Option varValue = new Option("V", true, "Set variable value");
         final Option debugOption = new Option("v", false, "Verbose");
@@ -97,7 +100,7 @@ public class Main {
         final Option frameworkOption = new Option("fv", true, "Set felix framework version");
 
         options.addOption(repoOption);
-        options.addOption(appOption);
+        options.addOption(featureOption);
         options.addOption(fwkProperties);
         options.addOption(varValue);
         options.addOption(debugOption);
@@ -135,8 +138,10 @@ public class Main {
             if ( cl.hasOption(installerOption.getOpt()) ) {
                 config.setUseInstaller();
             }
-            if ( cl.hasOption(appOption.getOpt()) ) {
-                config.setApplicationFile(cl.getOptionValue(appOption.getOpt()));
+            if ( cl.hasOption(featureOption.getOpt()) ) {
+                for(final String optVal : cl.getOptionValues(featureOption.getOpt())) {
+                    config.addFeatureFiles(optVal.split(","));
+                }
             }
             if (cl.hasOption(cacheOption.getOpt())) {
                 config.setCacheDirectory(new File(cl.getOptionValue(cacheOption.getOpt())));
@@ -185,53 +190,44 @@ public class Main {
         Main.LOG().info("Apache Sling Application Launcher");
         Main.LOG().info("---------------------------------");
 
-        ArtifactManager artifactManager = null;
-        try {
 
-            Main.LOG().info("Initializing...");
-            try {
-                artifactManager = ArtifactManager.getArtifactManager(launcherConfig);
-            } catch ( final IOException ioe) {
-                Main.LOG().error("Unable to setup artifact manager: {}", ioe.getMessage(), ioe);
-                System.exit(1);
-            }
+        Main.LOG().info("Initializing...");
+
+        final Launcher launcher = new FrameworkLauncher();
+
+        try (ArtifactManager artifactManager = ArtifactManager.getArtifactManager(launcherConfig)) {
+
             Main.LOG().info("Artifact Repositories: {}", Arrays.toString(launcherConfig.getRepositoryUrls()));
             Main.LOG().info("Assembling provisioning model...");
 
             try {
-                final Launcher launcher = new FrameworkLauncher();
-                final Feature app = FeatureProcessor.createApplication(launcherConfig, artifactManager);
+                boolean restart = launcherConfig.getFeatureFiles().length == 0;
+
+                final Feature app = assemble(launcherConfig, artifactManager);
 
                 Main.LOG().info("");
                 Main.LOG().info("Assembling launcher...");
-                final ArtifactManager aMgr = artifactManager;
-                final LauncherPrepareContext ctx = new LauncherPrepareContext() {
 
+                final LauncherPrepareContext ctx = new LauncherPrepareContext()
+                {
                     @Override
-                    public File getArtifactFile(final ArtifactId artifact) throws IOException {
-                        final ArtifactHandler handler = aMgr.getArtifactHandler(":" + artifact.toMvnPath());
-                        if (m_populate != null) {
-                            File source = handler.getFile();
-                            File target = new File(m_populate, artifact.toMvnPath().replace('/', File.separatorChar));
-
-                            if (!target.isFile()) {
-                                if (Main.LOG().isDebugEnabled()) {
-                                    Main.LOG().debug("Populating {} with {}", target.getAbsolutePath(), source.getAbsolutePath());
-                                }
-                                target.getParentFile().mkdirs();
-                                Files.copy(source.toPath(), target.toPath());
-                            }
+                    public File getArtifactFile(final ArtifactId artifact) throws IOException
+                    {
+                        final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + artifact.toMvnPath());
+                        if (m_populate != null)
+                        {
+                            populate(handler.getFile(), artifact);
                         }
                         return handler.getFile();
                     }
 
                     @Override
-                    public void addAppJar(final File jar) {
+                    public void addAppJar(final File jar)
+                    {
                         launcherConfig.getInstallation().addAppJar(jar);
                     }
                 };
 
-                // use hard coded Apache Felix
                 launcher.prepare(ctx, IOUtils.getFelixFrameworkId(m_frameworkVersion), app);
 
                 FeatureProcessor.prepareLauncher(launcherConfig, artifactManager, app);
@@ -239,43 +235,83 @@ public class Main {
                 Main.LOG().info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
                     launcherConfig.getLocalArtifacts(), launcherConfig.getCachedArtifacts(), launcherConfig.getDownloadedArtifacts());
 
-                if (m_populate != null) {
+                if (m_populate != null)
+                {
                     Map<Artifact, File> local = FeatureProcessor.calculateArtifacts(artifactManager, app);
-                    for (Map.Entry<Artifact, File> entry : local.entrySet()) {
-                        File source = entry.getValue();
-                        File target = new File(m_populate, entry.getKey().getId().toMvnPath().replace('/', File.separatorChar));
-
-                        if (!target.isFile()) {
-                            if (Main.LOG().isDebugEnabled()) {
-                                Main.LOG().debug("Populating {} with {}", target.getAbsolutePath(), source.getAbsolutePath());
-                            }
-                            target.getParentFile().mkdirs();
-                            Files.copy(source.toPath(), target.toPath());
-                        }
+                    for (Map.Entry<Artifact, File> entry : local.entrySet())
+                    {
+                        populate(entry.getValue(), entry.getKey().getId());
                     }
                     return;
                 }
 
+                if (restart) {
+                    launcherConfig.getInstallation().getInstallableArtifacts().clear();
+                    launcherConfig.getInstallation().getConfigurations().clear();
+                    launcherConfig.getInstallation().getBundleMap().clear();
+                }
             } catch ( final Exception iae) {
                 Main.LOG().error("Error while assembling launcher: {}", iae.getMessage(), iae);
                 System.exit(1);
             }
-        } finally {
-            if ( artifactManager != null ) {
-                artifactManager.shutdown();
-            }
+        }
+        catch (IOException ex) {
+            Main.LOG().error("Unable to setup artifact manager: {}", ex.getMessage(), ex);
+            System.exit(1);
         }
 
-        if (launcherConfig.getApplicationFile() == null) {
-            launcherConfig.getInstallation().getBundleMap().clear();
-            launcherConfig.getInstallation().getConfigurations().clear();
-            launcherConfig.getInstallation().getInstallableArtifacts().clear();
-        }
         try {
-            run(launcherConfig);
+            run(launcherConfig, launcher);
         } catch ( final Exception iae) {
             Main.LOG().error("Error while running launcher: {}", iae.getMessage(), iae);
             System.exit(1);
+        }
+    }
+
+    private static void populate(File file, ArtifactId artifactId) throws IOException{
+        File target = new File(m_populate, artifactId.toMvnPath().replace('/', File.separatorChar));
+
+        if (!target.isFile())
+        {
+            if (Main.LOG().isDebugEnabled())
+            {
+                Main.LOG().debug("Populating {} with {}", target.getAbsolutePath(), file.getAbsolutePath());
+            }
+            target.getParentFile().mkdirs();
+            Files.copy(file.toPath(), target.toPath());
+        }
+    }
+
+    private static Feature assemble(final LauncherConfig launcherConfig, final ArtifactManager artifactManager) throws IOException
+    {
+        if (launcherConfig.getFeatureFiles().length == 0) {
+            File application = new File(launcherConfig.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
+            if (application.isFile()) {
+                launcherConfig.addFeatureFiles(application.toURI().toURL().toString());
+            }
+            else {
+                throw new IllegalStateException("No feature(s) to launch found and none where specified");
+            }
+            return FeatureProcessor.createApplication(launcherConfig, artifactManager);
+        }
+        else
+        {
+            final Feature app = FeatureProcessor.createApplication(launcherConfig, artifactManager);
+
+            // write application back
+            final File file = new File(launcherConfig.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
+            file.getParentFile().mkdirs();
+
+            try (final FileWriter writer = new FileWriter(file))
+            {
+                FeatureJSONWriter.write(writer, app);
+            }
+            catch (final IOException ioe)
+            {
+                Main.LOG().error("Error while writing application file: {}", ioe.getMessage(), ioe);
+                System.exit(1);
+            }
+            return app;
         }
     }
 
@@ -288,7 +324,7 @@ public class Main {
      * @param config The configuration
      * @throws Exception If anything goes wrong
      */
-    private static void run(final LauncherConfig config) throws Exception {
+    private static void run(final LauncherConfig config, final Launcher launcher) throws Exception {
         Main.LOG().info("");
         Main.LOG().info("Starting launcher...");
         Main.LOG().info("Launcher Home: {}", config.getHomeDirectory().getAbsolutePath());
@@ -317,7 +353,6 @@ public class Main {
             installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
         }
 
-        final Launcher launcher = new FrameworkLauncher();
         while (launcher.run(installation, createClassLoader(installation)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
             Main.LOG().info("Framework restart due to extension refresh");
         }

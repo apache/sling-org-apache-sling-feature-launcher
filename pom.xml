@@ -77,6 +77,8 @@
                 <configuration>
                     <excludes>
                         <exclude>readme.md</exclude>
+                        <exclude>src/main/resources/META-INF/services/**</exclude>
+                        <exclude>**/*.properties</exclude>
                     </excludes>
                 </configuration>
             </plugin>

@@ -18,6 +18,8 @@ package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 
 import org.apache.sling.feature.KeyValueMap;
 import org.apache.sling.feature.io.ArtifactManagerConfig;
@@ -40,10 +42,7 @@ public class LauncherConfig
     private static final String CACHE_DIR = "cache";
 
     /** The feature files or directories. */
-    private volatile String[] featureFiles;
-
-    /** The application file. */
-    private volatile String appFile;
+    private final LinkedHashSet<String> featureFiles = new LinkedHashSet<>();
 
     private volatile StartupMode startupMode = StartupMode.PURE;
 
@@ -61,23 +60,12 @@ public class LauncherConfig
         this.setCacheDirectory(new File(getHomeDirectory(), CACHE_DIR));
     }
 
-    public void setApplicationFile(final String value) {
-        appFile = value;
-    }
-
-    public String getApplicationFile() {
-        return this.appFile;
-    }
-
     /**
      * Set the list of feature files or directories.
-     * @param value The array with the feature file names.
+     * @param featureFiles The array with the feature file names.
      */
-    public void setFeatureFiles(final String[] value) {
-        this.featureFiles = value;
-        if ( value != null && value.length == 0 ) {
-            this.featureFiles = null;
-        }
+    public void addFeatureFiles(final String... featureFiles) {
+        this.featureFiles.addAll(Arrays.asList(featureFiles));
     }
 
     /**
@@ -86,7 +74,7 @@ public class LauncherConfig
      * @throws IOException
      */
     public String[] getFeatureFiles() {
-        return this.featureFiles;
+        return this.featureFiles.toArray(new String[0]);
     }
 
 
