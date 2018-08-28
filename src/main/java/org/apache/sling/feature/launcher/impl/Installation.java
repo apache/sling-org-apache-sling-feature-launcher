@@ -17,6 +17,7 @@
 package org.apache.sling.feature.launcher.impl;
 
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
+import org.apache.sling.feature.launcher.spi.extensions.ExtensionInstallationContext;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import java.util.Map;
 /**
  * This class holds the configuration of the launcher.
  */
-public class Installation implements LauncherRunContext {
+public class Installation implements LauncherRunContext, ExtensionInstallationContext {
 
     /** The map with the framework properties. */
     private final Map<String, String> fwkProperties = new HashMap<>();
@@ -99,6 +100,12 @@ public class Installation implements LauncherRunContext {
     @Override
     public Map<String, String> getFrameworkProperties() {
         return this.fwkProperties;
+    }
+
+    @Override
+    public void addFrameworkProperty(String key, String value)
+    {
+        this.fwkProperties.put(key, value);
     }
 
     /**

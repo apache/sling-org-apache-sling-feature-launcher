@@ -88,8 +88,6 @@ public class Main {
         final Option varValue = new Option("V", true, "Set variable value");
         final Option debugOption = new Option("v", false, "Verbose");
         debugOption.setArgs(0);
-        final Option installerOption = new Option("I", false, "Use OSGi installer for additional artifacts.");
-        installerOption.setArgs(0);
         final Option cacheOption = new Option("c", true, "Set cache dir");
         final Option homeOption = new Option("p", true, "Set home dir");
         final Option populateOption = new Option("dao", true, "Only download required artifacts into directory");
@@ -101,7 +99,6 @@ public class Main {
         options.addOption(fwkProperties);
         options.addOption(varValue);
         options.addOption(debugOption);
-        options.addOption(installerOption);
         options.addOption(cacheOption);
         options.addOption(homeOption);
         options.addOption(populateOption);
@@ -131,9 +128,6 @@ public class Main {
             }
             if ( cl.hasOption(debugOption.getOpt()) ) {
                 System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
-            }
-            if ( cl.hasOption(installerOption.getOpt()) ) {
-                config.setUseInstaller();
             }
             if ( cl.hasOption(appOption.getOpt()) ) {
                 config.setApplicationFile(cl.getOptionValue(appOption.getOpt()));
@@ -234,7 +228,7 @@ public class Main {
                 // use hard coded Apache Felix
                 launcher.prepare(ctx, IOUtils.getFelixFrameworkId(m_frameworkVersion), app);
 
-                FeatureProcessor.prepareLauncher(launcherConfig, artifactManager, app);
+                FeatureProcessor.prepareLauncher(ctx, launcherConfig, app);
 
                 Main.LOG().info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
                     launcherConfig.getLocalArtifacts(), launcherConfig.getCachedArtifacts(), launcherConfig.getDownloadedArtifacts());
@@ -293,7 +287,6 @@ public class Main {
         Main.LOG().info("Starting launcher...");
         Main.LOG().info("Launcher Home: {}", config.getHomeDirectory().getAbsolutePath());
         Main.LOG().info("Cache Directory: {}", config.getCacheDirectory().getAbsolutePath());
-        Main.LOG().info("Startup Mode: {}", config.getStartupMode());
         Main.LOG().info("");
 
         final Installation installation = config.getInstallation();

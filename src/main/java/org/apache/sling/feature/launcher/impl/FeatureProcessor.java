@@ -24,6 +24,7 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -34,14 +35,14 @@ import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
 import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.FeatureConstants;
 import org.apache.sling.feature.KeyValueMap;
 import org.apache.sling.feature.builder.FeatureBuilder;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.io.json.FeatureJSONWriter;
-import org.apache.sling.feature.launcher.impl.LauncherConfig.StartupMode;
+import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
+import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
 public class FeatureProcessor {
 
@@ -102,57 +103,25 @@ public class FeatureProcessor {
      * - add all other artifacts to the install directory (only if startup mode is INSTALL)
      * - process configurations
      */
-    public static void prepareLauncher(final LauncherConfig config,
-            final ArtifactManager artifactManager,
+    public static void prepareLauncher(final LauncherPrepareContext ctx, final LauncherConfig config,
             final Feature app) throws Exception {
         for(final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet()) {
             for(final Artifact a : entry.getValue()) {
-                final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
-                final File artifactFile = handler.getFile();
+                final File artifactFile = ctx.getArtifactFile(a.getId());
 
                 config.getInstallation().addBundle(entry.getKey(), artifactFile);
             }
         }
-        int index = 1;
-        for(final Extension ext : app.getExtensions()) {
-            if ( ext.getType() == ExtensionType.ARTIFACTS ) {
-                for(final Artifact a : ext.getArtifacts() ) {
-                    if ( config.getStartupMode() == StartupMode.PURE ) {
-                        throw new Exception("Artifacts other than bundle are not supported by framework launcher.");
-                    }
-                    final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
-                    config.getInstallation().addInstallableArtifact(handler.getFile());
+
+        extensions: for(final Extension ext : app.getExtensions()) {
+            for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
+            {
+                if (handler.handle(ext, ctx, config.getInstallation())) {
+                    continue extensions;
                 }
-            } else if ( ext.getName().equals(FeatureConstants.EXTENSION_NAME_REPOINIT) ) {
-                    String text;
-                    if ( ext.getType() == ExtensionType.TEXT ) {
-                        text = ext.getText();
-                    }
-                    else if (ext.getType() == ExtensionType.JSON) {
-                        try (JsonReader reader = Json.createReader(new StringReader(ext.getJSON()))){
-                            JsonArray array = reader.readArray();
-                            if (array.size() > 0) {
-                                text = array.getString(0);
-                                for (int i = 1; i < array.size(); i++) {
-                                    text += "\n" + array.getString(i);
-                                }
-                            }
-                            else {
-                                text = "";
-                            }
-                        }
-                    }
-                    else {
-                        throw new Exception(FeatureConstants.EXTENSION_NAME_REPOINIT + " extension must be of type text or json");
-                    }
-                    final Configuration cfg = new Configuration("org.apache.sling.jcr.repoinit.RepositoryInitializer", "repoinit" + String.valueOf(index));
-                    index++;
-                    cfg.getProperties().put("scripts", text);
-                    config.getInstallation().addConfiguration(cfg.getName(), cfg.getFactoryPid(), cfg.getProperties());
-            } else {
-                if ( ext.isRequired() ) {
-                    throw new Exception("Unknown required extension " + ext.getName());
-                }
+            }
+            if ( ext.isRequired() ) {
+                throw new Exception("Unknown required extension " + ext.getName());
             }
         }
 
