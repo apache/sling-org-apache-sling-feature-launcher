@@ -18,29 +18,30 @@ package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonReader;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
 
 import org.apache.sling.feature.Artifact;
+import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
 import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.KeyValueMap;
+import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
+import org.apache.sling.feature.builder.FeatureExtensionHandler;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
+import org.apache.sling.feature.io.IOUtils;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
-import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
@@ -53,27 +54,50 @@ public class FeatureProcessor {
      * @param artifactManager The artifact manager
      */
     public static Feature createApplication(final LauncherConfig config,
-            final ArtifactManager artifactManager)
-    throws IOException {
-        Feature app = null;
-        if ( config.getApplicationFile() != null ) {
-            app = read(config.getApplicationFile(), artifactManager, config.getVariables());
-            // write application back
-            final File file = new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
-            file.getParentFile().mkdirs();
+            final ArtifactManager artifactManager) throws IOException
+    {
 
-            try (final FileWriter writer = new FileWriter(file)) {
-                FeatureJSONWriter.write(writer, app);
-            } catch ( final IOException ioe) {
-                Main.LOG().error("Error while writing application file: {}", ioe.getMessage(), ioe);
-                System.exit(1);
+        final BuilderContext builderContext = new BuilderContext(
+            id -> {
+                try {
+                    final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
+                    try (final FileReader r = new FileReader(handler.getFile())) {
+                        final Feature f = FeatureJSONReader.read(r, handler.getUrl());
+                        return f;
+                    }
+
+                } catch (final IOException e) {
+                    // ignore
+                }
+                return null;
+            }).add(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+            ServiceLoader.load(FeatureExtensionHandler.class).iterator(), Spliterator.ORDERED), false).toArray(FeatureExtensionHandler[]::new));
+
+        List<Feature> features = new ArrayList<>();
+
+        for (final String initFile : config.getFeatureFiles())
+        {
+            try
+            {
+                final Feature f = IOUtils.getFeature(initFile, artifactManager);
+                features.add(f);
+            }
+            catch (Exception ex)
+            {
+                throw new IOException("Error reading feature: " + initFile, ex);
             }
         }
-        else {
-            app = read(new File(config.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json").getPath(),
-                    artifactManager, config.getVariables());
-        }
 
+        Collections.sort(features);
+
+        // TODO make feature id configurable
+        final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, features.toArray(new Feature[0]));
+
+        final Artifact a = new Artifact(ArtifactId.parse("org.apache.sling/org.apache.sling.launchpad.api/1.2.0"));
+        a.getMetadata().put(org.apache.sling.feature.Artifact.KEY_START_ORDER, "1");
+        app.getBundles().add(a);
+
+        // TODO: this sucks
         for (Artifact bundle : app.getBundles()) {
             if ( bundle.getStartOrder() == 0) {
                 final int so = bundle.getMetadata().get("start-level") != null ? Integer.parseInt(bundle.getMetadata().get("start-level")) : 1;
@@ -81,22 +105,11 @@ public class FeatureProcessor {
             }
         }
 
+        FeatureBuilder.resolveVariables(app, config.getVariables());
+
         return app;
     }
 
-    private static Feature read(String absoluteArg, ArtifactManager artifactManager,
-            KeyValueMap overriddenVars) throws IOException {
-        if ( absoluteArg.indexOf(":") < 2 ) {
-            absoluteArg = new File(absoluteArg).getAbsolutePath();
-        }
-        final ArtifactHandler appArtifact = artifactManager.getArtifactHandler(absoluteArg);
-
-        try (final FileReader r = new FileReader(appArtifact.getFile())) {
-            final Feature f = FeatureJSONReader.read(r, appArtifact.getUrl());
-            FeatureBuilder.resolveVariables(f, overriddenVars);
-            return f;
-        }
-    }
     /**
      * Prepare the launcher
      * - add all bundles to the bundle map of the installation object
@@ -112,7 +125,6 @@ public class FeatureProcessor {
                 config.getInstallation().addBundle(entry.getKey(), artifactFile);
             }
         }
-
         extensions: for(final Extension ext : app.getExtensions()) {
             for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
             {
@@ -125,7 +137,7 @@ public class FeatureProcessor {
             }
         }
 
-        for(final Configuration cfg : app.getConfigurations()) {
+        for (final Configuration cfg : app.getConfigurations()) {
             if ( cfg.isFactoryConfiguration() ) {
                 config.getInstallation().addConfiguration(cfg.getName(), cfg.getFactoryPid(), cfg.getProperties());
             } else {
@@ -133,7 +145,7 @@ public class FeatureProcessor {
             }
         }
 
-        for(final Map.Entry<String, String> prop : app.getFrameworkProperties()) {
+        for (final Map.Entry<String, String> prop : app.getFrameworkProperties()) {
             if ( !config.getInstallation().getFrameworkProperties().containsKey(prop.getKey()) ) {
                 config.getInstallation().getFrameworkProperties().put(prop.getKey(), prop.getValue());
             }

@@ -21,6 +21,8 @@ import java.io.IOException;
 import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.Extension;
 import org.apache.sling.feature.ExtensionType;
+import org.apache.sling.feature.FeatureConstants;
+import org.apache.sling.feature.launcher.impl.FeatureProcessor;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionInstallationContext;
@@ -30,7 +32,7 @@ public class ContentPackageHandler implements ExtensionHandler
     @Override
     public boolean handle(Extension extension, LauncherPrepareContext prepareContext, ExtensionInstallationContext installationContext) throws IOException
     {
-        if ( extension.getType() == ExtensionType.ARTIFACTS ) {
+        if ( extension.getType() == ExtensionType.ARTIFACTS && extension.getName().equals(FeatureConstants.EXTENSION_NAME_CONTENT_PACKAGES) ) {
             for(final Artifact a : extension.getArtifacts() ) {
                 installationContext.addInstallableArtifact(prepareContext.getArtifactFile(a.getId()));
             }
