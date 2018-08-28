@@ -32,19 +32,12 @@ public class LauncherConfig
     extends ArtifactManagerConfig
     implements ArtifactProviderContext {
 
-    public enum StartupMode {
-        INSTALLER,
-        PURE
-    };
-
     private static final String HOME = "launcher";
 
     private static final String CACHE_DIR = "cache";
 
     /** The feature files or directories. */
     private final LinkedHashSet<String> featureFiles = new LinkedHashSet<>();
-
-    private volatile StartupMode startupMode = StartupMode.PURE;
 
     private final Installation installation = new Installation();
 
@@ -88,21 +81,6 @@ public class LauncherConfig
 
     public void setHomeDirectory(File file) {
         this.home = file;
-    }
-    /**
-     * Get the startup mode.
-     *
-     * @return The current startup mode.
-     */
-    public StartupMode getStartupMode() {
-        return this.startupMode;
-    }
-
-    /**
-     * Sets the startup mode to {@link StartupMode#INSTALLER}.
-     */
-    public void setUseInstaller() {
-        this.startupMode = StartupMode.INSTALLER;
     }
 
     public Installation getInstallation() {
