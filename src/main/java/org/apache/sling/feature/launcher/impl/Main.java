@@ -180,6 +180,27 @@ public class Main {
         }
         launcherConfig.getVariables().put("sling.launchpad", launcherConfig.getHomeDirectory().getAbsolutePath() + "/launchpad");
 
+        final Installation installation = launcherConfig.getInstallation();
+
+        // set sling home, and use separate locations for launchpad and properties
+        installation.getFrameworkProperties().put("sling.home", launcherConfig.getHomeDirectory().getAbsolutePath());
+        installation.getFrameworkProperties().put("sling.launchpad", launcherConfig.getHomeDirectory().getAbsolutePath() + "/launchpad");
+        if (!installation.getFrameworkProperties().containsKey("repository.home")) {
+            installation.getFrameworkProperties().put("repository.home", launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
+        }
+        installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
+
+
+        // additional OSGi properties
+        // move storage inside launcher
+        if ( installation.getFrameworkProperties().get(STORAGE_PROPERTY) == null ) {
+            installation.getFrameworkProperties().put(STORAGE_PROPERTY, launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
+        }
+        // set start level to 30
+        if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
+            installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
+        }
+        
         Main.LOG().info("");
         Main.LOG().info("Apache Sling Application Launcher");
         Main.LOG().info("---------------------------------");

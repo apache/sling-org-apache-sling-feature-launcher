@@ -71,7 +71,7 @@ public class FeatureProcessor {
                     // ignore
                 }
                 return null;
-            }).add(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+            }, config.getVariables(), config.getInstallation().getFrameworkProperties()).add(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
             ServiceLoader.load(FeatureExtensionHandler.class).iterator(), Spliterator.ORDERED), false).toArray(FeatureExtensionHandler[]::new));
 
         List<Feature> features = new ArrayList<>();
@@ -126,17 +126,6 @@ public class FeatureProcessor {
                 config.getInstallation().addBundle(entry.getKey(), artifactFile);
             }
         }
-        extensions: for(final Extension ext : app.getExtensions()) {
-            for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
-            {
-                if (handler.handle(ext, ctx, config.getInstallation())) {
-                    continue extensions;
-                }
-            }
-            if ( ext.isRequired() ) {
-                throw new Exception("Unknown required extension " + ext.getName());
-            }
-        }
 
         for (final Configuration cfg : app.getConfigurations()) {
             if ( cfg.isFactoryConfiguration() ) {
@@ -149,6 +138,18 @@ public class FeatureProcessor {
         for (final Map.Entry<String, String> prop : app.getFrameworkProperties()) {
             if ( !config.getInstallation().getFrameworkProperties().containsKey(prop.getKey()) ) {
                 config.getInstallation().getFrameworkProperties().put(prop.getKey(), prop.getValue());
+            }
+        }
+
+        extensions: for(final Extension ext : app.getExtensions()) {
+            for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
+            {
+                if (handler.handle(ext, ctx, config.getInstallation())) {
+                    continue extensions;
+                }
+            }
+            if ( ext.isRequired() ) {
+                throw new Exception("Unknown required extension " + ext.getName());
             }
         }
     }
