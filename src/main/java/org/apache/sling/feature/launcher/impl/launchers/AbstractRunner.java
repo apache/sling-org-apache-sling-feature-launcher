@@ -322,7 +322,6 @@ public abstract class AbstractRunner implements Callable<Integer> {
                         }
                     }
                     else {
-                        framework.getBundleContext().getDataFile("INSTALLED").mkdirs();
                         latch.countDown();
                     }
                 }
