@@ -79,6 +79,7 @@
                         <exclude>readme.md</exclude>
                         <exclude>src/main/resources/META-INF/services/**</exclude>
                         <exclude>**/*.properties</exclude>
+                        <exclude>launcher/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
