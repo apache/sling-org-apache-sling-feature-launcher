@@ -16,11 +16,7 @@
  */
 package org.apache.sling.feature.launcher.impl.extensions.handlers;
 
-import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonReader;
 
 import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
@@ -38,29 +34,11 @@ public class RepoInitHandler implements ExtensionHandler
     public boolean handle(Extension extension, LauncherPrepareContext prepareContext, ExtensionInstallationContext installationContext) throws Exception
     {
         if ( extension.getName().equals(FeatureConstants.EXTENSION_NAME_REPOINIT) ) {
-            String text;
-            if ( extension.getType() == ExtensionType.TEXT ) {
-                text = extension.getText();
-            }
-            else if (extension.getType() == ExtensionType.JSON) {
-                try (JsonReader reader = Json.createReader(new StringReader(extension.getJSON()))){
-                    JsonArray array = reader.readArray();
-                    if (array.size() > 0) {
-                        text = array.getString(0);
-                        for (int i = 1; i < array.size(); i++) {
-                            text += "\n" + array.getString(i);
-                        }
-                    }
-                    else {
-                        text = "";
-                    }
-                }
-            }
-            else {
-                throw new Exception(FeatureConstants.EXTENSION_NAME_REPOINIT + " extension must be of type text or json");
+            if ( extension.getType() != ExtensionType.TEXT ) {
+                throw new Exception(FeatureConstants.EXTENSION_NAME_REPOINIT + " extension must be of type text");
             }
             final Configuration cfg = new Configuration("org.apache.sling.jcr.repoinit.RepositoryInitializer", "repoinit" + String.valueOf(index.getAndIncrement()));
-            cfg.getProperties().put("scripts", text);
+            cfg.getProperties().put("scripts", extension.getText());
             installationContext.addConfiguration(cfg.getName(), cfg.getFactoryPid(), cfg.getProperties());
             return true;
         }
