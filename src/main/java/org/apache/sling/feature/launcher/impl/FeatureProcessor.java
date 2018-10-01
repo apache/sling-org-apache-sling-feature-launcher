@@ -39,9 +39,8 @@ import org.apache.sling.feature.FeatureConstants;
 import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
 import org.apache.sling.feature.builder.FeatureExtensionHandler;
-import org.apache.sling.feature.io.ArtifactHandler;
-import org.apache.sling.feature.io.ArtifactManager;
-import org.apache.sling.feature.io.IOUtils;
+import org.apache.sling.feature.io.file.ArtifactHandler;
+import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
@@ -78,13 +77,11 @@ public class FeatureProcessor {
 
         for (final String initFile : config.getFeatureFiles())
         {
-            try
-            {
-                final Feature f = IOUtils.getFeature(initFile, artifactManager);
+            final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
+            try (final FileReader r = new FileReader(featureArtifact.getFile())) {
+                final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
                 features.add(f);
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 throw new IOException("Error reading feature: " + initFile, ex);
             }
         }

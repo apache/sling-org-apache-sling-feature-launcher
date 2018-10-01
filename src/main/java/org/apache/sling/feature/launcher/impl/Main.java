@@ -37,10 +37,9 @@ import org.apache.commons.cli.ParseException;
 import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.io.ArtifactHandler;
-import org.apache.sling.feature.io.ArtifactManager;
-import org.apache.sling.feature.io.DefaultArtifactManager;
 import org.apache.sling.feature.io.IOUtils;
+import org.apache.sling.feature.io.file.ArtifactHandler;
+import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
 import org.apache.sling.feature.launcher.spi.Launcher;
@@ -211,7 +210,7 @@ public class Main {
 
         final Launcher launcher = new FrameworkLauncher();
 
-        try (ArtifactManager artifactManager = DefaultArtifactManager.getArtifactManager(launcherConfig)) {
+        try (ArtifactManager artifactManager = ArtifactManager.getArtifactManager(launcherConfig)) {
 
             Main.LOG().info("Artifact Repositories: {}", Arrays.toString(launcherConfig.getRepositoryUrls()));
             Main.LOG().info("Assembling provisioning model...");
