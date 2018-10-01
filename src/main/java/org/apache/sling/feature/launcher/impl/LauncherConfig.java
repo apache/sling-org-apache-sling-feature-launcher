@@ -22,14 +22,14 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 
 import org.apache.sling.feature.KeyValueMap;
-import org.apache.sling.feature.io.ArtifactManagerConfig;
+import org.apache.sling.feature.io.DefaultArtifactManagerConfig;
 import org.apache.sling.feature.io.spi.ArtifactProviderContext;
 
 /**
  * This class holds the configuration of the launcher.
  */
 public class LauncherConfig
-    extends ArtifactManagerConfig
+    extends DefaultArtifactManagerConfig
     implements ArtifactProviderContext {
 
     private static final String HOME = "launcher";

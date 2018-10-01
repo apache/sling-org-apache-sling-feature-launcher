@@ -39,6 +39,7 @@ import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.io.ArtifactHandler;
 import org.apache.sling.feature.io.ArtifactManager;
+import org.apache.sling.feature.io.DefaultArtifactManager;
 import org.apache.sling.feature.io.IOUtils;
 import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
@@ -200,7 +201,7 @@ public class Main {
         if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
             installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
         }
-        
+
         Main.LOG().info("");
         Main.LOG().info("Apache Sling Application Launcher");
         Main.LOG().info("---------------------------------");
@@ -210,7 +211,7 @@ public class Main {
 
         final Launcher launcher = new FrameworkLauncher();
 
-        try (ArtifactManager artifactManager = ArtifactManager.getArtifactManager(launcherConfig)) {
+        try (ArtifactManager artifactManager = DefaultArtifactManager.getArtifactManager(launcherConfig)) {
 
             Main.LOG().info("Artifact Repositories: {}", Arrays.toString(launcherConfig.getRepositoryUrls()));
             Main.LOG().info("Assembling provisioning model...");
