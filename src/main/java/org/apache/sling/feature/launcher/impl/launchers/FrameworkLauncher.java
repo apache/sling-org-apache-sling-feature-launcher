@@ -91,7 +91,7 @@ public class FrameworkLauncher implements Launcher {
             Main.LOG().debug("Bundles:");
             for(final Integer key : context.getBundleMap().keySet()) {
                 Main.LOG().debug("-- Start Level {}", key);
-                for(final File f : context.getBundleMap().get(key)) {
+                for(final File f : context.getBundleMap().get(key).values()) {
                     Main.LOG().debug("  - {}", f.getName());
                 }
             }
@@ -116,7 +116,8 @@ public class FrameworkLauncher implements Launcher {
         Callable<Integer> restart = (Callable<Integer>) constructor.newInstance(properties,
                 context.getBundleMap(),
                 context.getConfigurations(),
-                context.getInstallableArtifacts());
+                context.getInstallableArtifacts(),
+                context.getEffectiveFeature());
 
         return restart.call();
         // nothing else to do, constructor starts everything

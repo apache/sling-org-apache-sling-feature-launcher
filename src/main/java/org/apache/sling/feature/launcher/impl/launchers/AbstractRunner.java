@@ -16,6 +16,7 @@
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
+import org.apache.felix.inventory.InventoryPrinter;
 import org.apache.sling.feature.launcher.impl.Main;
 import org.apache.sling.launchpad.api.LaunchpadContentProvider;
 import org.apache.sling.launchpad.api.StartupHandler;
@@ -27,6 +28,7 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.Version;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.startlevel.FrameworkStartLevel;
@@ -37,17 +39,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -67,6 +72,7 @@ import java.util.regex.Pattern;
  * Common functionality for the framework start.
  */
 public abstract class AbstractRunner implements Callable<Integer> {
+    private static final String BUNDLES_SERVICE = "org.apache.sling.feature.service.Bundles";
 
     private volatile ServiceTracker<Object, Object> configAdminTracker;
 
@@ -100,7 +106,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
         }
     }
 
-    protected void setupFramework(final Framework framework, final Map<Integer, List<File>> bundlesMap)
+    protected void setupFramework(final Framework framework,
+            final Map<Integer, Map<String, File>> bundlesMap, String effectiveFeature)
     throws BundleException {
         if ( !configurations.isEmpty() ) {
             this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
@@ -165,11 +172,13 @@ public abstract class AbstractRunner implements Callable<Integer> {
             this.installerTracker.open();
         }
 
+        Map<Map.Entry<String, Version>, String> bm = null;
         try {
-            this.install(framework, bundlesMap);
+            bm = this.install(framework, bundlesMap);
         } catch ( final IOException ioe) {
             throw new BundleException("Unable to install bundles.", ioe);
         }
+        final Map<Map.Entry<String, Version>, String> bundleMapping = bm;
 
         // TODO: double check bundles and take installables into account
         install = !this.configurations.isEmpty() || !this.installables.isEmpty() || !bundlesMap.isEmpty();
@@ -271,6 +280,28 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
                 }
             }, null);
+
+            Dictionary<String, Object> props = new Hashtable<>();
+            props.put(InventoryPrinter.NAME, "launch.features");
+            props.put(InventoryPrinter.TITLE, "Launch Features");
+            props.put(InventoryPrinter.FORMAT, "JSON");
+            new RegisterServiceReflectively(framework.getBundleContext(), InventoryPrinter.SERVICE, props,
+                new BaseInvocationHandler<Void>("print", a -> {
+                    PrintWriter pw = (PrintWriter) a[0];
+                    pw.print(effectiveFeature);
+                    return null;
+                })).open();
+
+            new RegisterServiceReflectively(framework.getBundleContext(), BUNDLES_SERVICE, null,
+                new BaseInvocationHandler<String>("getBundleArtifact", a -> {
+                    if (a.length != 2)
+                        throw new IllegalArgumentException("Bundles.getBundleArtifact() has 2 arguments.");
+
+                    String bsn = a[0].toString();
+                    String ver = a[1].toString();
+
+                    return bundleMapping.get(new AbstractMap.SimpleEntry<String, Version>(bsn, Version.valueOf(ver)));
+                })).open();
         } catch (NoClassDefFoundError ex) {
             // Ignore, we don't have the launchpad.api
         }
@@ -384,21 +415,28 @@ public abstract class AbstractRunner implements Callable<Integer> {
     /**
      * Install the bundles
      * @param bundleMap The map with the bundles indexed by start level
+     * @return a map mapping from a Bundle Symbolic Name and Version to the associated Artifact ID
      * @throws IOException, BundleException If anything goes wrong.
      */
-    private void install(final Framework framework, final Map<Integer, List<File>> bundleMap)
+    private Map<Map.Entry<String, Version>, String> install(final Framework framework, final Map<Integer, Map<String, File>> bundleMap)
     throws IOException, BundleException {
+        Map<Map.Entry<String, Version>, String> mapping = new HashMap<>();
+
         final BundleContext bc = framework.getBundleContext();
         int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
         for(final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
             Main.LOG().debug("Installing bundles with start level {}", startLevel);
 
-            for(final File file : bundleMap.get(startLevel)) {
+            for(final Map.Entry<String, File> entry : bundleMap.get(startLevel).entrySet()) {
+                File file = entry.getValue();
                 Main.LOG().debug("- {}", file.getName());
 
                 // use reference protocol. This avoids copying the binary to the cache directory
                 // of the framework
                 final Bundle bundle = bc.installBundle("reference:" + file.toURI().toURL(), null);
+
+                // Record the mapping of the feature model bundle artifact ID to the Bundle Symbolic Name and Version
+                mapping.put(new AbstractMap.SimpleEntry<String, Version>(bundle.getSymbolicName(), bundle.getVersion()), entry.getKey());
 
                 // fragment?
                 if ( !isSystemBundleFragment(bundle) && getFragmentHostHeader(bundle) == null ) {
@@ -409,6 +447,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
                 }
             }
         }
+
+        return mapping;
     }
 
     /**
