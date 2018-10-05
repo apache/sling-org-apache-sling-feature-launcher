@@ -35,7 +35,7 @@ public class Installation implements LauncherRunContext, ExtensionInstallationCo
     private final Map<String, String> fwkProperties = new HashMap<>();
 
     /** Bundle map */
-    private final Map<Integer, List<File>> bundleMap = new HashMap<>();
+    private final Map<Integer, Map<String, File>> bundleMap = new HashMap<>();
 
     /** Artifacts to be installed */
     private final List<File> installables = new ArrayList<>();
@@ -45,6 +45,9 @@ public class Installation implements LauncherRunContext, ExtensionInstallationCo
 
     /** The list of app jars. */
     private final List<File> appJars = new ArrayList<>();
+
+    /** The effective, merged feature used to launch. */
+    private String effectiveFeature;
 
     /**
      * Add an application jar.
@@ -67,13 +70,13 @@ public class Installation implements LauncherRunContext, ExtensionInstallationCo
      * @param startLevel The start level
      * @param file The bundle file
      */
-    public void addBundle(final Integer startLevel, final File file) {
-        List<File> files = bundleMap.get(startLevel);
+    public void addBundle(final Integer startLevel, final String id, final File file) {
+        Map<String, File> files = bundleMap.get(startLevel);
         if ( files == null ) {
-            files = new ArrayList<>();
+            files = new HashMap<>();
             bundleMap.put(startLevel, files);
         }
-        files.add(file);
+        files.put(id, file);
     }
 
     /**
@@ -112,7 +115,7 @@ public class Installation implements LauncherRunContext, ExtensionInstallationCo
      * @see org.apache.sling.feature.launcher.spi.LauncherRunContext#getBundleMap()
      */
     @Override
-    public Map<Integer, List<File>> getBundleMap() {
+    public Map<Integer, Map<String, File>> getBundleMap() {
         return this.bundleMap;
     }
 
@@ -133,6 +136,22 @@ public class Installation implements LauncherRunContext, ExtensionInstallationCo
     }
 
     /**
+     * @see org.apache.sling.feature.launcher.spi.LauncherRunContext#getEffectiveFeature()
+     */
+    @Override
+    public String getEffectiveFeature() {
+        return effectiveFeature;
+    }
+
+    /**
+     * Set the effective feature JSON text
+     * @param featureJsonText
+     */
+    public void setEffectiveFeature(String featureJsonText) {
+        effectiveFeature = featureJsonText;
+    }
+
+    /**
      * Clear all in-memory objects
      */
     public void clear() {
@@ -140,5 +159,6 @@ public class Installation implements LauncherRunContext, ExtensionInstallationCo
         this.fwkProperties.clear();
         this.bundleMap.clear();
         this.installables.clear();
+        this.effectiveFeature = null;
     }
 }

@@ -37,9 +37,10 @@ public class FrameworkRunner extends AbstractRunner {
     private volatile int type = -1;
 
     public FrameworkRunner(final Map<String, String> frameworkProperties,
-            final Map<Integer, List<File>> bundlesMap,
+            final Map<Integer, Map<String, File>> bundlesMap,
             final List<Object[]> configurations,
-            final List<File> installables) throws Exception {
+            final List<File> installables,
+            final String effectiveFeature) throws Exception {
         super(frameworkProperties, configurations, installables);
 
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);
@@ -78,7 +79,7 @@ public class FrameworkRunner extends AbstractRunner {
             }
         });
 
-        this.setupFramework(framework, bundlesMap);
+        this.setupFramework(framework, bundlesMap, effectiveFeature);
 
 
         long time = System.currentTimeMillis();
