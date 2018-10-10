@@ -17,6 +17,10 @@
 package org.apache.sling.feature.launcher.impl.launchers;
 
 import org.apache.sling.feature.launcher.impl.Main;
+import org.apache.sling.feature.launcher.service.Bundles;
+import org.apache.sling.feature.launcher.service.Features;
+import org.apache.sling.feature.launcher.service.impl.BundlesImpl;
+import org.apache.sling.feature.launcher.service.impl.FeaturesImpl;
 import org.apache.sling.launchpad.api.LaunchpadContentProvider;
 import org.apache.sling.launchpad.api.StartupHandler;
 import org.apache.sling.launchpad.api.StartupMode;
@@ -43,11 +47,13 @@ import java.lang.reflect.Method;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -100,7 +106,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
         }
     }
 
-    protected void setupFramework(final Framework framework, final Map<Integer, List<File>> bundlesMap)
+    protected void setupFramework(final Framework framework, final Map<Integer, Map<String, File>> bundlesMap,
+            String effectiveFeature)
     throws BundleException {
         if ( !configurations.isEmpty() ) {
             this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
@@ -165,8 +172,9 @@ public abstract class AbstractRunner implements Callable<Integer> {
             this.installerTracker.open();
         }
 
+        Map<Map.Entry<String, String>, String> bundleMap = null;
         try {
-            this.install(framework, bundlesMap);
+            bundleMap = this.install(framework, bundlesMap);
         } catch ( final IOException ioe) {
             throw new BundleException("Unable to install bundles.", ioe);
         }
@@ -274,6 +282,9 @@ public abstract class AbstractRunner implements Callable<Integer> {
         } catch (NoClassDefFoundError ex) {
             // Ignore, we don't have the launchpad.api
         }
+
+        framework.getBundleContext().registerService(Bundles.class, new BundlesImpl(bundleMap), null);
+        framework.getBundleContext().registerService(Features.class, new FeaturesImpl(effectiveFeature), null);
     }
 
     protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException
@@ -386,19 +397,25 @@ public abstract class AbstractRunner implements Callable<Integer> {
      * @param bundleMap The map with the bundles indexed by start level
      * @throws IOException, BundleException If anything goes wrong.
      */
-    private void install(final Framework framework, final Map<Integer, List<File>> bundleMap)
+    private Map<Map.Entry<String, String>, String> install(final Framework framework, final Map<Integer, Map<String, File>> bundleMap)
     throws IOException, BundleException {
+        final Map<Map.Entry<String, String>, String> mapping = new HashMap<>();
         final BundleContext bc = framework.getBundleContext();
-        int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
+        final int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
         for(final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
             Main.LOG().debug("Installing bundles with start level {}", startLevel);
 
-            for(final File file : bundleMap.get(startLevel)) {
+            for(final Map.Entry<String, File> entry : bundleMap.get(startLevel).entrySet()) {
+                File file = entry.getValue();
                 Main.LOG().debug("- {}", file.getName());
 
                 // use reference protocol. This avoids copying the binary to the cache directory
                 // of the framework
                 final Bundle bundle = bc.installBundle("reference:" + file.toURI().toURL(), null);
+
+                // Record the mapping of the feature model bundle artifact ID to the Bundle Symbolic Name and Version
+                mapping.put(new AbstractMap.SimpleEntry<String, String>(
+                        bundle.getSymbolicName(), bundle.getVersion().toString()), entry.getKey());
 
                 // fragment?
                 if ( !isSystemBundleFragment(bundle) && getFragmentHostHeader(bundle) == null ) {
@@ -409,6 +426,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                 }
             }
         }
+        return mapping;
     }
 
     /**

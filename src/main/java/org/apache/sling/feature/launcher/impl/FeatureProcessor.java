@@ -19,6 +19,7 @@ package org.apache.sling.feature.launcher.impl;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import org.apache.sling.feature.builder.FeatureExtensionHandler;
 import org.apache.sling.feature.io.file.ArtifactHandler;
 import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
+import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
@@ -120,7 +122,7 @@ public class FeatureProcessor {
             for(final Artifact a : entry.getValue()) {
                 final File artifactFile = ctx.getArtifactFile(a.getId());
 
-                config.getInstallation().addBundle(entry.getKey(), artifactFile);
+                config.getInstallation().addBundle(entry.getKey(), a.getId().toMvnId(), artifactFile);
             }
         }
 
@@ -137,6 +139,10 @@ public class FeatureProcessor {
                 config.getInstallation().getFrameworkProperties().put(prop.getKey(), prop.getValue());
             }
         }
+
+        StringWriter featureStringWriter = new StringWriter();
+        FeatureJSONWriter.write(featureStringWriter, app);
+        config.getInstallation().setEffectiveFeature(featureStringWriter.toString());
 
         extensions: for(final Extension ext : app.getExtensions()) {
             for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))

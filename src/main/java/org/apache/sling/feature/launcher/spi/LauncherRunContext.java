@@ -32,10 +32,11 @@ public interface LauncherRunContext {
     Map<String, String> getFrameworkProperties();
 
     /**
-     * Bundle map, key is the start level, value is a list of files.
+     * Bundle map, key is the start level, value is a map of bundle artifact
+     * ID and the local file where the bundle can be found.
      * @return The bundle map, might be empty
      */
-    Map<Integer, List<File>> getBundleMap();
+    Map<Integer, Map<String, File>> getBundleMap();
 
     /**
      * List of configurations.
@@ -55,4 +56,10 @@ public interface LauncherRunContext {
      * @return The list of files. The list might be empty.
      */
     List<File> getInstallableArtifacts();
+
+    /**
+     * Obtain the effective Feature JSON
+     * @return The effective Feature JSON as a String.
+     */
+    String getEffectiveFeature();
 }
