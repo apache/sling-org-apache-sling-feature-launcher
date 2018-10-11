@@ -44,6 +44,15 @@ public class FrameworkLauncher implements Launcher {
     public void prepare(final LauncherPrepareContext context,
             final ArtifactId frameworkId,
             final Feature app) throws Exception {
+        String extraPackages = app.getFrameworkProperties().get(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA);
+        if (extraPackages != null && !extraPackages.trim().isEmpty()) {
+            extraPackages = extraPackages + ",";
+        }
+        else {
+            extraPackages = "";
+        }
+        extraPackages += "org.apache.sling.feature.launcher.service;version=\"0.1.0\"";
+
         context.addAppJar(context.getArtifactFile(frameworkId));
         ArtifactId api = ArtifactId.fromMvnId("org.apache.sling:org.apache.sling.launchpad.api:1.2.0");
         Artifact artifact = app.getBundles().getSame(api);
@@ -52,16 +61,11 @@ public class FrameworkLauncher implements Launcher {
             api = artifact.getId();
             context.addAppJar(context.getArtifactFile(api));
             app.getBundles().removeExact(api);
-            String extra = app.getFrameworkProperties().get(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA);
-            if (extra != null && !extra.trim().isEmpty()) {
-                extra = extra + ",";
-            }
-            else {
-                extra = "";
-            }
-            extra = extra + "org.apache.sling.launchpad.api;version=\"" + api.getOSGiVersion() + "\"";
-            app.getFrameworkProperties().put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, extra);
+
+            extraPackages = extraPackages + ",org.apache.sling.launchpad.api;version=\"" + api.getOSGiVersion() + "\"";
         }
+
+        app.getFrameworkProperties().put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, extraPackages);
     }
 
     /**
@@ -87,11 +91,12 @@ public class FrameworkLauncher implements Launcher {
         context.getFrameworkProperties().forEach((key, value) -> {
             properties.put(key, ss.replace(value).replace("{dollar}", "$"));
         });
+
         if ( Main.LOG().isDebugEnabled() ) {
             Main.LOG().debug("Bundles:");
             for(final Integer key : context.getBundleMap().keySet()) {
                 Main.LOG().debug("-- Start Level {}", key);
-                for(final File f : context.getBundleMap().get(key)) {
+                for(final File f : context.getBundleMap().get(key).values()) {
                     Main.LOG().debug("  - {}", f.getName());
                 }
             }
@@ -111,12 +116,13 @@ public class FrameworkLauncher implements Launcher {
         }
 
         final Class<?> runnerClass = cl.loadClass(FrameworkRunner.class.getName());
-        final Constructor<?> constructor = runnerClass.getDeclaredConstructor(Map.class, Map.class, List.class, List.class);
+        final Constructor<?> constructor = runnerClass.getDeclaredConstructor(Map.class, Map.class, List.class, List.class, String.class);
         constructor.setAccessible(true);
         Callable<Integer> restart = (Callable<Integer>) constructor.newInstance(properties,
                 context.getBundleMap(),
                 context.getConfigurations(),
-                context.getInstallableArtifacts());
+                context.getInstallableArtifacts(),
+                context.getEffectiveFeature());
 
         return restart.call();
         // nothing else to do, constructor starts everything

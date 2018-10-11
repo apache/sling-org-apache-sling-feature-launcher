@@ -23,7 +23,13 @@ import org.apache.sling.feature.launcher.spi.LauncherRunContext;
 
 public interface ExtensionInstallationContext extends LauncherRunContext
 {
-    public void addBundle(final Integer startLevel, final File file);
+    /**
+     * Add a bundle with the given start level
+     * @param startLevel The start level
+     * @param id The artifact ID for the bundle
+     * @param file The bundle file
+     */
+    public void addBundle(final Integer startLevel, final String artifactId, final File file);
 
     /**
      * Add an artifact to be installed by the installer
