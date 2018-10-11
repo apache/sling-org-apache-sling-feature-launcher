@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,7 +76,7 @@ public class Installation implements LauncherRunContext, ExtensionInstallationCo
     public void addBundle(final Integer startLevel, final String id, final File file) {
         Map<String, File> files = bundleMap.get(startLevel);
         if ( files == null ) {
-            files = new HashMap<>();
+            files = new LinkedHashMap<>();
             bundleMap.put(startLevel, files);
         }
         files.put(id, file);
