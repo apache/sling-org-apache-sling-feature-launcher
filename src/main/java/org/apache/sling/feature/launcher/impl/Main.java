@@ -189,6 +189,7 @@ public class Main {
             installation.getFrameworkProperties().put("repository.home", launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
         }
         installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
+        installation.getFrameworkProperties().put("sling.feature", getApplicationFeatureFile(launcherConfig).toURI().toString());
 
 
         // additional OSGi properties
@@ -300,7 +301,7 @@ public class Main {
     private static Feature assemble(final LauncherConfig launcherConfig, final ArtifactManager artifactManager) throws IOException
     {
         if (launcherConfig.getFeatureFiles().length == 0) {
-            File application = new File(launcherConfig.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
+            File application = getApplicationFeatureFile(launcherConfig);
             if (application.isFile()) {
                 launcherConfig.addFeatureFiles(application.toURI().toURL().toString());
             }
@@ -314,7 +315,7 @@ public class Main {
             final Feature app = FeatureProcessor.createApplication(launcherConfig, artifactManager);
 
             // write application back
-            final File file = new File(launcherConfig.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
+            final File file = getApplicationFeatureFile(launcherConfig);
             file.getParentFile().mkdirs();
 
             try (final FileWriter writer = new FileWriter(file))
@@ -328,6 +329,10 @@ public class Main {
             }
             return app;
         }
+    }
+
+    private static File getApplicationFeatureFile(final LauncherConfig launcherConfig) {
+        return new File(launcherConfig.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
     }
 
     private static final String STORAGE_PROPERTY = "org.osgi.framework.storage";
@@ -355,6 +360,7 @@ public class Main {
             installation.getFrameworkProperties().put("repository.home", config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
         }
         installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
+        installation.getFrameworkProperties().put("sling.feature", getApplicationFeatureFile(config).toURI().toString());
 
 
         // additional OSGi properties
