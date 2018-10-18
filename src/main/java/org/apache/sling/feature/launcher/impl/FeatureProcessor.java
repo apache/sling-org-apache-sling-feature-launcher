@@ -75,8 +75,8 @@ public class FeatureProcessor {
 
         List<Feature> features = new ArrayList<>();
 
-        for (final String initFile : config.getFeatureFiles())
-        {
+        for (final String initFile : config.getFeatureFiles()) {
+        	Main.LOG().debug("Reading feature file {}", initFile);
             final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
             try (final FileReader r = new FileReader(featureArtifact.getFile())) {
                 final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
