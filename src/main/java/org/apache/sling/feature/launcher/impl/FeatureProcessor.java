@@ -38,7 +38,8 @@ import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.FeatureConstants;
 import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
-import org.apache.sling.feature.builder.FeatureExtensionHandler;
+import org.apache.sling.feature.builder.MergeHandler;
+import org.apache.sling.feature.builder.PostProcessHandler;
 import org.apache.sling.feature.io.file.ArtifactHandler;
 import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
@@ -70,8 +71,24 @@ public class FeatureProcessor {
                     // ignore
                 }
                 return null;
-            }, config.getVariables(), config.getInstallation().getFrameworkProperties()).add(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-            ServiceLoader.load(FeatureExtensionHandler.class).iterator(), Spliterator.ORDERED), false).toArray(FeatureExtensionHandler[]::new));
+            },
+            id -> {
+                try {
+                    final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
+                    return handler.getFile();
+                } catch (final IOException e) {
+                    // ignore
+                    return null;
+                }
+            },
+            config.getVariables(), config.getInstallation().getFrameworkProperties())
+                .addMergeExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+                        ServiceLoader.load(MergeHandler.class).iterator(), Spliterator.ORDERED), false)
+                            .toArray(MergeHandler[]::new))
+                .addPostProcessExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+                    ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED), false)
+                        .toArray(PostProcessHandler[]::new));
+
 
         List<Feature> features = new ArrayList<>();
 
