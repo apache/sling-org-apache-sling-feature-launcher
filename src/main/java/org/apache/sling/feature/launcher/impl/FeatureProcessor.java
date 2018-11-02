@@ -16,19 +16,6 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.StreamSupport;
-
 import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Configuration;
@@ -46,6 +33,19 @@ import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
+
 public class FeatureProcessor {
 
     /**
@@ -53,6 +53,8 @@ public class FeatureProcessor {
      * Read the features and prepare the application
      * @param config The current configuration
      * @param artifactManager The artifact manager
+     * @return The merged feature representing the application
+     * @throws IOException when an IO exception occurs during application creation
      */
     public static Feature createApplication(final LauncherConfig config,
             final ArtifactManager artifactManager) throws IOException
@@ -130,6 +132,10 @@ public class FeatureProcessor {
      * - add all bundles to the bundle map of the installation object
      * - add all other artifacts to the install directory (only if startup mode is INSTALL)
      * - process configurations
+     * @param ctx The launcher prepare context
+     * @param config The launcher configuration
+     * @param app The merged feature to launch
+     * @throws Exception when something goes wrong
      */
     public static void prepareLauncher(final LauncherPrepareContext ctx, final LauncherConfig config,
             final Feature app) throws Exception {
@@ -172,6 +178,10 @@ public class FeatureProcessor {
      * Prepare the cache
      * - add all bundles
      * - add all other artifacts (only if startup mode is INSTALL)
+     * @param artifactManager The artifact manager
+     * @param app the feature with the artifacts
+     * @return An Artifact to File mapping.
+     * @throws Exception when something goes wrong.
      */
     public static Map<Artifact, File> calculateArtifacts(final ArtifactManager artifactManager,
         final Feature app) throws Exception

@@ -16,17 +16,6 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -47,6 +36,17 @@ import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.osgi.framework.FrameworkEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is the launcher main class.
@@ -381,6 +381,7 @@ public class Main {
     /**
      * Create the class loader.
      * @param installation The launcher configuration
+     * @return The classloader.
      * @throws Exception If anything goes wrong
      */
     public static ClassLoader createClassLoader(final Installation installation) throws Exception {

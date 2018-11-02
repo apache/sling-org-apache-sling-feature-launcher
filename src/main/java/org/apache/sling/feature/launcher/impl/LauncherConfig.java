@@ -16,14 +16,13 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-
 import org.apache.sling.feature.KeyValueMap;
 import org.apache.sling.feature.io.file.ArtifactManagerConfig;
 import org.apache.sling.feature.io.file.spi.ArtifactProviderContext;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 
 /**
  * This class holds the configuration of the launcher.
@@ -64,7 +63,6 @@ public class LauncherConfig
     /**
      * Get the list of feature files.
      * @return The array of names.
-     * @throws IOException
      */
     public String[] getFeatureFiles() {
         return this.featureFiles.toArray(new String[0]);
