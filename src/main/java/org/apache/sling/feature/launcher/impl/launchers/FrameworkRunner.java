@@ -34,6 +34,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class FrameworkRunner extends AbstractRunner {
 
+    private static final String SHUTDOWN_GRACE_TIME = "sling.framework.shutdown.graceTime";
+
     private volatile int type = -1;
 
     public FrameworkRunner(final Map<String, String> frameworkProperties,
@@ -57,12 +59,13 @@ public class FrameworkRunner extends AbstractRunner {
         // initialize the framework
         framework.init();
 
+        long graceTime = Long.parseLong(frameworkProperties.getOrDefault(SHUTDOWN_GRACE_TIME, "60000"));
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 try {
                     framework.stop();
-                    FrameworkEvent waitForStop = framework.waitForStop(60 * 1000);
+                    FrameworkEvent waitForStop = framework.waitForStop(graceTime);
                     if (waitForStop.getType() != FrameworkEvent.STOPPED)
                     {
                         Main.LOG().warn("Framework stopped with: " + waitForStop.getType(), waitForStop.getThrowable());
