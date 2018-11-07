@@ -34,6 +34,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class FrameworkRunner extends AbstractRunner {
 
+    private static final String START_TIMEOUT = "sling.framework.start.timeout";
+
     private static final String SHUTDOWN_GRACE_TIME = "sling.framework.shutdown.graceTime";
 
     private volatile int type = -1;
@@ -59,13 +61,13 @@ public class FrameworkRunner extends AbstractRunner {
         // initialize the framework
         framework.init();
 
-        long graceTime = Long.parseLong(frameworkProperties.getOrDefault(SHUTDOWN_GRACE_TIME, "60000"));
+        long graceTime = Long.parseLong(frameworkProperties.getOrDefault(SHUTDOWN_GRACE_TIME, "60"));
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 try {
                     framework.stop();
-                    FrameworkEvent waitForStop = framework.waitForStop(graceTime);
+                    FrameworkEvent waitForStop = framework.waitForStop(graceTime * 1000);
                     if (waitForStop.getType() != FrameworkEvent.STOPPED)
                     {
                         Main.LOG().warn("Framework stopped with: " + waitForStop.getType(), waitForStop.getThrowable());
@@ -85,10 +87,11 @@ public class FrameworkRunner extends AbstractRunner {
 
 
         long time = System.currentTimeMillis();
+        long startTimeout = Long.parseLong(frameworkProperties.getOrDefault(START_TIMEOUT, String.valueOf(10 * 60)));
 
         // finally start
-        if (!this.startFramework(framework, 10, TimeUnit.MINUTES)) {
-            throw new TimeoutException("Waited for more than 10 minutes to startup framework.");
+        if (!this.startFramework(framework, startTimeout, TimeUnit.SECONDS)) {
+            throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
         }
 
         Main.LOG().debug("Startup took: " + (System.currentTimeMillis() - time));
@@ -96,8 +99,8 @@ public class FrameworkRunner extends AbstractRunner {
         while ((type = framework.waitForStop(Long.MAX_VALUE).getType()) == FrameworkEvent.STOPPED_UPDATE) {
             Main.LOG().info("Framework restart due to update");
             time = System.currentTimeMillis();
-            if (!this.startFramework(framework, 10, TimeUnit.MINUTES)) {
-                throw new TimeoutException("Waited for more than 10 minutes to startup framework.");
+            if (!this.startFramework(framework, startTimeout, TimeUnit.SECONDS)) {
+                throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
             }
             Main.LOG().debug("Restart took: " + (System.currentTimeMillis() - time));
         }
