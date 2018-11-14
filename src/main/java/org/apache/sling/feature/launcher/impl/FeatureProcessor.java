@@ -59,38 +59,35 @@ public class FeatureProcessor {
     public static Feature createApplication(final LauncherConfig config,
             final ArtifactManager artifactManager) throws IOException
     {
-
-        final BuilderContext builderContext = new BuilderContext(
-            id -> {
-                try {
-                    final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
-                    try (final FileReader r = new FileReader(handler.getFile())) {
-                        final Feature f = FeatureJSONReader.read(r, handler.getUrl());
-                        return f;
-                    }
-
-                } catch (final IOException e) {
-                    // ignore
+        final BuilderContext builderContext = new BuilderContext(id -> {
+            try {
+                final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
+                try (final FileReader r = new FileReader(handler.getFile())) {
+                    final Feature f = FeatureJSONReader.read(r, handler.getUrl());
+                    return f;
                 }
+            } catch (IOException e) {
+                // ignore
                 return null;
-            },
-            id -> {
-                try {
-                    final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
-                    return handler.getFile();
-                } catch (final IOException e) {
-                    // ignore
-                    return null;
-                }
-            },
-            config.getVariables(), config.getInstallation().getFrameworkProperties())
-                .addMergeExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                        ServiceLoader.load(MergeHandler.class).iterator(), Spliterator.ORDERED), false)
-                            .toArray(MergeHandler[]::new))
-                .addPostProcessExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                    ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED), false)
-                        .toArray(PostProcessHandler[]::new));
-
+            }
+        });
+        builderContext.setArtifactProvider(id -> {
+            try {
+                final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
+                return handler.getFile();
+            } catch (final IOException e) {
+                // ignore
+                return null;
+            }
+        });
+        builderContext.addVariablesOverwrites(config.getVariables());
+        builderContext.addFrameworkPropertiesOverwrites(config.getInstallation().getFrameworkProperties());
+        builderContext.addMergeExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+                ServiceLoader.load(MergeHandler.class).iterator(), Spliterator.ORDERED), false)
+                    .toArray(MergeHandler[]::new));
+        builderContext.addPostProcessExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
+            ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED), false)
+                .toArray(PostProcessHandler[]::new));
 
         List<Feature> features = new ArrayList<>();
 
@@ -155,7 +152,7 @@ public class FeatureProcessor {
             }
         }
 
-        for (final Map.Entry<String, String> prop : app.getFrameworkProperties()) {
+        for (final Map.Entry<String, String> prop : app.getFrameworkProperties().entrySet()) {
             if ( !config.getInstallation().getFrameworkProperties().containsKey(prop.getKey()) ) {
                 config.getInstallation().getFrameworkProperties().put(prop.getKey(), prop.getValue());
             }
