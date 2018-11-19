@@ -37,9 +37,11 @@ public class RepoInitHandler implements ExtensionHandler
             if ( extension.getType() != ExtensionType.TEXT ) {
                 throw new Exception(FeatureConstants.EXTENSION_NAME_REPOINIT + " extension must be of type text");
             }
-            final Configuration cfg = new Configuration("org.apache.sling.jcr.repoinit.RepositoryInitializer", "repoinit" + String.valueOf(index.getAndIncrement()));
+            final Configuration cfg = new Configuration("org.apache.sling.jcr.repoinit.RepositoryInitializer~repoinit"
+                    + String.valueOf(index.getAndIncrement()));
             cfg.getProperties().put("scripts", extension.getText());
-            installationContext.addConfiguration(cfg.getName(), cfg.getFactoryPid(), cfg.getProperties());
+            installationContext.addConfiguration(Configuration.getName(cfg.getPid()),
+                    Configuration.getFactoryPid(cfg.getPid()), cfg.getConfigurationProperties());
             return true;
         }
         return false;

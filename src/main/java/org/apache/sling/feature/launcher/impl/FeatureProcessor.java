@@ -16,6 +16,19 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
+
 import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Configuration;
@@ -32,19 +45,6 @@ import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.StreamSupport;
 
 public class FeatureProcessor {
 
@@ -145,10 +145,11 @@ public class FeatureProcessor {
         }
 
         for (final Configuration cfg : app.getConfigurations()) {
-            if ( cfg.isFactoryConfiguration() ) {
-                config.getInstallation().addConfiguration(cfg.getName(), cfg.getFactoryPid(), cfg.getProperties());
+            if (Configuration.isFactoryConfiguration(cfg.getPid())) {
+                config.getInstallation().addConfiguration(Configuration.getName(cfg.getPid()),
+                        Configuration.getFactoryPid(cfg.getPid()), cfg.getConfigurationProperties());
             } else {
-                config.getInstallation().addConfiguration(cfg.getPid(), null, cfg.getProperties());
+                config.getInstallation().addConfiguration(cfg.getPid(), null, cfg.getConfigurationProperties());
             }
         }
 
