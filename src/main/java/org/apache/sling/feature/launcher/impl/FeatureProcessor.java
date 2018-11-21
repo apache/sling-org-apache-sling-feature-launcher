@@ -80,8 +80,8 @@ public class FeatureProcessor {
                 return null;
             }
         });
-        builderContext.addVariablesOverwrites(config.getVariables());
-        builderContext.addFrameworkPropertiesOverwrites(config.getInstallation().getFrameworkProperties());
+        builderContext.addVariablesOverrides(config.getVariables());
+        builderContext.addFrameworkPropertiesOverrides(config.getInstallation().getFrameworkProperties());
         builderContext.addMergeExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
                 ServiceLoader.load(MergeHandler.class).iterator(), Spliterator.ORDERED), false)
                     .toArray(MergeHandler[]::new));
