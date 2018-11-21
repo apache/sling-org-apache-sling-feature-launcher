@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
 import org.apache.sling.feature.ExtensionType;
-import org.apache.sling.feature.FeatureConstants;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionInstallationContext;
@@ -33,9 +32,9 @@ public class RepoInitHandler implements ExtensionHandler
     @Override
     public boolean handle(Extension extension, LauncherPrepareContext prepareContext, ExtensionInstallationContext installationContext) throws Exception
     {
-        if ( extension.getName().equals(FeatureConstants.EXTENSION_NAME_REPOINIT) ) {
+        if (extension.getName().equals(Extension.EXTENSION_NAME_REPOINIT)) {
             if ( extension.getType() != ExtensionType.TEXT ) {
-                throw new Exception(FeatureConstants.EXTENSION_NAME_REPOINIT + " extension must be of type text");
+                throw new Exception(Extension.EXTENSION_NAME_REPOINIT + " extension must be of type text");
             }
             final Configuration cfg = new Configuration("org.apache.sling.jcr.repoinit.RepositoryInitializer~repoinit"
                     + String.valueOf(index.getAndIncrement()));

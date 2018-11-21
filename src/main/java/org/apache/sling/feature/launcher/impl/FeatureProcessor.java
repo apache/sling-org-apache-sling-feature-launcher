@@ -35,7 +35,6 @@ import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
 import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.FeatureConstants;
 import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
 import org.apache.sling.feature.builder.MergeHandler;
@@ -197,7 +196,8 @@ public class FeatureProcessor {
         }
         for (final Extension ext : app.getExtensions())
         {
-            if (ext.getType() == ExtensionType.ARTIFACTS && ext.getName().equals(FeatureConstants.EXTENSION_NAME_CONTENT_PACKAGES))
+            if (ext.getType() == ExtensionType.ARTIFACTS
+                    && ext.getName().equals(Extension.EXTENSION_NAME_CONTENT_PACKAGES))
             {
                 for (final Artifact a : ext.getArtifacts())
                 {
