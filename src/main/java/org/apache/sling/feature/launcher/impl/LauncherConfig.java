@@ -16,14 +16,14 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import org.apache.sling.feature.io.file.ArtifactManagerConfig;
-import org.apache.sling.feature.io.file.spi.ArtifactProviderContext;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+
+import org.apache.sling.feature.io.file.ArtifactManagerConfig;
+import org.apache.sling.feature.io.file.spi.ArtifactProviderContext;
 
 /**
  * This class holds the configuration of the launcher.

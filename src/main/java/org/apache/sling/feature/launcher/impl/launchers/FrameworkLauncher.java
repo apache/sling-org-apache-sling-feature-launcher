@@ -25,14 +25,12 @@ import java.util.concurrent.Callable;
 
 import org.apache.commons.lang.text.StrLookup;
 import org.apache.commons.lang.text.StrSubstitutor;
-import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.launcher.impl.Main;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
-import org.osgi.framework.Constants;
 
 /**
  * Launcher directly using the OSGi launcher API.
@@ -45,23 +43,6 @@ public class FrameworkLauncher implements Launcher {
             final ArtifactId frameworkId,
             final Feature app) throws Exception {
         context.addAppJar(context.getArtifactFile(frameworkId));
-        ArtifactId api = ArtifactId.fromMvnId("org.apache.sling:org.apache.sling.launchpad.api:1.2.0");
-        Artifact artifact = app.getBundles().getSame(api);
-        if (artifact != null)
-        {
-            api = artifact.getId();
-            context.addAppJar(context.getArtifactFile(api));
-            app.getBundles().removeExact(api);
-            String extra = app.getFrameworkProperties().get(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA);
-            if (extra != null && !extra.trim().isEmpty()) {
-                extra = extra + ",";
-            }
-            else {
-                extra = "";
-            }
-            extra = extra + "org.apache.sling.launchpad.api;version=\"" + api.getOSGiVersion() + "\"";
-            app.getFrameworkProperties().put(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, extra);
-        }
     }
 
     /**

@@ -62,8 +62,6 @@ public class Main {
         return LOGGER;
     }
 
-    private static volatile File m_populate;
-
     private static volatile String m_frameworkVersion = null; // DEFAULT is null
 
     /** Split a string into key and value */
@@ -91,7 +89,6 @@ public class Main {
         debugOption.setArgs(0);
         final Option cacheOption = new Option("c", true, "Set cache dir");
         final Option homeOption = new Option("p", true, "Set home dir");
-        final Option populateOption = new Option("dao", true, "Only download required artifacts into directory");
 
         final Option frameworkOption = new Option("fv", true, "Set felix framework version");
 
@@ -102,7 +99,6 @@ public class Main {
         options.addOption(debugOption);
         options.addOption(cacheOption);
         options.addOption(homeOption);
-        options.addOption(populateOption);
         options.addOption(frameworkOption);
 
         final CommandLineParser clp = new BasicParser();
@@ -141,12 +137,6 @@ public class Main {
             }
             if (cl.hasOption(homeOption.getOpt())) {
                 config.setHomeDirectory(new File(cl.getOptionValue(homeOption.getOpt())));
-            }
-            if (cl.hasOption(populateOption.getOpt())) {
-                m_populate = new File(cl.getOptionValue(populateOption.getOpt()));
-                if (!m_populate.isDirectory() && !m_populate.mkdirs()) {
-                    throw new ParseException("Bad dao directory");
-                }
             }
             if (cl.hasOption(frameworkOption.getOpt())) {
                 m_frameworkVersion = cl.getOptionValue(frameworkOption.getOpt());
@@ -241,10 +231,6 @@ public class Main {
                     public File getArtifactFile(final ArtifactId artifact) throws IOException
                     {
                         final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + artifact.toMvnPath());
-                        if (m_populate != null)
-                        {
-                            populate(handler.getFile(), artifact);
-                        }
                         return handler.getFile();
                     }
 
@@ -261,16 +247,6 @@ public class Main {
 
                 Main.LOG().info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
                     launcherConfig.getLocalArtifacts(), launcherConfig.getCachedArtifacts(), launcherConfig.getDownloadedArtifacts());
-
-                if (m_populate != null)
-                {
-                    Map<Artifact, File> local = FeatureProcessor.calculateArtifacts(artifactManager, app);
-                    for (Map.Entry<Artifact, File> entry : local.entrySet())
-                    {
-                        populate(entry.getValue(), entry.getKey().getId());
-                    }
-                    return;
-                }
 
                 if (restart) {
                     launcherConfig.getInstallation().getInstallableArtifacts().clear();
@@ -292,20 +268,6 @@ public class Main {
         } catch ( final Exception iae) {
             Main.LOG().error("Error while running launcher: {}", iae.getMessage(), iae);
             System.exit(1);
-        }
-    }
-
-    private static void populate(File file, ArtifactId artifactId) throws IOException{
-        File target = new File(m_populate, artifactId.toMvnPath().replace('/', File.separatorChar));
-
-        if (!target.isFile())
-        {
-            if (Main.LOG().isDebugEnabled())
-            {
-                Main.LOG().debug("Populating {} with {}", target.getAbsolutePath(), file.getAbsolutePath());
-            }
-            target.getParentFile().mkdirs();
-            Files.copy(file.toPath(), target.toPath());
         }
     }
 

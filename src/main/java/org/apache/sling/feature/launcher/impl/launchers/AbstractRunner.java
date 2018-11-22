@@ -16,10 +16,28 @@
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.sling.feature.launcher.impl.Main;
-import org.apache.sling.launchpad.api.LaunchpadContentProvider;
-import org.apache.sling.launchpad.api.StartupHandler;
-import org.apache.sling.launchpad.api.StartupMode;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -29,39 +47,8 @@ import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
-import org.osgi.framework.startlevel.FrameworkStartLevel;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.regex.Pattern;
 
 /**
  * Common functionality for the framework start.
@@ -76,28 +63,9 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     private final List<File> installables;
 
-    private final int targetStartlevel;
-
-    private final AtomicInteger waitRequested = new AtomicInteger(0);
-
-    private volatile boolean install;
-
-    public AbstractRunner(final Map<String, String> frameworkProperties, final List<Object[]> configurations, final List<File> installables) {
+    public AbstractRunner(final List<Object[]> configurations, final List<File> installables) {
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
-        String target = frameworkProperties.get(Constants.FRAMEWORK_BEGINNING_STARTLEVEL);
-        if (target != null) {
-            targetStartlevel = Integer.parseInt(target);
-        }
-        else {
-            targetStartlevel = 1;
-        }
-        if (!this.installables.isEmpty()) {
-            if ("true".equalsIgnoreCase(frameworkProperties.get("sling.framework.install.incremental")))
-            {
-                frameworkProperties.put(Constants.FRAMEWORK_BEGINNING_STARTLEVEL, "1");
-            }
-        }
     }
 
     protected void setupFramework(final Framework framework, final Map<Integer, List<File>> bundlesMap)
@@ -170,110 +138,6 @@ public abstract class AbstractRunner implements Callable<Integer> {
         } catch ( final IOException ioe) {
             throw new BundleException("Unable to install bundles.", ioe);
         }
-
-        // TODO: double check bundles and take installables into account
-        install = !this.configurations.isEmpty() || !this.installables.isEmpty() || !bundlesMap.isEmpty();
-        try
-        {
-            // TODO: double check bundles and take installables into account
-            final StartupMode mode = !install ? StartupMode.RESTART : StartupMode.INSTALL;
-
-            framework.getBundleContext().registerService(StartupHandler.class, new StartupHandler()
-            {
-                @Override
-                public StartupMode getMode()
-                {
-                    return mode;
-                }
-
-                @Override
-                public boolean isFinished() {
-                    return framework.getState() == Framework.ACTIVE && targetStartlevel > framework.adapt(FrameworkStartLevel.class).getStartLevel();
-                }
-
-                @Override
-                public void waitWithStartup(boolean b) {
-                    if (b) {
-                        waitRequested.incrementAndGet();
-                    }
-                    else {
-                        waitRequested.decrementAndGet();
-                    }
-                }
-            }, null);
-
-            framework.getBundleContext().registerService(LaunchpadContentProvider.class, new LaunchpadContentProvider()
-            {
-                @Override
-                public Iterator<String> getChildren(String path) {
-                    List<String> children;
-
-                    // Guard against extra trailing slashes
-                    if(path.endsWith("/") && path.length() > 1) {
-                        path = path.substring(0, path.length()-1);
-                    }
-
-                    URL url = this.getClass().getResource(path);
-                    if (url != null) {
-                        Pattern pathPattern = Pattern.compile("^" + path + "/[^/]+/?$");
-
-                        children = new ArrayList<String>();
-                        try {
-                            URLConnection conn = url.openConnection();
-                            if (conn instanceof JarURLConnection) {
-                                JarFile jar = ((JarURLConnection) conn).getJarFile();
-                                Enumeration<JarEntry> entries = jar.entries();
-                                while (entries.hasMoreElements()) {
-                                    String entry = entries.nextElement().getName();
-                                    if (pathPattern.matcher(entry).matches()) {
-                                        children.add(entry);
-                                    }
-                                }
-                            }
-                        } catch (IOException ioe) {
-                            // ignore for now
-                        }
-                    } else {
-                        children = Collections.emptyList();
-                    }
-
-                    return children.iterator();
-                }
-
-                @Override
-                public URL getResource(String path) {
-                    // ensure path
-                    if (path == null || path.length() == 0) {
-                        return null;
-                    }
-
-                    // remove leading slash
-                    if (path.charAt(0) == '/') {
-                        path = path.substring(1);
-                    }
-
-                    return this.getResource(path);
-                }
-
-                @Override
-                public InputStream getResourceAsStream(String path) {
-                    URL res = this.getResource(path);
-                    if (res != null) {
-                        try {
-                            return res.openStream();
-                        } catch (IOException ioe) {
-                            // ignore this one
-                        }
-                    }
-
-                    // no resource
-                    return null;
-
-                }
-            }, null);
-        } catch (NoClassDefFoundError ex) {
-            // Ignore, we don't have the launchpad.api
-        }
     }
 
     protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException
@@ -287,43 +151,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
             @Override
             public void frameworkEvent(FrameworkEvent frameworkEvent)
             {
-                if (frameworkEvent.getType() == FrameworkEvent.STARTED || frameworkEvent.getType() == FrameworkEvent.STARTLEVEL_CHANGED) {
-                    if (framework.getState() == Framework.ACTIVE && targetStartlevel > framework.adapt(FrameworkStartLevel.class).getStartLevel()) {
-                        if (install) {
-                            executor.execute(() ->
-                            {
-                                if (waitRequested.get() == 0) {
-                                    try {
-                                        Thread.sleep(500);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                while (waitRequested.get() > 0) {
-                                    try {
-                                        Thread.sleep(500);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                try {
-                                    framework.adapt(FrameworkStartLevel.class).setStartLevel(framework.adapt(FrameworkStartLevel.class).getStartLevel() + 1);
-                                } catch (Exception ex) {
-                                    latch.countDown();
-                                }
-                            });
-                        }
-                        else {
-                            try {
-                                framework.adapt(FrameworkStartLevel.class).setStartLevel(targetStartlevel);
-                            } catch (Exception ex) {
-                                latch.countDown();
-                            }
-                        }
-                    }
-                    else {
-                        latch.countDown();
-                    }
+                if (frameworkEvent.getType() == FrameworkEvent.STARTED) {
+                    latch.countDown();
                 }
             }
         };

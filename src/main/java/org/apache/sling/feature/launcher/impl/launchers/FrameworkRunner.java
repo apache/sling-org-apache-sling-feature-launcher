@@ -16,18 +16,18 @@
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
-import org.apache.sling.feature.launcher.impl.Main;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.FrameworkEvent;
-import org.osgi.framework.launch.Framework;
-import org.osgi.framework.launch.FrameworkFactory;
-
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.sling.feature.launcher.impl.Main;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.launch.Framework;
+import org.osgi.framework.launch.FrameworkFactory;
 
 /**
  * Launcher directly using the OSGi launcher API.
@@ -44,7 +44,7 @@ public class FrameworkRunner extends AbstractRunner {
             final Map<Integer, List<File>> bundlesMap,
             final List<Object[]> configurations,
             final List<File> installables) throws Exception {
-        super(frameworkProperties, configurations, installables);
+        super(configurations, installables);
 
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);
         FrameworkFactory factory = null;

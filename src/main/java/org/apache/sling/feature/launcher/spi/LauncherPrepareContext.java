@@ -16,10 +16,10 @@
  */
 package org.apache.sling.feature.launcher.spi;
 
-import org.apache.sling.feature.ArtifactId;
-
 import java.io.File;
 import java.io.IOException;
+
+import org.apache.sling.feature.ArtifactId;
 
 /**
  * This is the context for the launcher

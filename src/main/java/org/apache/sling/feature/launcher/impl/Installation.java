@@ -16,15 +16,15 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import org.apache.sling.feature.launcher.spi.LauncherRunContext;
-import org.apache.sling.feature.launcher.spi.extensions.ExtensionInstallationContext;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.sling.feature.launcher.spi.LauncherRunContext;
+import org.apache.sling.feature.launcher.spi.extensions.ExtensionInstallationContext;
 
 /**
  * This class holds the configuration of the launcher.
