@@ -17,9 +17,11 @@
 package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.sling.feature.io.file.ArtifactManagerConfig;
@@ -35,6 +37,8 @@ public class LauncherConfig
     private static final String HOME = "launcher";
 
     private static final String CACHE_DIR = "cache";
+
+    private final List<String> artifactClashOverrides = new ArrayList<>();
 
     /** The feature files or directories. */
     private final LinkedHashSet<String> featureFiles = new LinkedHashSet<>();
@@ -53,6 +57,10 @@ public class LauncherConfig
         this.setCacheDirectory(new File(getHomeDirectory(), CACHE_DIR));
     }
 
+    public List<String> getArtifactClashOverrides() {
+        return this.artifactClashOverrides;
+    }
+
     /**
      * Set the list of feature files or directories.
      * @param featureFiles The array with the feature file names.
@@ -68,7 +76,6 @@ public class LauncherConfig
     public String[] getFeatureFiles() {
         return this.featureFiles.toArray(new String[0]);
     }
-
 
     /**
      * Get the home directory.

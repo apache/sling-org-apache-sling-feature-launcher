@@ -21,11 +21,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -34,7 +32,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.io.file.ArtifactHandler;
@@ -81,6 +78,7 @@ public class Main {
     private static void parseArgs(final LauncherConfig config, final String[] args) {
         final Options options = new Options();
 
+        final Option artifactClashOverride = new Option("C", true, "Set artifact clash override");
         final Option repoOption =  new Option("u", true, "Set repository url");
         final Option featureOption =  new Option("f", true, "Set feature files");
         final Option fwkProperties = new Option("D", true, "Set framework properties");
@@ -92,6 +90,7 @@ public class Main {
 
         final Option frameworkOption = new Option("fv", true, "Set felix framework version");
 
+        options.addOption(artifactClashOverride);
         options.addOption(repoOption);
         options.addOption(featureOption);
         options.addOption(fwkProperties);
@@ -108,6 +107,11 @@ public class Main {
             if ( cl.hasOption(repoOption.getOpt()) ) {
                 final String value = cl.getOptionValue(repoOption.getOpt());
                 config.setRepositoryUrls(value.split(","));
+            }
+            if ( cl.hasOption(artifactClashOverride.getOpt()) ) {
+                for(final String override : cl.getOptionValues(artifactClashOverride.getOpt())) {
+                    config.getArtifactClashOverrides().add(override);
+                }
             }
             if ( cl.hasOption(fwkProperties.getOpt()) ) {
                 for(final String value : cl.getOptionValues(fwkProperties.getOpt())) {
@@ -154,7 +158,7 @@ public class Main {
 
     /**
      * Get an artifact id for the Apache Felix framework
-     * 
+     *
      * @param version The version to use or {@code null} for the default version
      * @return The artifact id
      * @throws IllegalArgumentException If the provided version is invalid
