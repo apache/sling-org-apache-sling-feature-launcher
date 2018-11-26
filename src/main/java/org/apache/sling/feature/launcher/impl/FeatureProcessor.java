@@ -107,10 +107,6 @@ public class FeatureProcessor {
         // TODO make feature id configurable
         final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, features.toArray(new Feature[0]));
 
-        final Artifact a = new Artifact(ArtifactId.parse("org.apache.sling/org.apache.sling.launchpad.api/1.2.0"));
-        a.getMetadata().put(org.apache.sling.feature.Artifact.KEY_START_ORDER, "1");
-        app.getBundles().add(a);
-
         // TODO: this sucks
         for (Artifact bundle : app.getBundles()) {
             if ( bundle.getStartOrder() == 0) {
