@@ -102,8 +102,6 @@ public class FeatureProcessor {
             }
         }
 
-        Collections.sort(features);
-
         // TODO make feature id configurable
         final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, features.toArray(new Feature[0]));
 
