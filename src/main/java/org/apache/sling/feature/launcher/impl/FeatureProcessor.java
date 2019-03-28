@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,7 +155,7 @@ public class FeatureProcessor {
         extensions: for(final Extension ext : app.getExtensions()) {
             for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
             {
-                if (handler.handle(ext, ctx, config.getInstallation())) {
+                if (handler.handle(new ExtensionContextImpl(ctx, config.getInstallation()), ext)) {
                     continue extensions;
                 }
             }

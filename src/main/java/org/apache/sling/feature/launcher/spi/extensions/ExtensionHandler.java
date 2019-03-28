@@ -17,9 +17,8 @@
 package org.apache.sling.feature.launcher.spi.extensions;
 
 import org.apache.sling.feature.Extension;
-import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 
 public interface ExtensionHandler
 {
-    public boolean handle(Extension extension, LauncherPrepareContext prepareContext, ExtensionInstallationContext installationContext) throws Exception;
+    public boolean handle(ExtensionContext context, Extension extension) throws Exception;
 }

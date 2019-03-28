@@ -16,21 +16,20 @@
  */
 package org.apache.sling.feature.launcher.impl.extensions.handlers;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
 import org.apache.sling.feature.ExtensionType;
-import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
+import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
-import org.apache.sling.feature.launcher.spi.extensions.ExtensionInstallationContext;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RepoInitHandler implements ExtensionHandler
 {
     private static final AtomicInteger index = new AtomicInteger(1);
 
     @Override
-    public boolean handle(Extension extension, LauncherPrepareContext prepareContext, ExtensionInstallationContext installationContext) throws Exception
+    public boolean handle(ExtensionContext context, Extension extension) throws Exception
     {
         if (extension.getName().equals(Extension.EXTENSION_NAME_REPOINIT)) {
             if ( extension.getType() != ExtensionType.TEXT ) {
@@ -39,7 +38,7 @@ public class RepoInitHandler implements ExtensionHandler
             final Configuration cfg = new Configuration("org.apache.sling.jcr.repoinit.RepositoryInitializer~repoinit"
                     + String.valueOf(index.getAndIncrement()));
             cfg.getProperties().put("scripts", extension.getText());
-            installationContext.addConfiguration(Configuration.getName(cfg.getPid()),
+            context.addConfiguration(Configuration.getName(cfg.getPid()),
                     Configuration.getFactoryPid(cfg.getPid()), cfg.getConfigurationProperties());
             return true;
         }
