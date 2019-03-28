@@ -19,8 +19,6 @@ package org.apache.sling.feature.launcher.impl;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,11 +50,12 @@ public class FeatureProcessor {
      * Read the features and prepare the application
      * @param config The current configuration
      * @param artifactManager The artifact manager
+     * @param loadedFeatures This map will be populated with features that were loaded as part of this process
      * @return The merged feature representing the application
      * @throws IOException when an IO exception occurs during application creation
      */
     public static Feature createApplication(final LauncherConfig config,
-            final ArtifactManager artifactManager) throws IOException
+            final ArtifactManager artifactManager, final Map<ArtifactId, Feature> loadedFeatures) throws IOException
     {
         final BuilderContext builderContext = new BuilderContext(id -> {
             try {
@@ -89,21 +88,20 @@ public class FeatureProcessor {
             ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED), false)
                 .toArray(PostProcessHandler[]::new));
 
-        List<Feature> features = new ArrayList<>();
-
         for (final String initFile : config.getFeatureFiles()) {
         	Main.LOG().debug("Reading feature file {}", initFile);
             final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
             try (final FileReader r = new FileReader(featureArtifact.getFile())) {
                 final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
-                features.add(f);
+                loadedFeatures.put(f.getId(), f);
             } catch (Exception ex) {
                 throw new IOException("Error reading feature: " + initFile, ex);
             }
         }
 
         // TODO make feature id configurable
-        final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, features.toArray(new Feature[0]));
+        final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, loadedFeatures.values().toArray(new Feature[0]));
+        loadedFeatures.put(app.getId(), app);
 
         // TODO: this sucks
         for (Artifact bundle : app.getBundles()) {
@@ -126,10 +124,12 @@ public class FeatureProcessor {
      * @param ctx The launcher prepare context
      * @param config The launcher configuration
      * @param app The merged feature to launch
+     * @param loadedFeatures The features previously loaded by the launcher, this includes features that
+     * were passed in via file:// URLs from the commandline
      * @throws Exception when something goes wrong
      */
     public static void prepareLauncher(final LauncherPrepareContext ctx, final LauncherConfig config,
-            final Feature app) throws Exception {
+            final Feature app, Map<ArtifactId, Feature> loadedFeatures) throws Exception {
         for(final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet()) {
             for(final Artifact a : entry.getValue()) {
                 final File artifactFile = ctx.getArtifactFile(a.getId());
@@ -156,7 +156,7 @@ public class FeatureProcessor {
         extensions: for(final Extension ext : app.getExtensions()) {
             for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
             {
-                if (handler.handle(ext, ctx, config.getInstallation())) {
+                if (handler.handle(new ExtensionContextImpl(ctx, config.getInstallation(), loadedFeatures), ext)) {
                     continue extensions;
                 }
             }

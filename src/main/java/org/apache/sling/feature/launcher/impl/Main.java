@@ -23,7 +23,9 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -224,7 +226,8 @@ public class Main {
             try {
                 boolean restart = launcherConfig.getFeatureFiles().length == 0;
 
-                final Feature app = assemble(launcherConfig, artifactManager);
+                Map<ArtifactId, Feature> loadedFeatures = new HashMap<>();
+                final Feature app = assemble(launcherConfig, artifactManager, loadedFeatures);
 
                 Main.LOG().info("");
                 Main.LOG().info("Assembling launcher...");
@@ -247,7 +250,7 @@ public class Main {
 
                 launcher.prepare(ctx, getFelixFrameworkId(m_frameworkVersion), app);
 
-                FeatureProcessor.prepareLauncher(ctx, launcherConfig, app);
+                FeatureProcessor.prepareLauncher(ctx, launcherConfig, app, loadedFeatures);
 
                 Main.LOG().info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
                     launcherConfig.getLocalArtifacts(), launcherConfig.getCachedArtifacts(), launcherConfig.getDownloadedArtifacts());
@@ -275,7 +278,8 @@ public class Main {
         }
     }
 
-    private static Feature assemble(final LauncherConfig launcherConfig, final ArtifactManager artifactManager) throws IOException
+    private static Feature assemble(final LauncherConfig launcherConfig, final ArtifactManager artifactManager,
+            Map<ArtifactId, Feature> loadedFeatures) throws IOException
     {
         if (launcherConfig.getFeatureFiles().length == 0) {
             File application = getApplicationFeatureFile(launcherConfig);
@@ -285,11 +289,11 @@ public class Main {
             else {
                 throw new IllegalStateException("No feature(s) to launch found and none where specified");
             }
-            return FeatureProcessor.createApplication(launcherConfig, artifactManager);
+            return FeatureProcessor.createApplication(launcherConfig, artifactManager, loadedFeatures);
         }
         else
         {
-            final Feature app = FeatureProcessor.createApplication(launcherConfig, artifactManager);
+            final Feature app = FeatureProcessor.createApplication(launcherConfig, artifactManager, loadedFeatures);
 
             // write application back
             final File file = getApplicationFeatureFile(launcherConfig);
