@@ -37,6 +37,7 @@ import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
 import org.apache.sling.feature.builder.MergeHandler;
 import org.apache.sling.feature.builder.PostProcessHandler;
+import org.apache.sling.feature.io.IOUtils;
 import org.apache.sling.feature.io.file.ArtifactHandler;
 import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
@@ -88,7 +89,7 @@ public class FeatureProcessor {
             ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED), false)
                 .toArray(PostProcessHandler[]::new));
 
-        for (final String initFile : config.getFeatureFiles()) {
+        for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), config.getFeatureFiles())) {
         	Main.LOG().debug("Reading feature file {}", initFile);
             final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
             try (final FileReader r = new FileReader(featureArtifact.getFile())) {
