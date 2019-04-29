@@ -49,6 +49,7 @@ import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Common functionality for the framework start.
@@ -65,10 +66,10 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     protected final Logger logger;
 
-    public AbstractRunner(final Logger logger, final List<Object[]> configurations, final List<File> installables) {
-        this.logger = logger;
+    public AbstractRunner(final List<Object[]> configurations, final List<File> installables) {
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
+        logger = LoggerFactory.getLogger("launcher");
     }
 
     protected void setupFramework(final Framework framework, final Map<Integer, List<File>> bundlesMap)
@@ -191,7 +192,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                 updateMethod.invoke(cfg, obj[2]);
             }
         } catch ( final Exception e) {
-            this.logger.error("Unable to create configurations", e);
+            logger.error("Unable to create configurations", e);
             throw new RuntimeException(e);
         }
         final Thread t = new Thread(() -> { configAdminTracker.close(); configAdminTracker = null; });
@@ -223,10 +224,10 @@ public abstract class AbstractRunner implements Callable<Integer> {
         final BundleContext bc = framework.getBundleContext();
         int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
         for(final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
-            this.logger.debug("Installing bundles with start level {}", startLevel);
+            logger.debug("Installing bundles with start level {}", startLevel);
 
             for(final File file : bundleMap.get(startLevel)) {
-                this.logger.debug("- {}", file.getName());
+                logger.debug("- {}", file.getName());
 
                 // use reference protocol. This avoids copying the binary to the cache directory
                 // of the framework
@@ -295,7 +296,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
             }
             registerResources.invoke(installer, "cloudlauncher", resources);
         } catch ( final Exception e) {
-            this.logger.error("Unable to contact installer and install additional artifacts", e);
+            logger.error("Unable to contact installer and install additional artifacts", e);
             throw new RuntimeException(e);
         } finally  {
             final Thread t = new Thread(() -> {

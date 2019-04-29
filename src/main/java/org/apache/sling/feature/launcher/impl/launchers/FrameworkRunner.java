@@ -27,7 +27,6 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
-import org.slf4j.Logger;
 
 /**
  * Launcher directly using the OSGi launcher API.
@@ -40,11 +39,11 @@ public class FrameworkRunner extends AbstractRunner {
 
     private volatile int type = -1;
 
-    public FrameworkRunner(final Logger logger, final Map<String, String> frameworkProperties,
+    public FrameworkRunner(final Map<String, String> frameworkProperties,
             final Map<Integer, List<File>> bundlesMap,
             final List<Object[]> configurations,
             final List<File> installables) throws Exception {
-        super(logger, configurations, installables);
+        super(configurations, installables);
 
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);
         FrameworkFactory factory = null;
@@ -69,7 +68,8 @@ public class FrameworkRunner extends AbstractRunner {
                     framework.stop();
                     FrameworkEvent waitForStop = framework.waitForStop(graceTime * 1000);
                     if (waitForStop.getType() != FrameworkEvent.STOPPED) {
-                        logger.warn("Framework stopped with: " + waitForStop.getType(), waitForStop.getThrowable());
+                        logger.warn("Framework stopped with: " + waitForStop.getType(),
+                                waitForStop.getThrowable());
                     } else {
                         logger.info("Framework stopped");
                     }
@@ -90,15 +90,15 @@ public class FrameworkRunner extends AbstractRunner {
             throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
         }
 
-        this.logger.debug("Startup took: " + (System.currentTimeMillis() - time));
+        logger.debug("Startup took: " + (System.currentTimeMillis() - time));
 
         while ((type = framework.waitForStop(Long.MAX_VALUE).getType()) == FrameworkEvent.STOPPED_UPDATE) {
-            this.logger.info("Framework restart due to update");
+            logger.info("Framework restart due to update");
             time = System.currentTimeMillis();
             if (!this.startFramework(framework, startTimeout, TimeUnit.SECONDS)) {
                 throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
             }
-            this.logger.debug("Restart took: " + (System.currentTimeMillis() - time));
+            logger.debug("Restart took: " + (System.currentTimeMillis() - time));
         }
     }
 

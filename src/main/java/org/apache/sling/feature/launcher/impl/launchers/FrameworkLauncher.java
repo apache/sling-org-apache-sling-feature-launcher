@@ -91,12 +91,11 @@ public class FrameworkLauncher implements Launcher {
         }
 
         final Class<?> runnerClass = cl.loadClass(FrameworkRunner.class.getName());
-        final Constructor<?> constructor = runnerClass.getDeclaredConstructor(Map.class, Map.class, List.class, List.class);
+        final Constructor<?> constructor = runnerClass.getDeclaredConstructor(Map.class, Map.class, List.class,
+                List.class);
         constructor.setAccessible(true);
-        Callable<Integer> restart = (Callable<Integer>) constructor.newInstance(properties,
-                context.getBundleMap(),
-                context.getConfigurations(),
-                context.getInstallableArtifacts());
+        Callable<Integer> restart = (Callable<Integer>) constructor.newInstance(properties, context.getBundleMap(),
+                context.getConfigurations(), context.getInstallableArtifacts());
 
         return restart.call();
         // nothing else to do, constructor starts everything
