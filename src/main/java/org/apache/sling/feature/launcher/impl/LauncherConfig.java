@@ -49,6 +49,8 @@ public class LauncherConfig
 
     private final Map<String,String> variables = new HashMap<>();
 
+    private volatile String frameworkVersion;
+
     /**
      * Create a new configuration object.
      * Set the default values
@@ -102,5 +104,13 @@ public class LauncherConfig
 
     public Map<String,String> getVariables() {
         return this.variables;
+    }
+
+    public String getFrameworkVersion() {
+        return frameworkVersion;
+    }
+
+    public void setFrameworkVersion(final String frameworkVersion) {
+        this.frameworkVersion = frameworkVersion;
     }
 }

@@ -17,15 +17,6 @@
 package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -34,15 +25,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.sling.feature.ArtifactId;
-import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.io.file.ArtifactHandler;
-import org.apache.sling.feature.io.file.ArtifactManager;
-import org.apache.sling.feature.io.json.FeatureJSONWriter;
-import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
-import org.apache.sling.feature.launcher.spi.Launcher;
-import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
-import org.osgi.framework.FrameworkEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +42,6 @@ public class Main {
         }
         return LOGGER;
     }
-
-    private static volatile String m_frameworkVersion = null; // DEFAULT is null
 
     /** Split a string into key and value */
     private static String[] split(final String val) {
@@ -145,7 +125,7 @@ public class Main {
                 config.setHomeDirectory(new File(cl.getOptionValue(homeOption.getOpt())));
             }
             if (cl.hasOption(frameworkOption.getOpt())) {
-                m_frameworkVersion = cl.getOptionValue(frameworkOption.getOpt());
+                config.setFrameworkVersion(cl.getOptionValue(frameworkOption.getOpt()));
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
@@ -155,19 +135,6 @@ public class Main {
 
             System.exit(1);
         }
-    }
-
-
-    /**
-     * Get an artifact id for the Apache Felix framework
-     *
-     * @param version The version to use or {@code null} for the default version
-     * @return The artifact id
-     * @throws IllegalArgumentException If the provided version is invalid
-     */
-    public static ArtifactId getFelixFrameworkId(final String version) {
-        return new ArtifactId("org.apache.felix", "org.apache.felix.framework", version != null ? version : "6.0.1",
-                null, null);
     }
 
     public static void main(final String[] args) {
@@ -181,255 +148,7 @@ public class Main {
         final LauncherConfig launcherConfig = new LauncherConfig();
         parseArgs(launcherConfig, args);
 
-        launcherConfig.getVariables().put("sling.home", launcherConfig.getHomeDirectory().getAbsolutePath());
-        if (launcherConfig.getVariables().get("repository.home") == null ) {
-            launcherConfig.getVariables().put("repository.home", launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
-        }
-        launcherConfig.getVariables().put("sling.launchpad", launcherConfig.getHomeDirectory().getAbsolutePath() + "/launchpad");
-
-        final Installation installation = launcherConfig.getInstallation();
-
-        // set sling home, and use separate locations for launchpad and properties
-        installation.getFrameworkProperties().put("sling.home", launcherConfig.getHomeDirectory().getAbsolutePath());
-        installation.getFrameworkProperties().put("sling.launchpad", launcherConfig.getHomeDirectory().getAbsolutePath() + "/launchpad");
-        if (!installation.getFrameworkProperties().containsKey("repository.home")) {
-            installation.getFrameworkProperties().put("repository.home", launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
-        }
-        installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
-        installation.getFrameworkProperties().put("sling.feature", getApplicationFeatureFile(launcherConfig).toURI().toString());
-
-
-        // additional OSGi properties
-        // move storage inside launcher
-        if ( installation.getFrameworkProperties().get(STORAGE_PROPERTY) == null ) {
-            installation.getFrameworkProperties().put(STORAGE_PROPERTY, launcherConfig.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
-        }
-        // set start level to 30
-        if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
-            installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
-        }
-
-        Main.LOG().info("");
-        Main.LOG().info("Apache Sling Application Launcher");
-        Main.LOG().info("---------------------------------");
-
-
-        Main.LOG().info("Initializing...");
-
-        final Launcher launcher = new FrameworkLauncher();
-
-        try (ArtifactManager artifactManager = ArtifactManager.getArtifactManager(launcherConfig)) {
-
-            Main.LOG().info("Artifact Repositories: {}", Arrays.toString(launcherConfig.getRepositoryUrls()));
-            Main.LOG().info("Assembling provisioning model...");
-
-            try {
-                boolean restart = launcherConfig.getFeatureFiles().length == 0;
-
-                Map<ArtifactId, Feature> loadedFeatures = new HashMap<>();
-                final Feature app = assemble(launcherConfig, artifactManager, loadedFeatures);
-
-                Main.LOG().info("");
-                Main.LOG().info("Assembling launcher...");
-
-                final LauncherPrepareContext ctx = new LauncherPrepareContext()
-                {
-                    @Override
-                    public File getArtifactFile(final ArtifactId artifact) throws IOException
-                    {
-                        final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + artifact.toMvnPath());
-                        return handler.getFile();
-                    }
-
-                    @Override
-                    public void addAppJar(final File jar)
-                    {
-                        launcherConfig.getInstallation().addAppJar(jar);
-                    }
-                };
-
-                launcher.prepare(ctx, getFelixFrameworkId(m_frameworkVersion), app);
-
-                FeatureProcessor.prepareLauncher(ctx, launcherConfig, app, loadedFeatures);
-
-                Main.LOG().info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
-                    launcherConfig.getLocalArtifacts(), launcherConfig.getCachedArtifacts(), launcherConfig.getDownloadedArtifacts());
-
-                if (restart) {
-                    launcherConfig.getInstallation().getInstallableArtifacts().clear();
-                    launcherConfig.getInstallation().getConfigurations().clear();
-                    launcherConfig.getInstallation().getBundleMap().clear();
-                }
-            } catch ( final Exception iae) {
-                Main.LOG().error("Error while assembling launcher: {}", iae.getMessage(), iae);
-                System.exit(1);
-            }
-        }
-        catch (IOException ex) {
-            Main.LOG().error("Unable to setup artifact manager: {}", ex.getMessage(), ex);
-            System.exit(1);
-        }
-
-        try {
-            run(launcherConfig, launcher);
-        } catch ( final Exception iae) {
-            Main.LOG().error("Error while running launcher: {}", iae.getMessage(), iae);
-            System.exit(1);
-        }
-    }
-
-    private static Feature assemble(final LauncherConfig launcherConfig, final ArtifactManager artifactManager,
-            Map<ArtifactId, Feature> loadedFeatures) throws IOException
-    {
-        if (launcherConfig.getFeatureFiles().length == 0) {
-            File application = getApplicationFeatureFile(launcherConfig);
-            if (application.isFile()) {
-                launcherConfig.addFeatureFiles(application.toURI().toURL().toString());
-            }
-            else {
-                throw new IllegalStateException("No feature(s) to launch found and none where specified");
-            }
-            return FeatureProcessor.createApplication(launcherConfig, artifactManager, loadedFeatures);
-        }
-        else
-        {
-            final Feature app = FeatureProcessor.createApplication(launcherConfig, artifactManager, loadedFeatures);
-
-            // write application back
-            final File file = getApplicationFeatureFile(launcherConfig);
-            file.getParentFile().mkdirs();
-
-            try (final FileWriter writer = new FileWriter(file))
-            {
-                FeatureJSONWriter.write(writer, app);
-            }
-            catch (final IOException ioe)
-            {
-                Main.LOG().error("Error while writing application file: {}", ioe.getMessage(), ioe);
-                System.exit(1);
-            }
-            return app;
-        }
-    }
-
-    private static File getApplicationFeatureFile(final LauncherConfig launcherConfig) {
-        return new File(launcherConfig.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
-    }
-
-    private static final String STORAGE_PROPERTY = "org.osgi.framework.storage";
-
-    private static final String START_LEVEL_PROP = "org.osgi.framework.startlevel.beginning";
-
-    /**
-     * Run launcher.
-     * @param config The configuration
-     * @throws Exception If anything goes wrong
-     */
-    private static void run(final LauncherConfig config, final Launcher launcher) throws Exception {
-        Main.LOG().info("");
-        Main.LOG().info("Starting launcher...");
-        Main.LOG().info("Launcher Home: {}", config.getHomeDirectory().getAbsolutePath());
-        Main.LOG().info("Cache Directory: {}", config.getCacheDirectory().getAbsolutePath());
-        Main.LOG().info("");
-
-        final Installation installation = config.getInstallation();
-
-        // set sling home, and use separate locations for launchpad and properties
-        installation.getFrameworkProperties().put("sling.home", config.getHomeDirectory().getAbsolutePath());
-        installation.getFrameworkProperties().put("sling.launchpad", config.getHomeDirectory().getAbsolutePath() + "/launchpad");
-        if (!installation.getFrameworkProperties().containsKey("repository.home")) {
-            installation.getFrameworkProperties().put("repository.home", config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
-        }
-        installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
-        installation.getFrameworkProperties().put("sling.feature", getApplicationFeatureFile(config).toURI().toString());
-
-
-        // additional OSGi properties
-        // move storage inside launcher
-        if ( installation.getFrameworkProperties().get(STORAGE_PROPERTY) == null ) {
-            installation.getFrameworkProperties().put(STORAGE_PROPERTY, config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
-        }
-        // set start level to 30
-        if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
-            installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
-        }
-
-        while (launcher.run(installation, createClassLoader(installation)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
-            Main.LOG().info("Framework restart due to extension refresh");
-        }
-    }
-
-    /**
-     * Create the class loader.
-     * @param installation The launcher configuration
-     * @return The classloader.
-     * @throws Exception If anything goes wrong
-     */
-    public static ClassLoader createClassLoader(final Installation installation) throws Exception {
-        final List<URL> list = new ArrayList<>();
-        for(final File f : installation.getAppJars()) {
-            try {
-                list.add(f.toURI().toURL());
-            } catch (IOException e) {
-                // ignore
-            }
-        }
-        list.add(Main.class.getProtectionDomain().getCodeSource().getLocation());
-
-        final URL[] urls = list.toArray(new URL[list.size()]);
-
-        if ( Main.LOG().isDebugEnabled() ) {
-            Main.LOG().debug("App classpath: ");
-            for (int i = 0; i < urls.length; i++) {
-                Main.LOG().debug(" - {}", urls[i]);
-            }
-        }
-
-        // create a paranoid class loader, loading from parent last
-        final ClassLoader cl = new URLClassLoader(urls) {
-            @Override
-            public final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-                // First check if it's already loaded
-                Class<?> clazz = findLoadedClass(name);
-
-                if (clazz == null) {
-
-                    try {
-                        clazz = findClass(name);
-                    } catch (ClassNotFoundException cnfe) {
-                        ClassLoader parent = getParent();
-                        if (parent != null) {
-                            // Ask to parent ClassLoader (can also throw a CNFE).
-                            clazz = parent.loadClass(name);
-                        } else {
-                            // Propagate exception
-                            throw cnfe;
-                        }
-                    }
-                }
-
-                if (resolve) {
-                    resolveClass(clazz);
-                }
-
-                return clazz;
-            }
-
-            @Override
-            public final URL getResource(final String name) {
-
-                URL resource = findResource(name);
-                ClassLoader parent = this.getParent();
-                if (resource == null && parent != null) {
-                    resource = parent.getResource(name);
-                }
-
-                return resource;
-            }
-        };
-
-        Thread.currentThread().setContextClassLoader(cl);
-
-        return cl;
+        final Bootstrap bootstrap = new Bootstrap(launcherConfig, Main.LOG());
+        bootstrap.run();
     }
 }
