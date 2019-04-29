@@ -20,6 +20,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+
 /**
  * This is the context for the launcher
  */
@@ -55,4 +57,11 @@ public interface LauncherRunContext {
      * @return The list of files. The list might be empty.
      */
     List<File> getInstallableArtifacts();
+
+    /**
+     * Get the central logger
+     * 
+     * @return The logger
+     */
+    Logger getLogger();
 }

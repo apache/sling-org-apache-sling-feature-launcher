@@ -16,14 +16,15 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import org.apache.sling.feature.launcher.spi.LauncherRunContext;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.sling.feature.launcher.spi.LauncherRunContext;
+import org.slf4j.Logger;
 
 /**
  * This class holds the configuration of the launcher.
@@ -44,6 +45,8 @@ public class Installation implements LauncherRunContext {
 
     /** The list of app jars. */
     private final List<File> appJars = new ArrayList<>();
+
+    private volatile Logger logger;
 
     /**
      * Add an application jar.
@@ -138,5 +141,14 @@ public class Installation implements LauncherRunContext {
         this.fwkProperties.clear();
         this.bundleMap.clear();
         this.installables.clear();
+    }
+
+    public void setLogger(final Logger l) {
+        this.logger = l;
+    }
+
+    @Override
+    public Logger getLogger() {
+        return this.logger;
     }
 }

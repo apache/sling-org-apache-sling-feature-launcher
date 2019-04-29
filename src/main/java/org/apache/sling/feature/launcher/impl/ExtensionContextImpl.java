@@ -16,12 +16,6 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import org.apache.sling.feature.ArtifactId;
-import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.io.json.FeatureJSONReader;
-import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
-import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -29,15 +23,29 @@ import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.sling.feature.ArtifactId;
+import org.apache.sling.feature.Feature;
+import org.apache.sling.feature.io.json.FeatureJSONReader;
+import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
+import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
+import org.slf4j.Logger;
+
 class ExtensionContextImpl implements ExtensionContext {
+
     private final Installation installation;
     private final LauncherPrepareContext prepareContext;
     private final Map<ArtifactId, Feature> loadedFeatures;
 
-    ExtensionContextImpl(LauncherPrepareContext lpc, Installation inst, Map<ArtifactId, Feature> featureMap) {
+    ExtensionContextImpl(LauncherPrepareContext lpc, Installation inst,
+            Map<ArtifactId, Feature> featureMap) {
         prepareContext = lpc;
         installation = inst;
         loadedFeatures = featureMap;
+    }
+
+    @Override
+    public Logger getLogger() {
+        return prepareContext.getLogger();
     }
 
     @Override

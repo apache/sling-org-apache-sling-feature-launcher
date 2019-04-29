@@ -37,7 +37,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.sling.feature.launcher.impl.Main;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -49,6 +48,7 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
+import org.slf4j.Logger;
 
 /**
  * Common functionality for the framework start.
@@ -63,7 +63,10 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     private final List<File> installables;
 
-    public AbstractRunner(final List<Object[]> configurations, final List<File> installables) {
+    protected final Logger logger;
+
+    public AbstractRunner(final Logger logger, final List<Object[]> configurations, final List<File> installables) {
+        this.logger = logger;
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
     }
@@ -188,7 +191,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                 updateMethod.invoke(cfg, obj[2]);
             }
         } catch ( final Exception e) {
-            Main.LOG().error("Unable to create configurations", e);
+            this.logger.error("Unable to create configurations", e);
             throw new RuntimeException(e);
         }
         final Thread t = new Thread(() -> { configAdminTracker.close(); configAdminTracker = null; });
@@ -220,10 +223,10 @@ public abstract class AbstractRunner implements Callable<Integer> {
         final BundleContext bc = framework.getBundleContext();
         int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
         for(final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
-            Main.LOG().debug("Installing bundles with start level {}", startLevel);
+            this.logger.debug("Installing bundles with start level {}", startLevel);
 
             for(final File file : bundleMap.get(startLevel)) {
-                Main.LOG().debug("- {}", file.getName());
+                this.logger.debug("- {}", file.getName());
 
                 // use reference protocol. This avoids copying the binary to the cache directory
                 // of the framework
@@ -292,7 +295,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
             }
             registerResources.invoke(installer, "cloudlauncher", resources);
         } catch ( final Exception e) {
-            Main.LOG().error("Unable to contact installer and install additional artifacts", e);
+            this.logger.error("Unable to contact installer and install additional artifacts", e);
             throw new RuntimeException(e);
         } finally  {
             final Thread t = new Thread(() -> {

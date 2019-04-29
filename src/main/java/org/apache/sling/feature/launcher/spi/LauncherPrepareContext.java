@@ -20,11 +20,19 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.sling.feature.ArtifactId;
+import org.slf4j.Logger;
 
 /**
  * This is the context for the launcher
  */
 public interface LauncherPrepareContext {
+
+    /**
+     * Get the central logger
+     *
+     * @return The logger
+     */
+    Logger getLogger();
 
     void addAppJar(File jar);
 

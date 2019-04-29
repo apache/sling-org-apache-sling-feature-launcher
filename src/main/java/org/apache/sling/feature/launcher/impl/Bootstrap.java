@@ -75,6 +75,7 @@ public class Bootstrap {
                 this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
 
         final Installation installation = this.config.getInstallation();
+        installation.setLogger(this.logger);
 
         // set sling home, and use separate locations for launchpad and properties
         installation.getFrameworkProperties().put("sling.home", this.config.getHomeDirectory().getAbsolutePath());
@@ -128,6 +129,11 @@ public class Bootstrap {
 
                 final LauncherPrepareContext ctx = new LauncherPrepareContext()
                 {
+                    @Override
+                    public Logger getLogger() {
+                        return logger;
+                    }
+
                     @Override
                     public File getArtifactFile(final ArtifactId artifact) throws IOException
                     {
@@ -184,11 +190,12 @@ public class Bootstrap {
             else {
                 throw new IllegalStateException("No feature(s) to launch found and none where specified");
             }
-            return FeatureProcessor.createApplication(this.config, artifactManager, loadedFeatures);
+            return FeatureProcessor.createApplication(this.logger, this.config, artifactManager, loadedFeatures);
         }
         else
         {
-            final Feature app = FeatureProcessor.createApplication(this.config, artifactManager, loadedFeatures);
+            final Feature app = FeatureProcessor.createApplication(this.logger, this.config, artifactManager,
+                    loadedFeatures);
 
             // write application back
             final File file = getApplicationFeatureFile(this.config);

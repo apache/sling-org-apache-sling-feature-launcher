@@ -36,7 +36,7 @@ public class Main {
 
     private static Logger LOGGER;
 
-    public static Logger LOG() {
+    private static Logger LOG() {
         if ( LOGGER == null ) {
             LOGGER = LoggerFactory.getLogger("launcher");
         }

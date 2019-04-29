@@ -23,11 +23,11 @@ import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.sling.feature.launcher.impl.Main;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.launch.FrameworkFactory;
+import org.slf4j.Logger;
 
 /**
  * Launcher directly using the OSGi launcher API.
@@ -40,11 +40,11 @@ public class FrameworkRunner extends AbstractRunner {
 
     private volatile int type = -1;
 
-    public FrameworkRunner(final Map<String, String> frameworkProperties,
+    public FrameworkRunner(final Logger logger, final Map<String, String> frameworkProperties,
             final Map<Integer, List<File>> bundlesMap,
             final List<Object[]> configurations,
             final List<File> installables) throws Exception {
-        super(configurations, installables);
+        super(logger, configurations, installables);
 
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);
         FrameworkFactory factory = null;
@@ -68,17 +68,13 @@ public class FrameworkRunner extends AbstractRunner {
                 try {
                     framework.stop();
                     FrameworkEvent waitForStop = framework.waitForStop(graceTime * 1000);
-                    if (waitForStop.getType() != FrameworkEvent.STOPPED)
-                    {
-                        Main.LOG().warn("Framework stopped with: " + waitForStop.getType(), waitForStop.getThrowable());
+                    if (waitForStop.getType() != FrameworkEvent.STOPPED) {
+                        logger.warn("Framework stopped with: " + waitForStop.getType(), waitForStop.getThrowable());
+                    } else {
+                        logger.info("Framework stopped");
                     }
-                    else
-                    {
-                        Main.LOG().info("Framework stopped");
-                    }
-                } catch (BundleException | InterruptedException e)
-                {
-                    Main.LOG().warn("Exception stopping the framework in shutdown hook", e);
+                } catch (BundleException | InterruptedException e) {
+                    logger.warn("Exception stopping the framework in shutdown hook", e);
                 }
             }
         });
@@ -94,18 +90,19 @@ public class FrameworkRunner extends AbstractRunner {
             throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
         }
 
-        Main.LOG().debug("Startup took: " + (System.currentTimeMillis() - time));
+        this.logger.debug("Startup took: " + (System.currentTimeMillis() - time));
 
         while ((type = framework.waitForStop(Long.MAX_VALUE).getType()) == FrameworkEvent.STOPPED_UPDATE) {
-            Main.LOG().info("Framework restart due to update");
+            this.logger.info("Framework restart due to update");
             time = System.currentTimeMillis();
             if (!this.startFramework(framework, startTimeout, TimeUnit.SECONDS)) {
                 throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
             }
-            Main.LOG().debug("Restart took: " + (System.currentTimeMillis() - time));
+            this.logger.debug("Restart took: " + (System.currentTimeMillis() - time));
         }
     }
 
+    @Override
     public Integer call() {
         return type;
     }

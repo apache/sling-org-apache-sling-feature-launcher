@@ -43,6 +43,7 @@ import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
+import org.slf4j.Logger;
 
 public class FeatureProcessor {
 
@@ -55,7 +56,7 @@ public class FeatureProcessor {
      * @return The merged feature representing the application
      * @throws IOException when an IO exception occurs during application creation
      */
-    public static Feature createApplication(final LauncherConfig config,
+    public static Feature createApplication(final Logger logger, final LauncherConfig config,
             final ArtifactManager artifactManager, final Map<ArtifactId, Feature> loadedFeatures) throws IOException
     {
         final BuilderContext builderContext = new BuilderContext(id -> {
@@ -90,7 +91,7 @@ public class FeatureProcessor {
                 .toArray(PostProcessHandler[]::new));
 
         for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), config.getFeatureFiles())) {
-        	Main.LOG().debug("Reading feature file {}", initFile);
+            logger.debug("Reading feature file {}", initFile);
             final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
             try (final FileReader r = new FileReader(featureArtifact.getFile())) {
                 final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());

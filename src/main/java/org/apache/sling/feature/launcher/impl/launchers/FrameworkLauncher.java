@@ -27,7 +27,6 @@ import org.apache.commons.lang.text.StrLookup;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.launcher.impl.Main;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
@@ -68,27 +67,27 @@ public class FrameworkLauncher implements Launcher {
         context.getFrameworkProperties().forEach((key, value) -> {
             properties.put(key, ss.replace(value).replace("{dollar}", "$"));
         });
-        if ( Main.LOG().isDebugEnabled() ) {
-            Main.LOG().debug("Bundles:");
+        if (context.getLogger().isDebugEnabled()) {
+            context.getLogger().debug("Bundles:");
             for(final Integer key : context.getBundleMap().keySet()) {
-                Main.LOG().debug("-- Start Level {}", key);
+                context.getLogger().debug("-- Start Level {}", key);
                 for(final File f : context.getBundleMap().get(key)) {
-                    Main.LOG().debug("  - {}", f.getName());
+                    context.getLogger().debug("  - {}", f.getName());
                 }
             }
-            Main.LOG().debug("Settings: ");
+            context.getLogger().debug("Settings: ");
             for(final Map.Entry<String, String> entry : properties.entrySet()) {
-                Main.LOG().debug("- {}={}", entry.getKey(), entry.getValue());
+                context.getLogger().debug("- {}={}", entry.getKey(), entry.getValue());
             }
-            Main.LOG().debug("Configurations: ");
+            context.getLogger().debug("Configurations: ");
             for(final Object[] entry : context.getConfigurations()) {
                 if ( entry[1] != null ) {
-                    Main.LOG().debug("- Factory {} - {}", entry[1], entry[0]);
+                    context.getLogger().debug("- Factory {} - {}", entry[1], entry[0]);
                 } else {
-                    Main.LOG().debug("- {}", entry[0]);
+                    context.getLogger().debug("- {}", entry[0]);
                 }
             }
-            Main.LOG().debug("");
+            context.getLogger().debug("");
         }
 
         final Class<?> runnerClass = cl.loadClass(FrameworkRunner.class.getName());
