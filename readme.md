@@ -12,4 +12,27 @@ The launcher can be executed as follows:
 java org.apache.sling.feature.launcher.impl.Main
 ```
 
+or via the Java Main class of the jar file:
+```
+java -jar org.apache.sling.feature.launcher-1.0.0.jar
+```
+
+The launcher creates a local cache, by default in a subdirectory called `launcher`. If you want to run the launcher with a clean start, delete this directory before invoking the launcher.
+
+The following command line options are supported:
+```
+$ rm -rf launcher && java -jar org.apache.sling.feature.launcher-1.0.0.jar -h
+usage: launcher
+ -C <arg>    Set artifact clash override
+ -c <arg>    Set cache dir
+ -D <arg>    Set framework properties
+ -f <arg>    Set feature files
+ -fv <arg>   Set felix framework version
+ -p <arg>    Set home dir
+ -u <arg>    Set repository url
+ -V <arg>    Set variable value
+ -v          Verbose
+```
+
+
 For further documentation see: https://github.com/apache/sling-org-apache-sling-feature/blob/master/readme.md
