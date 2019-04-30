@@ -148,8 +148,6 @@ public abstract class AbstractRunner implements Callable<Integer> {
     {
         CountDownLatch latch = new CountDownLatch(1);
 
-        final Executor executor = Executors.newSingleThreadExecutor();
-
         FrameworkListener listener = new FrameworkListener()
         {
             @Override
@@ -168,7 +166,6 @@ public abstract class AbstractRunner implements Callable<Integer> {
         try {
             return latch.await(timeout, unit);
         } finally {
-            ((ExecutorService) executor).shutdownNow();
             framework.getBundleContext().removeFrameworkListener(listener);
         }
     }
