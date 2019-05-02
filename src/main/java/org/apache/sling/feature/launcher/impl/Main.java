@@ -70,7 +70,8 @@ public class Main {
         final Option cacheOption = new Option("c", true, "Set cache dir");
         final Option homeOption = new Option("p", true, "Set home dir");
 
-        final Option frameworkOption = new Option("fv", true, "Set felix framework version");
+        final Option frameworkVersionOption = new Option("fv", true, "Set felix framework version");
+        final Option frameworkArtifactOption = new Option("fa", true, "Set framework artifact (overrides felix framework version)");
 
         options.addOption(artifactClashOverride);
         options.addOption(repoOption);
@@ -80,7 +81,8 @@ public class Main {
         options.addOption(debugOption);
         options.addOption(cacheOption);
         options.addOption(homeOption);
-        options.addOption(frameworkOption);
+        options.addOption(frameworkVersionOption);
+        options.addOption(frameworkArtifactOption);
 
         final CommandLineParser clp = new BasicParser();
         try {
@@ -124,8 +126,11 @@ public class Main {
             if (cl.hasOption(homeOption.getOpt())) {
                 config.setHomeDirectory(new File(cl.getOptionValue(homeOption.getOpt())));
             }
-            if (cl.hasOption(frameworkOption.getOpt())) {
-                config.setFrameworkVersion(cl.getOptionValue(frameworkOption.getOpt()));
+            if (cl.hasOption(frameworkVersionOption.getOpt())) {
+                config.setFrameworkVersion(cl.getOptionValue(frameworkVersionOption.getOpt()));
+            }
+            if (cl.hasOption(frameworkArtifactOption.getOpt())) {
+                config.setFrameworkArtifact(cl.getOptionValue(frameworkArtifactOption.getOpt()));
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);

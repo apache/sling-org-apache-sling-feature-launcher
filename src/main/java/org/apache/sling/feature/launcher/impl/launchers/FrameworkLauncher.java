@@ -90,7 +90,7 @@ public class FrameworkLauncher implements Launcher {
             context.getLogger().debug("");
         }
 
-        final Class<?> runnerClass = cl.loadClass(FrameworkRunner.class.getName());
+        final Class<?> runnerClass = cl.loadClass(getFrameworkRunnerClass());
         final Constructor<?> constructor = runnerClass.getDeclaredConstructor(Map.class, Map.class, List.class,
                 List.class);
         constructor.setAccessible(true);
@@ -99,5 +99,9 @@ public class FrameworkLauncher implements Launcher {
 
         return restart.call();
         // nothing else to do, constructor starts everything
+    }
+
+    protected String getFrameworkRunnerClass() {
+        return FrameworkRunner.class.getName();
     }
 }

@@ -51,6 +51,8 @@ public class LauncherConfig
 
     private volatile String frameworkVersion;
 
+    private volatile String frameworkArtifact;
+
     /**
      * Create a new configuration object.
      * Set the default values
@@ -112,5 +114,13 @@ public class LauncherConfig
 
     public void setFrameworkVersion(final String frameworkVersion) {
         this.frameworkVersion = frameworkVersion;
+    }
+
+    public String getFrameworkArtifact() {
+        return frameworkArtifact;
+    }
+
+    public void setFrameworkArtifact(final String frameworkArtifact) {
+        this.frameworkArtifact = frameworkArtifact;
     }
 }

@@ -24,8 +24,10 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
@@ -60,7 +62,7 @@ public class Bootstrap {
      * @throws IllegalArgumentException If the provided version is invalid
      */
     private ArtifactId getFelixFrameworkId(final String version) {
-        return new ArtifactId("org.apache.felix", "org.apache.felix.framework", version != null ? version : "6.0.1",
+        return new ArtifactId("org.apache.felix", "org.apache.felix.framework", version != null ? version : "6.0.3",
                 null, null);
     }
 
@@ -111,7 +113,13 @@ public class Bootstrap {
         this.logger.info("Initializing...");
         prepare();
 
-        final Launcher launcher = new FrameworkLauncher();
+        Iterator<Launcher> iterator = ServiceLoader.load(Launcher.class).iterator();
+        if (!iterator.hasNext()) {
+            this.logger.error("Unable to find launcher service.");
+            System.exit(1);
+        }
+
+        final Launcher launcher = iterator.next();
 
         try (ArtifactManager artifactManager = ArtifactManager.getArtifactManager(this.config)) {
 
@@ -148,7 +156,9 @@ public class Bootstrap {
                     }
                 };
 
-                launcher.prepare(ctx, getFelixFrameworkId(this.config.getFrameworkVersion()), app);
+                launcher.prepare(ctx, this.config.getFrameworkArtifact() != null ?
+                    ArtifactId.fromMvnId(this.config.getFrameworkArtifact()) :
+                    getFelixFrameworkId(this.config.getFrameworkVersion()), app);
 
                 FeatureProcessor.prepareLauncher(ctx, this.config, app, loadedFeatures);
 
@@ -255,7 +265,7 @@ public class Bootstrap {
             installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
         }
 
-        while (launcher.run(installation, createClassLoader(installation)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
+        while (launcher.run(installation, createClassLoader(installation, launcher.getClass().getProtectionDomain().getCodeSource().getLocation())) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
             this.logger.info("Framework restart due to extension refresh");
         }
     }
@@ -266,7 +276,7 @@ public class Bootstrap {
      * @return The classloader.
      * @throws Exception If anything goes wrong
      */
-    public ClassLoader createClassLoader(final Installation installation) throws Exception {
+    public ClassLoader createClassLoader(final Installation installation, URL... extra) throws Exception {
         final List<URL> list = new ArrayList<>();
         for(final File f : installation.getAppJars()) {
             try {
@@ -275,7 +285,14 @@ public class Bootstrap {
                 // ignore
             }
         }
+
         list.add(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation());
+
+        if (extra != null) {
+            for (URL url : extra) {
+                list.add(url);
+            }
+        }
 
         final URL[] urls = list.toArray(new URL[list.size()]);
 
