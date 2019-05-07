@@ -16,6 +16,9 @@
  */
 package org.apache.sling.feature.launcher.spi;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 
@@ -24,4 +27,59 @@ public interface Launcher {
     void prepare(LauncherPrepareContext context, ArtifactId frameworkId, Feature app) throws Exception;
 
     int run(LauncherRunContext context, ClassLoader cl) throws Exception;
+
+    default LauncherClassLoader createClassLoader() {
+        return new LauncherClassLoader();
+    }
+
+    class LauncherClassLoader extends URLClassLoader {
+        public LauncherClassLoader() {
+            super(new URL[0]);
+        }
+
+        @Override
+        public final void addURL(URL url) {
+            super.addURL(url);
+        }
+
+        @Override
+        public final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            // First check if it's already loaded
+            Class<?> clazz = findLoadedClass(name);
+
+            if (clazz == null) {
+
+                try {
+                    clazz = findClass(name);
+                } catch (ClassNotFoundException cnfe) {
+                    ClassLoader parent = getParent();
+                    if (parent != null) {
+                        // Ask to parent ClassLoader (can also throw a CNFE).
+                        clazz = parent.loadClass(name);
+                    } else {
+                        // Propagate exception
+                        throw cnfe;
+                    }
+                }
+            }
+
+            if (resolve) {
+                resolveClass(clazz);
+            }
+
+            return clazz;
+        }
+
+        @Override
+        public final URL getResource(final String name) {
+
+            URL resource = findResource(name);
+            ClassLoader parent = this.getParent();
+            if (resource == null && parent != null) {
+                resource = parent.getResource(name);
+            }
+
+            return resource;
+        }
+    }
 }

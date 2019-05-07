@@ -19,6 +19,7 @@ package org.apache.sling.feature.launcher.impl;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,11 @@ class ExtensionContextImpl implements ExtensionContext {
 
     @Override
     public void addAppJar(File jar) {
+        prepareContext.addAppJar(jar);
+    }
+
+    @Override
+    public void addAppJar(URL jar) {
         prepareContext.addAppJar(jar);
     }
 

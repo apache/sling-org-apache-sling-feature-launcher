@@ -19,8 +19,8 @@ package org.apache.sling.feature.launcher.impl;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +34,6 @@ import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.io.file.ArtifactHandler;
 import org.apache.sling.feature.io.file.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONWriter;
-import org.apache.sling.feature.launcher.impl.launchers.FrameworkLauncher;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.osgi.framework.FrameworkEvent;
@@ -135,22 +134,30 @@ public class Bootstrap {
                 this.logger.info("");
                 this.logger.info("Assembling launcher...");
 
-                final LauncherPrepareContext ctx = new LauncherPrepareContext()
-                {
+                final LauncherPrepareContext ctx = new LauncherPrepareContext() {
                     @Override
                     public Logger getLogger() {
                         return logger;
                     }
 
                     @Override
-                    public File getArtifactFile(final ArtifactId artifact) throws IOException
-                    {
+                    public File getArtifactFile(final ArtifactId artifact) throws IOException {
                         final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + artifact.toMvnPath());
                         return handler.getFile();
                     }
 
                     @Override
-                    public void addAppJar(final File jar)
+                    public void addAppJar(final File jar) {
+                        try {
+                            config.getInstallation().addAppJar(jar.toURI().toURL());
+                        }
+                        catch (MalformedURLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    @Override
+                    public void addAppJar(final URL jar)
                     {
                         config.getInstallation().addAppJar(jar);
                     }
@@ -265,7 +272,7 @@ public class Bootstrap {
             installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
         }
 
-        while (launcher.run(installation, createClassLoader(installation, launcher.getClass().getProtectionDomain().getCodeSource().getLocation())) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
+        while (launcher.run(installation, createClassLoader(installation, launcher)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
             this.logger.info("Framework restart due to extension refresh");
         }
     }
@@ -276,23 +283,16 @@ public class Bootstrap {
      * @return The classloader.
      * @throws Exception If anything goes wrong
      */
-    public ClassLoader createClassLoader(final Installation installation, URL... extra) throws Exception {
+    public ClassLoader createClassLoader(final Installation installation, Launcher launcher) throws Exception {
         final List<URL> list = new ArrayList<>();
-        for(final File f : installation.getAppJars()) {
-            try {
-                list.add(f.toURI().toURL());
-            } catch (IOException e) {
-                // ignore
-            }
-        }
+
+        list.addAll(installation.getAppJars());
 
         list.add(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation());
 
-        if (extra != null) {
-            for (URL url : extra) {
-                list.add(url);
-            }
-        }
+
+        // create a paranoid class loader, loading from parent last
+        final Launcher.LauncherClassLoader cl = launcher.createClassLoader();
 
         final URL[] urls = list.toArray(new URL[list.size()]);
 
@@ -302,49 +302,9 @@ public class Bootstrap {
                 this.logger.debug(" - {}", urls[i]);
             }
         }
-
-        // create a paranoid class loader, loading from parent last
-        final ClassLoader cl = new URLClassLoader(urls) {
-            @Override
-            public final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-                // First check if it's already loaded
-                Class<?> clazz = findLoadedClass(name);
-
-                if (clazz == null) {
-
-                    try {
-                        clazz = findClass(name);
-                    } catch (ClassNotFoundException cnfe) {
-                        ClassLoader parent = getParent();
-                        if (parent != null) {
-                            // Ask to parent ClassLoader (can also throw a CNFE).
-                            clazz = parent.loadClass(name);
-                        } else {
-                            // Propagate exception
-                            throw cnfe;
-                        }
-                    }
-                }
-
-                if (resolve) {
-                    resolveClass(clazz);
-                }
-
-                return clazz;
-            }
-
-            @Override
-            public final URL getResource(final String name) {
-
-                URL resource = findResource(name);
-                ClassLoader parent = this.getParent();
-                if (resource == null && parent != null) {
-                    resource = parent.getResource(name);
-                }
-
-                return resource;
-            }
-        };
+        for (URL u : urls) {
+            cl.addURL(u);
+        }
 
         Thread.currentThread().setContextClassLoader(cl);
 

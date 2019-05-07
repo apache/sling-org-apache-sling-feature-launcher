@@ -17,6 +17,7 @@
 package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -44,7 +45,7 @@ public class Installation implements LauncherRunContext {
     private final List<Object[]> configurations = new ArrayList<>();
 
     /** The list of app jars. */
-    private final List<File> appJars = new ArrayList<>();
+    private final List<URL> appJars = new ArrayList<>();
 
     private volatile Logger logger;
 
@@ -52,7 +53,7 @@ public class Installation implements LauncherRunContext {
      * Add an application jar.
      * @param jar The application jar
      */
-    public void addAppJar(final File jar) {
+    public void addAppJar(final URL jar) {
         this.appJars.add(jar);
     }
 
@@ -60,7 +61,7 @@ public class Installation implements LauncherRunContext {
      * Get the list of application jars.
      * @return The list of app jars
      */
-    public List<File> getAppJars() {
+    public List<URL> getAppJars() {
         return this.appJars;
     }
 

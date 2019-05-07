@@ -89,6 +89,7 @@ public class FrameworkRunner extends AbstractRunner {
         if (!this.startFramework(framework, startTimeout, TimeUnit.SECONDS)) {
             throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
         }
+        logger.info("Framework started");
 
         logger.debug("Startup took: " + (System.currentTimeMillis() - time));
 
