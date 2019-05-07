@@ -32,7 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -145,25 +151,32 @@ public abstract class AbstractRunner implements Callable<Integer> {
     {
         CountDownLatch latch = new CountDownLatch(1);
 
-        FrameworkListener listener = new FrameworkListener()
+        Executor executor = Executors.newSingleThreadExecutor();
+        Future<Void> result = ((ExecutorService) executor).submit(new Callable<Void>()
         {
             @Override
-            public void frameworkEvent(FrameworkEvent frameworkEvent)
+            public Void call() throws Exception
             {
-                if (frameworkEvent.getType() == FrameworkEvent.STARTED) {
-                    latch.countDown();
-                }
+                framework.start();
+                return null;
             }
-        };
-
-        framework.getBundleContext().addFrameworkListener(listener);
-
-        framework.start();
+        });
 
         try {
-            return latch.await(timeout, unit);
-        } finally {
-            framework.getBundleContext().removeFrameworkListener(listener);
+            result.get(timeout, unit);
+            return true;
+        } catch (TimeoutException ex) {
+            return false;
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof BundleException) {
+                throw (BundleException) cause;
+            } else {
+                throw (RuntimeException) cause;
+            }
+        }
+        finally {
+            ((ExecutorService) executor).shutdownNow();
         }
     }
 
