@@ -147,6 +147,12 @@ public class Bootstrap {
                     }
 
                     @Override
+                    public ArtifactHandler getArtifactHandler(ArtifactId artifactId) throws IOException
+                    {
+                        return artifactManager.getArtifactHandler(":" + artifactId.toMvnPath());
+                    }
+
+                    @Override
                     public void addAppJar(final File jar) {
                         try {
                             config.getInstallation().addAppJar(jar.toURI().toURL());

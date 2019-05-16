@@ -38,7 +38,7 @@ public interface Launcher {
         }
 
         @Override
-        public final void addURL(URL url) {
+        public void addURL(URL url) {
             super.addURL(url);
         }
 

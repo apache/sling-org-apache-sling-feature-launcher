@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.apache.sling.feature.ArtifactId;
+import org.apache.sling.feature.io.file.ArtifactHandler;
 import org.slf4j.Logger;
 
 /**
@@ -40,4 +41,6 @@ public interface LauncherPrepareContext {
     void addAppJar(URL url);
 
     File getArtifactFile(ArtifactId artifact) throws IOException;
+
+    ArtifactHandler getArtifactHandler(ArtifactId artifactId) throws IOException;
 }

@@ -20,6 +20,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.sling.feature.Artifact;
+import org.apache.sling.feature.io.file.ArtifactHandler;
 import org.slf4j.Logger;
 
 /**
@@ -40,6 +42,12 @@ public interface LauncherRunContext {
     Map<Integer, List<File>> getBundleMap();
 
     /**
+     * Bundle map, key is the start level, value is a list of handlers.
+     * @return The bundle map, might be empty
+     */
+    Map<Integer, List<ArtifactHandler>> getBundleArtifactMap();
+
+    /**
      * List of configurations.
      * The value in each is an object array with three values
      * <ol>
@@ -57,6 +65,12 @@ public interface LauncherRunContext {
      * @return The list of files. The list might be empty.
      */
     List<File> getInstallableArtifacts();
+
+    /**
+     * List of installable artifacts.
+     * @return The list of files. The list might be empty.
+     */
+    List<ArtifactHandler> getInstallableArtifactHandlers();
 
     /**
      * Get the central logger

@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
+import org.apache.sling.feature.io.file.ArtifactHandler;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
@@ -80,6 +81,12 @@ class ExtensionContextImpl implements ExtensionContext {
     }
 
     @Override
+    public Map<Integer, List<ArtifactHandler>> getBundleArtifactMap()
+    {
+        return installation.getBundleArtifactMap();
+    }
+
+    @Override
     public List<Object[]> getConfigurations() {
         return installation.getConfigurations();
     }
@@ -87,6 +94,12 @@ class ExtensionContextImpl implements ExtensionContext {
     @Override
     public List<File> getInstallableArtifacts() {
         return installation.getInstallableArtifacts();
+    }
+
+    @Override
+    public List<ArtifactHandler> getInstallableArtifactHandlers()
+    {
+        return installation.getInstallableArtifactHandlers();
     }
 
     @Override
@@ -102,6 +115,12 @@ class ExtensionContextImpl implements ExtensionContext {
     @Override
     public File getArtifactFile(ArtifactId artifact) throws IOException {
         return prepareContext.getArtifactFile(artifact);
+    }
+
+    @Override
+    public ArtifactHandler getArtifactHandler(ArtifactId artifactId) throws IOException
+    {
+        return prepareContext.getArtifactHandler(artifactId);
     }
 
     @Override

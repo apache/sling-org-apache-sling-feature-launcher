@@ -16,10 +16,10 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -31,7 +31,6 @@ import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
-import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
@@ -62,7 +61,7 @@ public class FeatureProcessor {
         final BuilderContext builderContext = new BuilderContext(id -> {
             try {
                 final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
-                try (final FileReader r = new FileReader(handler.getFile())) {
+                try (final Reader r = new InputStreamReader(handler.getLocalURL().openStream(), "UTF-8")) {
                     final Feature f = FeatureJSONReader.read(r, handler.getUrl());
                     return f;
                 }
@@ -134,8 +133,7 @@ public class FeatureProcessor {
             final Feature app, Map<ArtifactId, Feature> loadedFeatures) throws Exception {
         for(final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet()) {
             for(final Artifact a : entry.getValue()) {
-                final File artifactFile = ctx.getArtifactFile(a.getId());
-
+                final ArtifactHandler artifactFile = ctx.getArtifactHandler(a.getId());
                 config.getInstallation().addBundle(entry.getKey(), artifactFile);
             }
         }
@@ -166,43 +164,5 @@ public class FeatureProcessor {
                 throw new Exception("Unknown required extension " + ext.getName());
             }
         }
-    }
-
-    /**
-     * Prepare the cache
-     * - add all bundles
-     * - add all other artifacts (only if startup mode is INSTALL)
-     * @param artifactManager The artifact manager
-     * @param app the feature with the artifacts
-     * @return An Artifact to File mapping.
-     * @throws Exception when something goes wrong.
-     */
-    public static Map<Artifact, File> calculateArtifacts(final ArtifactManager artifactManager,
-        final Feature app) throws Exception
-    {
-        Map<Artifact, File> result = new HashMap<>();
-        for (final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet())
-        {
-            for (final Artifact a : entry.getValue())
-            {
-                final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
-                final File artifactFile = handler.getFile();
-
-                result.put(a, artifactFile);
-            }
-        }
-        for (final Extension ext : app.getExtensions())
-        {
-            if (ext.getType() == ExtensionType.ARTIFACTS
-                    && ext.getName().equals(Extension.EXTENSION_NAME_CONTENT_PACKAGES))
-            {
-                for (final Artifact a : ext.getArtifacts())
-                {
-                    final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
-                    result.put(a, handler.getFile());
-                }
-            }
-        }
-        return result;
     }
 }
