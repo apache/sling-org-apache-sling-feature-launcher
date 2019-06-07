@@ -31,8 +31,8 @@ import java.util.ServiceLoader;
 
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
-import org.apache.sling.feature.io.file.ArtifactHandler;
-import org.apache.sling.feature.io.file.ArtifactManager;
+import org.apache.sling.feature.io.artifacts.ArtifactHandler;
+import org.apache.sling.feature.io.artifacts.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
@@ -141,24 +141,13 @@ public class Bootstrap {
                     }
 
                     @Override
-                    public File getArtifactFile(final ArtifactId artifact) throws IOException {
+                    public URL getArtifactFile(final ArtifactId artifact) throws IOException {
                         final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + artifact.toMvnPath());
-                        return handler.getFile();
+                        return handler.getLocalURL();
                     }
 
                     @Override
-                    public void addAppJar(final File jar) {
-                        try {
-                            config.getInstallation().addAppJar(jar.toURI().toURL());
-                        }
-                        catch (MalformedURLException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    @Override
-                    public void addAppJar(final URL jar)
-                    {
+                    public void addAppJar(final URL jar) {
                         config.getInstallation().addAppJar(jar);
                     }
                 };

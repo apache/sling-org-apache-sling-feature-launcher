@@ -21,8 +21,8 @@ import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Dictionary;
 
 /**
@@ -34,13 +34,13 @@ public interface ExtensionContext extends LauncherPrepareContext, LauncherRunCon
      * @param startLevel The start level for the bundle.
      * @param file The file with the bundle.
      */
-    public void addBundle(final Integer startLevel, final File file);
+    public void addBundle(final Integer startLevel, final URL file);
 
     /**
      * Add an artifact to be installed by the launcher
      * @param file The file
      */
-    public void addInstallableArtifact(final File file);
+    public void addInstallableArtifact(final URL file);
 
     /**
      * Add a configuration to be installed by the launcher

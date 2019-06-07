@@ -16,7 +16,6 @@
  */
 package org.apache.sling.feature.launcher.spi;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
@@ -35,9 +34,7 @@ public interface LauncherPrepareContext {
      */
     Logger getLogger();
 
-    void addAppJar(File jar);
-
     void addAppJar(URL url);
 
-    File getArtifactFile(ArtifactId artifact) throws IOException;
+    URL getArtifactFile(ArtifactId artifact) throws IOException;
 }

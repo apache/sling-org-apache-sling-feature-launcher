@@ -36,10 +36,10 @@ public class Installation implements LauncherRunContext {
     private final Map<String, String> fwkProperties = new HashMap<>();
 
     /** Bundle map */
-    private final Map<Integer, List<File>> bundleMap = new HashMap<>();
+    private final Map<Integer, List<URL>> bundleMap = new HashMap<>();
 
     /** Artifacts to be installed */
-    private final List<File> installables = new ArrayList<>();
+    private final List<URL> installables = new ArrayList<>();
 
     /** Configurations, they are installed on first start. */
     private final List<Object[]> configurations = new ArrayList<>();
@@ -68,10 +68,10 @@ public class Installation implements LauncherRunContext {
     /**
      * Add a bundle with the given start level
      * @param startLevel The start level
-     * @param file The bundle file
+     * @param file The url to the bundle file
      */
-    public void addBundle(final Integer startLevel, final File file) {
-        List<File> files = bundleMap.get(startLevel);
+    public void addBundle(final Integer startLevel, final URL file) {
+        List<URL> files = bundleMap.get(startLevel);
         if ( files == null ) {
             files = new ArrayList<>();
             bundleMap.put(startLevel, files);
@@ -81,9 +81,9 @@ public class Installation implements LauncherRunContext {
 
     /**
      * Add an artifact to be installed by the installer
-     * @param file The file
+     * @param file The url to the file
      */
-    public void addInstallableArtifact(final File file) {
+    public void addInstallableArtifact(final URL file) {
         this.installables.add(file);
     }
 
@@ -114,7 +114,7 @@ public class Installation implements LauncherRunContext {
      * @see org.apache.sling.feature.launcher.spi.LauncherRunContext#getBundleMap()
      */
     @Override
-    public Map<Integer, List<File>> getBundleMap() {
+    public Map<Integer, List<URL>> getBundleMap() {
         return this.bundleMap;
     }
 
@@ -130,7 +130,7 @@ public class Installation implements LauncherRunContext {
      * @see org.apache.sling.feature.launcher.spi.LauncherRunContext#getInstallableArtifacts()
      */
     @Override
-    public List<File> getInstallableArtifacts() {
+    public List<URL> getInstallableArtifacts() {
         return this.installables;
     }
 

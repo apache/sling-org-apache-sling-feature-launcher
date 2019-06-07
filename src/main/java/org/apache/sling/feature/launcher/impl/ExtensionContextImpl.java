@@ -16,9 +16,9 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.util.Dictionary;
 import java.util.List;
@@ -50,12 +50,12 @@ class ExtensionContextImpl implements ExtensionContext {
     }
 
     @Override
-    public void addBundle(Integer startLevel, File file) {
+    public void addBundle(Integer startLevel, URL file) {
         installation.addBundle(startLevel, file);
     }
 
     @Override
-    public void addInstallableArtifact(File file) {
+    public void addInstallableArtifact(URL file) {
         installation.addInstallableArtifact(file);
     }
 
@@ -75,7 +75,7 @@ class ExtensionContextImpl implements ExtensionContext {
     }
 
     @Override
-    public Map<Integer, List<File>> getBundleMap() {
+    public Map<Integer, List<URL>> getBundleMap() {
         return installation.getBundleMap();
     }
 
@@ -85,13 +85,8 @@ class ExtensionContextImpl implements ExtensionContext {
     }
 
     @Override
-    public List<File> getInstallableArtifacts() {
+    public List<URL> getInstallableArtifacts() {
         return installation.getInstallableArtifacts();
-    }
-
-    @Override
-    public void addAppJar(File jar) {
-        prepareContext.addAppJar(jar);
     }
 
     @Override
@@ -100,7 +95,7 @@ class ExtensionContextImpl implements ExtensionContext {
     }
 
     @Override
-    public File getArtifactFile(ArtifactId artifact) throws IOException {
+    public URL getArtifactFile(ArtifactId artifact) throws IOException {
         return prepareContext.getArtifactFile(artifact);
     }
 
@@ -110,11 +105,11 @@ class ExtensionContextImpl implements ExtensionContext {
         if (f != null)
             return f;
 
-        File file = getArtifactFile(artifact);
+        URL file = getArtifactFile(artifact);
         if (file == null)
             return null;
 
-        try (FileReader r = new FileReader(file)) {
+        try (Reader r = new InputStreamReader(file.openStream(), "UTF-8")) {
             return FeatureJSONReader.read(r, artifact.toMvnUrl());
         }
     }

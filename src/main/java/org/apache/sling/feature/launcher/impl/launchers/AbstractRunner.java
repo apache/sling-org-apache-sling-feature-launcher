@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,17 +66,17 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     private final List<Object[]> configurations;
 
-    private final List<File> installables;
+    private final List<URL> installables;
 
     protected final Logger logger;
 
-    public AbstractRunner(final List<Object[]> configurations, final List<File> installables) {
+    public AbstractRunner(final List<Object[]> configurations, final List<URL> installables) {
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
         logger = LoggerFactory.getLogger("launcher");
     }
 
-    protected void setupFramework(final Framework framework, final Map<Integer, List<File>> bundlesMap)
+    protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap)
     throws BundleException {
         if ( !configurations.isEmpty() ) {
             this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
@@ -226,19 +227,19 @@ public abstract class AbstractRunner implements Callable<Integer> {
      * @param bundleMap The map with the bundles indexed by start level
      * @throws IOException, BundleException If anything goes wrong.
      */
-    private void install(final Framework framework, final Map<Integer, List<File>> bundleMap)
+    private void install(final Framework framework, final Map<Integer, List<URL>> bundleMap)
     throws IOException, BundleException {
         final BundleContext bc = framework.getBundleContext();
         int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
         for(final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
             logger.debug("Installing bundles with start level {}", startLevel);
 
-            for(final File file : bundleMap.get(startLevel)) {
-                logger.debug("- {}", file.getName());
+            for(final URL file : bundleMap.get(startLevel)) {
+                logger.debug("- {}", file);
 
                 // use reference protocol. This avoids copying the binary to the cache directory
                 // of the framework
-                final Bundle bundle = bc.installBundle("reference:" + file.toURI().toURL(), null);
+                final Bundle bundle = bc.installBundle("reference:" + file, null);
 
                 // fragment?
                 if ( !isSystemBundleFragment(bundle) && getFragmentHostHeader(bundle) == null ) {
@@ -290,13 +291,13 @@ public abstract class AbstractRunner implements Callable<Integer> {
                     Integer.class);
 
             for(int i=0; i<this.installables.size();i++) {
-                final File f = this.installables.get(i);
+                final URL f = this.installables.get(i);
                 final Dictionary<String, Object> dict = new Hashtable<>();
                 dict.put("resource.uri.hint", f.toURI().toString());
-                final Object rsrc = constructor.newInstance(f.getAbsolutePath(),
-                        new FileInputStream(f),
+                final Object rsrc = constructor.newInstance(f.getPath(),
+                        f.openStream(),
                         dict,
-                        f.getName(),
+                        f.getPath(),
                         "file",
                         null);
                 Array.set(resources, i, rsrc);

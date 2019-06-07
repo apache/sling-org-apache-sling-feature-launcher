@@ -17,6 +17,7 @@
 package org.apache.sling.feature.launcher.impl.launchers;
 
 import java.io.File;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -40,9 +41,9 @@ public class FrameworkRunner extends AbstractRunner {
     private volatile int type = -1;
 
     public FrameworkRunner(final Map<String, String> frameworkProperties,
-            final Map<Integer, List<File>> bundlesMap,
+            final Map<Integer, List<URL>> bundlesMap,
             final List<Object[]> configurations,
-            final List<File> installables) throws Exception {
+            final List<URL> installables) throws Exception {
         super(configurations, installables);
 
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);

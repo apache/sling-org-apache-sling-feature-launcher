@@ -18,6 +18,7 @@ package org.apache.sling.feature.launcher.impl.launchers;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,8 +72,8 @@ public class FrameworkLauncher implements Launcher {
             context.getLogger().debug("Bundles:");
             for(final Integer key : context.getBundleMap().keySet()) {
                 context.getLogger().debug("-- Start Level {}", key);
-                for(final File f : context.getBundleMap().get(key)) {
-                    context.getLogger().debug("  - {}", f.getName());
+                for(final URL f : context.getBundleMap().get(key)) {
+                    context.getLogger().debug("  - {}", f);
                 }
             }
             context.getLogger().debug("Settings: ");

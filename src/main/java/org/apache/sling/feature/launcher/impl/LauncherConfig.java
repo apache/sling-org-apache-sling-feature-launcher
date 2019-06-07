@@ -24,8 +24,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.sling.feature.io.file.ArtifactManagerConfig;
-import org.apache.sling.feature.io.file.spi.ArtifactProviderContext;
+import org.apache.sling.feature.io.artifacts.ArtifactManagerConfig;
+import org.apache.sling.feature.io.artifacts.spi.ArtifactProviderContext;
 
 /**
  * This class holds the configuration of the launcher.
