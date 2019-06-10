@@ -40,6 +40,8 @@ public class LauncherConfig
 
     private final List<String> artifactClashOverrides = new ArrayList<>();
 
+    private final Map<String, Map<String,String>> extensionConfiguration = new HashMap<>();
+
     /** The feature files or directories. */
     private final LinkedHashSet<String> featureFiles = new LinkedHashSet<>();
 
@@ -63,6 +65,10 @@ public class LauncherConfig
 
     public List<String> getArtifactClashOverrides() {
         return this.artifactClashOverrides;
+    }
+
+    public Map<String, Map<String, String>> getExtensionConfiguration() {
+        return this.extensionConfiguration;
     }
 
     /**
@@ -101,7 +107,13 @@ public class LauncherConfig
      * Clear all in-memory objects
      */
     public void clear() {
+        // TODO this is bad as it doesn't cover everything, e.g. the super class
+        // is not cleared. Can we please get rid of this method?
+        this.artifactClashOverrides.clear();
+        this.extensionConfiguration.clear();
+        this.featureFiles.clear();
         this.installation.clear();
+        this.variables.clear();
     }
 
     public Map<String,String> getVariables() {
