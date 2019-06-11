@@ -103,19 +103,6 @@ public class LauncherConfig
         return this.installation;
     }
 
-    /**
-     * Clear all in-memory objects
-     */
-    public void clear() {
-        // TODO this is bad as it doesn't cover everything, e.g. the super class
-        // is not cleared. Can we please get rid of this method?
-        this.artifactClashOverrides.clear();
-        this.extensionConfiguration.clear();
-        this.featureFiles.clear();
-        this.installation.clear();
-        this.variables.clear();
-    }
-
     public Map<String,String> getVariables() {
         return this.variables;
     }
