@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.File;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ import static org.junit.Assert.assertNull;
 public class ExtensionContextImplTest {
     @Test
     public void testGetFeature() throws Exception {
-        File testFeatureFile = new File(getClass().getResource("/test-feature.json").getFile());
+        URL testFeatureFile = getClass().getResource("/test-feature.json");
 
         ArtifactId aid2 = ArtifactId.fromMvnId("g:a:2");
         LauncherPrepareContext lpc = Mockito.mock(LauncherPrepareContext.class);

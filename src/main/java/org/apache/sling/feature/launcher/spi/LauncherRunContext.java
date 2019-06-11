@@ -16,7 +16,7 @@
  */
 package org.apache.sling.feature.launcher.spi;
 
-import java.io.File;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +37,7 @@ public interface LauncherRunContext {
      * Bundle map, key is the start level, value is a list of files.
      * @return The bundle map, might be empty
      */
-    Map<Integer, List<File>> getBundleMap();
+    Map<Integer, List<URL>> getBundleMap();
 
     /**
      * List of configurations.
@@ -56,7 +56,7 @@ public interface LauncherRunContext {
      * List of installable artifacts.
      * @return The list of files. The list might be empty.
      */
-    List<File> getInstallableArtifacts();
+    List<URL> getInstallableArtifacts();
 
     /**
      * Get the central logger

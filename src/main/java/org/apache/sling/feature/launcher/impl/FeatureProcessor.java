@@ -16,10 +16,10 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -31,15 +31,14 @@ import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
-import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
 import org.apache.sling.feature.builder.MergeHandler;
 import org.apache.sling.feature.builder.PostProcessHandler;
 import org.apache.sling.feature.io.IOUtils;
-import org.apache.sling.feature.io.file.ArtifactHandler;
-import org.apache.sling.feature.io.file.ArtifactManager;
+import org.apache.sling.feature.io.artifacts.ArtifactHandler;
+import org.apache.sling.feature.io.artifacts.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
@@ -62,7 +61,7 @@ public class FeatureProcessor {
         final BuilderContext builderContext = new BuilderContext(id -> {
             try {
                 final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
-                try (final FileReader r = new FileReader(handler.getFile())) {
+                try (final Reader r = new InputStreamReader(handler.getLocalURL().openStream(), "UTF-8")) {
                     final Feature f = FeatureJSONReader.read(r, handler.getUrl());
                     return f;
                 }
@@ -74,7 +73,7 @@ public class FeatureProcessor {
         builderContext.setArtifactProvider(id -> {
             try {
                 final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
-                return handler.getFile();
+                return handler.getLocalURL();
             } catch (final IOException e) {
                 // ignore
                 return null;
@@ -93,7 +92,7 @@ public class FeatureProcessor {
         for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), config.getFeatureFiles())) {
             logger.debug("Reading feature file {}", initFile);
             final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
-            try (final FileReader r = new FileReader(featureArtifact.getFile())) {
+            try (final Reader r = new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
                 final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
                 loadedFeatures.put(f.getId(), f);
             } catch (Exception ex) {
@@ -134,7 +133,7 @@ public class FeatureProcessor {
             final Feature app, Map<ArtifactId, Feature> loadedFeatures) throws Exception {
         for(final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet()) {
             for(final Artifact a : entry.getValue()) {
-                final File artifactFile = ctx.getArtifactFile(a.getId());
+                final URL artifactFile = ctx.getArtifactFile(a.getId());
 
                 config.getInstallation().addBundle(entry.getKey(), artifactFile);
             }
@@ -166,43 +165,5 @@ public class FeatureProcessor {
                 throw new Exception("Unknown required extension " + ext.getName());
             }
         }
-    }
-
-    /**
-     * Prepare the cache
-     * - add all bundles
-     * - add all other artifacts (only if startup mode is INSTALL)
-     * @param artifactManager The artifact manager
-     * @param app the feature with the artifacts
-     * @return An Artifact to File mapping.
-     * @throws Exception when something goes wrong.
-     */
-    public static Map<Artifact, File> calculateArtifacts(final ArtifactManager artifactManager,
-        final Feature app) throws Exception
-    {
-        Map<Artifact, File> result = new HashMap<>();
-        for (final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet())
-        {
-            for (final Artifact a : entry.getValue())
-            {
-                final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
-                final File artifactFile = handler.getFile();
-
-                result.put(a, artifactFile);
-            }
-        }
-        for (final Extension ext : app.getExtensions())
-        {
-            if (ext.getType() == ExtensionType.ARTIFACTS
-                    && ext.getName().equals(Extension.EXTENSION_NAME_CONTENT_PACKAGES))
-            {
-                for (final Artifact a : ext.getArtifacts())
-                {
-                    final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + a.getId().toMvnPath());
-                    result.put(a, handler.getFile());
-                }
-            }
-        }
-        return result;
     }
 }
