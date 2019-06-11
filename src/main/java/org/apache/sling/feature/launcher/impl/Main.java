@@ -72,6 +72,7 @@ public class Main {
 
         final Option frameworkVersionOption = new Option("fv", true, "Set felix framework version");
         final Option frameworkArtifactOption = new Option("fa", true, "Set framework artifact (overrides felix framework version)");
+        final Option failOnErrorOption = new Option("foe", false, "Fail on Error");
 
         options.addOption(artifactClashOverride);
         options.addOption(repoOption);
@@ -83,6 +84,7 @@ public class Main {
         options.addOption(homeOption);
         options.addOption(frameworkVersionOption);
         options.addOption(frameworkArtifactOption);
+        options.addOption(failOnErrorOption);
 
         final CommandLineParser clp = new BasicParser();
         try {
@@ -131,6 +133,9 @@ public class Main {
             }
             if (cl.hasOption(frameworkArtifactOption.getOpt())) {
                 config.setFrameworkArtifact(cl.getOptionValue(frameworkArtifactOption.getOpt()));
+            }
+            if (cl.hasOption(failOnErrorOption.getOpt())) {
+                config.setFailOnError(true);
             }
         } catch ( final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);

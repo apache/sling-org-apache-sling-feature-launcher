@@ -31,7 +31,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -44,11 +43,10 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkEvent;
-import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.framework.wiring.BundleRevision;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 import org.slf4j.Logger;
@@ -149,8 +147,6 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException
     {
-        CountDownLatch latch = new CountDownLatch(1);
-
         Executor executor = Executors.newSingleThreadExecutor();
         Future<Void> result = ((ExecutorService) executor).submit(new Callable<Void>()
         {
@@ -158,6 +154,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
             public Void call() throws Exception
             {
                 framework.start();
+                checkResultingState(framework);
                 return null;
             }
         });
@@ -313,6 +310,24 @@ public abstract class AbstractRunner implements Callable<Integer> {
             t.setDaemon(false);
             t.start();
             this.installables.clear();
+        }
+    }
+
+    static void checkResultingState(final Framework framework) {
+        if (!Boolean.TRUE.toString().equals(framework.getBundleContext().
+                getProperty("sling.feature.launcher.failonerror")))
+            return; // if the failonerror property is not set, don't check
+
+        // Check that all bundles were resolved and started successfully.
+        for (Bundle b : framework.getBundleContext().getBundles()) {
+            if ((b.adapt(BundleRevision.class).getTypes() & BundleRevision.TYPE_FRAGMENT) != 0) {
+                // It's a fragment, these don't start
+                continue;
+            }
+
+            if (b.getState() != Bundle.ACTIVE) {
+                throw new IllegalStateException("Was not able to start bundle: " + b + " See the log for further details.");
+            }
         }
     }
 }

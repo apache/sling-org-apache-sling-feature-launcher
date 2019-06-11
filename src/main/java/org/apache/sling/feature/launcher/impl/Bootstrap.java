@@ -89,6 +89,8 @@ public class Bootstrap {
         installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
         installation.getFrameworkProperties().put("sling.feature",
                 getApplicationFeatureFile(this.config).toURI().toString());
+        installation.getFrameworkProperties().put("sling.feature.launcher.failonerror",
+                Boolean.valueOf(this.config.getFailOnError()).toString());
 
 
         // additional OSGi properties

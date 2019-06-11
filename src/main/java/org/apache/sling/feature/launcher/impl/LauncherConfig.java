@@ -40,6 +40,8 @@ public class LauncherConfig
 
     private final List<String> artifactClashOverrides = new ArrayList<>();
 
+    private volatile boolean failOnError = false;
+
     /** The feature files or directories. */
     private final LinkedHashSet<String> featureFiles = new LinkedHashSet<>();
 
@@ -106,6 +108,14 @@ public class LauncherConfig
 
     public Map<String,String> getVariables() {
         return this.variables;
+    }
+
+    public boolean getFailOnError() {
+        return failOnError;
+    }
+
+    public void setFailOnError(boolean foe) {
+        failOnError = foe;
     }
 
     public String getFrameworkVersion() {
