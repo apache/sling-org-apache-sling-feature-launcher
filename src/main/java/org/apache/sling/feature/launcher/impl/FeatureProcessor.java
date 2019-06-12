@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -89,19 +90,21 @@ public class FeatureProcessor {
             ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED), false)
                 .toArray(PostProcessHandler[]::new));
 
+        List<Feature> features = new ArrayList<>();
         for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), config.getFeatureFiles())) {
             logger.debug("Reading feature file {}", initFile);
             final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
             try (final Reader r = new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
                 final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
                 loadedFeatures.put(f.getId(), f);
+                features.add(f);
             } catch (Exception ex) {
                 throw new IOException("Error reading feature: " + initFile, ex);
             }
         }
 
         // TODO make feature id configurable
-        final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, loadedFeatures.values().toArray(new Feature[0]));
+        final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, features.toArray(new Feature[0]));
         loadedFeatures.put(app.getId(), app);
 
         // TODO: this sucks
