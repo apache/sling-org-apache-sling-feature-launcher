@@ -16,8 +16,6 @@
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
@@ -32,7 +30,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -45,8 +42,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkEvent;
-import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
@@ -76,8 +71,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
         logger = LoggerFactory.getLogger("launcher");
     }
 
-    protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap)
-    throws BundleException {
+    protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap) throws BundleException {
         if ( !configurations.isEmpty() ) {
             this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
                     "org.osgi.service.cm.ConfigurationAdmin",
@@ -141,17 +135,10 @@ public abstract class AbstractRunner implements Callable<Integer> {
             this.installerTracker.open();
         }
 
-        try {
-            this.install(framework, bundlesMap);
-        } catch ( final IOException ioe) {
-            throw new BundleException("Unable to install bundles.", ioe);
-        }
+        this.install(framework, bundlesMap);
     }
 
-    protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException
-    {
-        CountDownLatch latch = new CountDownLatch(1);
-
+    protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException {
         Executor executor = Executors.newSingleThreadExecutor();
         Future<Void> result = ((ExecutorService) executor).submit(new Callable<Void>()
         {
@@ -227,8 +214,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
      * @param bundleMap The map with the bundles indexed by start level
      * @throws IOException, BundleException If anything goes wrong.
      */
-    private void install(final Framework framework, final Map<Integer, List<URL>> bundleMap)
-    throws IOException, BundleException {
+    private void install(final Framework framework, final Map<Integer, List<URL>> bundleMap) throws BundleException {
         final BundleContext bc = framework.getBundleContext();
         int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
         for(final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
@@ -237,9 +223,15 @@ public abstract class AbstractRunner implements Callable<Integer> {
             for(final URL file : bundleMap.get(startLevel)) {
                 logger.debug("- {}", file);
 
-                // use reference protocol. This avoids copying the binary to the cache directory
+                // use reference protocol if possible. This avoids copying the binary to the cache directory
                 // of the framework
-                final Bundle bundle = bc.installBundle("reference:" + file, null);
+                String location = "";
+                if (file.getProtocol().equals("file")) {
+                    location = "reference:";
+                }
+                location = location + file.toString();
+
+                final Bundle bundle = bc.installBundle(location, null);
 
                 // fragment?
                 if ( !isSystemBundleFragment(bundle) && getFragmentHostHeader(bundle) == null ) {

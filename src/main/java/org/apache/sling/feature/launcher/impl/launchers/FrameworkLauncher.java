@@ -16,7 +16,6 @@
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
-import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.util.HashMap;
