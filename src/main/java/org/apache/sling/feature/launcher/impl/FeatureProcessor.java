@@ -91,15 +91,17 @@ public class FeatureProcessor {
                 .toArray(PostProcessHandler[]::new));
 
         List<Feature> features = new ArrayList<>();
-        for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), config.getFeatureFiles())) {
-            logger.debug("Reading feature file {}", initFile);
-            final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
-            try (final Reader r = new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
-                final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
-                loadedFeatures.put(f.getId(), f);
-                features.add(f);
-            } catch (Exception ex) {
-                throw new IOException("Error reading feature: " + initFile, ex);
+        for (final String featureFile : config.getFeatureFiles()) {
+            for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), featureFile)) {
+                logger.debug("Reading feature file {}", initFile);
+                final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
+                try (final Reader r = new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
+                    final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
+                    loadedFeatures.put(f.getId(), f);
+                    features.add(f);
+                } catch (Exception ex) {
+                    throw new IOException("Error reading feature: " + initFile, ex);
+                }
             }
         }
 
