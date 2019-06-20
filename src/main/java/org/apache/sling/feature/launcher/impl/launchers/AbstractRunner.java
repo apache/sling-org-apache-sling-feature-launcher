@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -42,7 +43,9 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.util.tracker.ServiceTracker;
@@ -54,6 +57,19 @@ import org.slf4j.LoggerFactory;
  * Common functionality for the framework start.
  */
 public abstract class AbstractRunner implements Callable<Integer> {
+
+    /**
+     * Configuration property for Apache Felix Configuration Admin persistence
+     * manager.
+     */
+    private static final String CM_CONFIG_PM = "felix.cm.pm";
+
+    /** Name of the feature launcher persistence manager. */
+    private static final String PM_FEATURE_LAUNCHER = "featurelauncher";
+
+    /** Filter expression to get the memory persistence manager. */
+    private static final String PM_MEMORY_FILTER = "(&(" + Constants.OBJECTCLASS
+            + "=org.apache.felix.cm.PersistenceManager)(name=memory))";
 
     private volatile ServiceTracker<Object, Object> configAdminTracker;
 
@@ -68,40 +84,112 @@ public abstract class AbstractRunner implements Callable<Integer> {
     public AbstractRunner(final List<Object[]> configurations, final List<URL> installables) {
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
-        logger = LoggerFactory.getLogger("launcher");
+        this.logger = LoggerFactory.getLogger("launcher");
     }
 
     protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap) throws BundleException {
         if ( !configurations.isEmpty() ) {
-            this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
-                    "org.osgi.service.cm.ConfigurationAdmin",
-                    new ServiceTrackerCustomizer<Object, Object>() {
+            // check for Apache Felix CM persistence manager config
+            final String pm = framework.getBundleContext().getProperty(CM_CONFIG_PM);
+            if (PM_FEATURE_LAUNCHER.equals(pm)) {
+                logger.info("Using feature launcher configuration admin persistence manager");
+                try {
+                    // we start a tracker for the memory PM
+                    this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
+                            framework.getBundleContext().createFilter(PM_MEMORY_FILTER),
 
-                        @Override
-                        public Object addingService(final ServiceReference<Object> reference) {
-                            // get config admin
-                            final Object cm = framework.getBundleContext().getService(reference);
-                            if ( cm != null ) {
-                                try {
-                                    configure(cm);
-                                } finally {
-                                    framework.getBundleContext().ungetService(reference);
+                            new ServiceTrackerCustomizer<Object, Object>() {
+                                private volatile ServiceRegistration<?> reg;
+
+                                @Override
+                                public Object addingService(final ServiceReference<Object> reference) {
+                                    // get memory pm
+                                    final Object memoryPM = framework.getBundleContext().getService(reference);
+                                    if (memoryPM != null) {
+                                        try {
+                                            // we re use the memory PM (it is not used anyway)
+                                            // and simply store the configs there using reflection
+                                            final Method storeMethod = memoryPM.getClass().getDeclaredMethod("store",
+                                                    String.class, Dictionary.class);
+                                            for (final Object[] obj : configurations) {
+                                                @SuppressWarnings("unchecked")
+                                                final Dictionary<String, Object> props = (Dictionary<String, Object>) obj[2];
+                                                final String pid;
+                                                if (obj[1] != null) {
+                                                    final String factoryPid = (String) obj[1];
+                                                    pid = factoryPid.concat("~").concat((String) obj[0]);
+                                                    props.put("service.factoryPid", factoryPid);
+                                                } else {
+                                                    pid = (String) obj[0];
+                                            }
+                                                props.put(Constants.SERVICE_PID, pid);
+                                                storeMethod.invoke(memoryPM, pid, props);
+                                            }
+                                            // register feature launcher pm
+                                            final Dictionary<String, Object> properties = new Hashtable<>();
+                                            properties.put("name", PM_FEATURE_LAUNCHER);
+                                            reg = reference.getBundle().getBundleContext().registerService(
+                                                    "org.apache.felix.cm.PersistenceManager", memoryPM, properties);
+                                        } catch (IllegalAccessException | IllegalArgumentException
+                                                | InvocationTargetException | NoSuchMethodException
+                                                | SecurityException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }
+                                    return memoryPM;
                                 }
+
+                                @Override
+                                public void modifiedService(ServiceReference<Object> reference, Object service) {
+                                    // nothing to do
+                                }
+
+                                @Override
+                                public void removedService(ServiceReference<Object> reference, Object service) {
+                                    if (reg != null) {
+                                        reg.unregister();
+                                        reg = null;
+                                }
+                                    reference.getBundle().getBundleContext().ungetService(reference);
+                                }
+                            });
+                } catch (final InvalidSyntaxException e) {
+                    // the filter is constant so this should really not happen
+                    throw new RuntimeException(e);
+                }
+                this.configAdminTracker.open();
+
+            } else {
+                this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
+                        "org.osgi.service.cm.ConfigurationAdmin",
+                        new ServiceTrackerCustomizer<Object, Object>() {
+
+                            @Override
+                            public Object addingService(final ServiceReference<Object> reference) {
+                                // get config admin
+                                final Object cm = framework.getBundleContext().getService(reference);
+                                if ( cm != null ) {
+                                    try {
+                                        configure(cm);
+                                    } finally {
+                                        framework.getBundleContext().ungetService(reference);
+                                    }
+                                }
+                                return null;
                             }
-                            return null;
-                        }
 
-                        @Override
-                        public void modifiedService(ServiceReference<Object> reference, Object service) {
-                            // nothing to do
-                        }
+                            @Override
+                            public void modifiedService(ServiceReference<Object> reference, Object service) {
+                                // nothing to do
+                            }
 
-                        @Override
-                        public void removedService(ServiceReference<Object> reference, Object service) {
-                            // nothing to do
-                        }
-            });
-            this.configAdminTracker.open();
+                            @Override
+                            public void removedService(ServiceReference<Object> reference, Object service) {
+                                // nothing to do
+                            }
+                });
+                this.configAdminTracker.open();
+            }
         }
         if ( !installables.isEmpty() ) {
             this.installerTracker = new ServiceTracker<>(framework.getBundleContext(),
