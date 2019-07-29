@@ -16,8 +16,6 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
-import java.io.File;
-
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -27,6 +25,12 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This is the launcher main class.
@@ -44,12 +48,28 @@ public class Main {
     }
 
     /** Split a string into key and value */
-    private static String[] split(final String val) {
+    static String[] split(final String val) {
         final int pos = val.indexOf('=');
         if ( pos == -1 ) {
             return new String[] {val, "true"};
         }
         return new String[] {val.substring(0, pos), val.substring(pos + 1)};
+    }
+
+    static Map.Entry<String, Map<String, String>> splitMap(final String val) {
+        String[] split1 = val.split(":");
+
+        if (split1.length < 2) {
+            return new AbstractMap.SimpleEntry<>(split1[0], Collections.emptyMap());
+        }
+
+        Map<String, String> m = new HashMap<>();
+        for (String kv : split1[1].split(",")) {
+            String[] keyval = split(kv);
+            m.put(keyval[0], keyval[1]);
+        }
+
+        return new AbstractMap.SimpleEntry<>(split1[0], m);
     }
 
     /**
@@ -70,6 +90,7 @@ public class Main {
         final Option cacheOption = new Option("c", true, "Set cache dir");
         final Option homeOption = new Option("p", true, "Set home dir");
 
+        final Option extensionConfiguration = new Option("ec", true, "Provide extension configuration, format: extensionName:key1=val1,key2=val2");
         final Option frameworkVersionOption = new Option("fv", true, "Set felix framework version");
         final Option frameworkArtifactOption = new Option("fa", true, "Set framework artifact (overrides felix framework version)");
 
@@ -81,6 +102,7 @@ public class Main {
         options.addOption(debugOption);
         options.addOption(cacheOption);
         options.addOption(homeOption);
+        options.addOption(extensionConfiguration);
         options.addOption(frameworkVersionOption);
         options.addOption(frameworkArtifactOption);
 
@@ -125,6 +147,18 @@ public class Main {
             }
             if (cl.hasOption(homeOption.getOpt())) {
                 config.setHomeDirectory(new File(cl.getOptionValue(homeOption.getOpt())));
+            }
+            if (cl.hasOption(extensionConfiguration.getOpt())) {
+                for(final String optVal : cl.getOptionValues(extensionConfiguration.getOpt())) {
+                    Map.Entry<String, Map<String, String>> xc = splitMap(optVal);
+                    Map<String, Map<String, String>> ec = config.getExtensionConfiguration();
+                    Map<String, String> c = ec.get(xc.getKey());
+                    if (c == null) {
+                        c = new HashMap<>();
+                        ec.put(xc.getKey(), c);
+                    }
+                    c.putAll(xc.getValue());
+                }
             }
             if (cl.hasOption(frameworkVersionOption.getOpt())) {
                 config.setFrameworkVersion(cl.getOptionValue(frameworkVersionOption.getOpt()));

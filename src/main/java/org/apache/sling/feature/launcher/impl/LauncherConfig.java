@@ -40,6 +40,8 @@ public class LauncherConfig
 
     private final List<String> artifactClashOverrides = new ArrayList<>();
 
+    private final Map<String, Map<String,String>> extensionConfiguration = new HashMap<>();
+
     /** The feature files or directories. */
     private final LinkedHashSet<String> featureFiles = new LinkedHashSet<>();
 
@@ -63,6 +65,10 @@ public class LauncherConfig
 
     public List<String> getArtifactClashOverrides() {
         return this.artifactClashOverrides;
+    }
+
+    public Map<String, Map<String, String>> getExtensionConfiguration() {
+        return this.extensionConfiguration;
     }
 
     /**
@@ -95,13 +101,6 @@ public class LauncherConfig
 
     public Installation getInstallation() {
         return this.installation;
-    }
-
-    /**
-     * Clear all in-memory objects
-     */
-    public void clear() {
-        this.installation.clear();
     }
 
     public Map<String,String> getVariables() {
