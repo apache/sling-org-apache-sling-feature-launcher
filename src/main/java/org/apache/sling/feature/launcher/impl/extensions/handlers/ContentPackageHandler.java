@@ -27,6 +27,11 @@ import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 public class ContentPackageHandler implements ExtensionHandler
 {
     @Override
+    public int getPriority() {
+        return FALLBACK_PRIORITY;
+    }
+
+    @Override
     public boolean handle(ExtensionContext context, Extension extension) throws IOException
     {
         if (extension.getType() == ExtensionType.ARTIFACTS
