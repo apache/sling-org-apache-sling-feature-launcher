@@ -22,6 +22,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -165,13 +166,13 @@ public class FeatureProcessor {
         }
 
         extensions: for(final Extension ext : app.getExtensions()) {
-            List<ExtensionHandler> extensionHandlerList = new ArrayList<>();
-            for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader())) {
-                extensionHandlerList.add(handler);
-            }
-            List<ExtensionHandler> prioritizedExtensionHandlerList = extensionHandlerList.stream()
-                .sorted(Comparator.comparingInt(ExtensionHandler::getPriority).reversed())
-                .collect(Collectors.toList());
+            Iterator<ExtensionHandler> i = ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()).iterator();
+            // Stream the iterator, sort them based on Priority in reversed order and then collection into a list
+            List<ExtensionHandler> prioritizedExtensionHandlerList =
+                StreamSupport
+                    .stream(Spliterators.spliteratorUnknownSize(i, Spliterator.ORDERED), false)
+                    .sorted(Comparator.comparingInt(ExtensionHandler::getPriority).reversed())
+                    .collect(Collectors.toList());
             for (ExtensionHandler handler : prioritizedExtensionHandlerList)
             {
                 if (handler.handle(new ExtensionContextImpl(ctx, config.getInstallation(), loadedFeatures), ext)) {
