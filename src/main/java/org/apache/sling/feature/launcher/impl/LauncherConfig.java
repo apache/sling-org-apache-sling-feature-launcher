@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,8 @@ public class LauncherConfig
     private static final String CACHE_DIR = "cache";
 
     private final List<String> artifactClashOverrides = new ArrayList<>();
+
+    private final Map<String,String> configClashOverrides = new LinkedHashMap<>();
 
     private final Map<String, Map<String,String>> extensionConfiguration = new HashMap<>();
 
@@ -65,6 +68,10 @@ public class LauncherConfig
 
     public List<String> getArtifactClashOverrides() {
         return this.artifactClashOverrides;
+    }
+
+    public Map<String, String> getConfigClashOverrides() {
+        return this.configClashOverrides;
     }
 
     public Map<String, Map<String, String>> getExtensionConfiguration() {

@@ -81,6 +81,7 @@ public class FeatureProcessor {
             }
         });
         builderContext.addArtifactsOverrides(config.getArtifactClashOverrides());
+        builderContext.addConfigsOverrides(config.getConfigClashOverrides());
         builderContext.addVariablesOverrides(config.getVariables());
         builderContext.addFrameworkPropertiesOverrides(config.getInstallation().getFrameworkProperties());
         builderContext.addMergeExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
