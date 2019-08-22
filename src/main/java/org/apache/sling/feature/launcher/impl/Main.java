@@ -81,6 +81,7 @@ public class Main {
         final Options options = new Options();
 
         final Option artifactClashOverride = new Option("C", true, "Set artifact clash override");
+        final Option configClashOverride = new Option("CC", true, "Set config clash override");
         final Option repoOption =  new Option("u", true, "Set repository url");
         final Option featureOption =  new Option("f", true, "Set feature files");
         final Option fwkProperties = new Option("D", true, "Set framework properties");
@@ -95,6 +96,7 @@ public class Main {
         final Option frameworkArtifactOption = new Option("fa", true, "Set framework artifact (overrides felix framework version)");
 
         options.addOption(artifactClashOverride);
+        options.addOption(configClashOverride);
         options.addOption(repoOption);
         options.addOption(featureOption);
         options.addOption(fwkProperties);
@@ -117,6 +119,12 @@ public class Main {
             if ( cl.hasOption(artifactClashOverride.getOpt()) ) {
                 for(final String override : cl.getOptionValues(artifactClashOverride.getOpt())) {
                     config.getArtifactClashOverrides().add(override);
+                }
+            }
+            if ( cl.hasOption(configClashOverride.getOpt()) ) {
+                for(final String override : cl.getOptionValues(configClashOverride.getOpt())) {
+                    final String[] keyVal = split(override);
+                    config.getConfigClashOverrides().put(keyVal[0], keyVal[1]);
                 }
             }
             if ( cl.hasOption(fwkProperties.getOpt()) ) {
