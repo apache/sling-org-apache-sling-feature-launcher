@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import org.apache.commons.lang.text.StrLookup;
-import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.commons.text.StringSubstitutor;
+import org.apache.commons.text.lookup.StringLookup;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.launcher.spi.Launcher;
@@ -50,15 +50,15 @@ public class FrameworkLauncher implements Launcher {
      */
     @Override
     public int run(final LauncherRunContext context, final ClassLoader cl) throws Exception {
-        StrSubstitutor ss = new StrSubstitutor(new StrLookup() {
+        StringSubstitutor ss = new StringSubstitutor(new StringLookup() {
+
             @Override
-            public String lookup(String key) {
+            public String lookup(final String key) {
                 // Normally if a variable cannot be found, StrSubstitutor will
                 // leave the raw variable in place. We need to replace it with
                 // nothing in that case.
-
-                String val = context.getFrameworkProperties().get(key);
-                return val != null ? val : "";
+                final String value = context.getFrameworkProperties().get(key);
+                return value == null ? "" : value;
             }
         });
         ss.setEnableSubstitutionInVariables(true);
