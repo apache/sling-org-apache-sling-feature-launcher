@@ -19,7 +19,6 @@ package org.apache.sling.feature.launcher.impl;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,7 +125,7 @@ public class Bootstrap {
             this.logger.info("Assembling provisioning model...");
 
             try {
-                boolean restart = this.config.getFeatureFiles().length == 0;
+                final boolean restart = this.config.getFeatureFiles().isEmpty();
 
                 Map<ArtifactId, Feature> loadedFeatures = new HashMap<>();
                 final Feature app = assemble(artifactManager, loadedFeatures);
@@ -188,7 +187,7 @@ public class Bootstrap {
     private Feature assemble(final ArtifactManager artifactManager,
             Map<ArtifactId, Feature> loadedFeatures) throws IOException
     {
-        if (this.config.getFeatureFiles().length == 0) {
+        if (this.config.getFeatureFiles().isEmpty() ) {
             File application = getApplicationFeatureFile(this.config);
             if (application.isFile()) {
                 this.config.addFeatureFiles(application.toURI().toURL().toString());

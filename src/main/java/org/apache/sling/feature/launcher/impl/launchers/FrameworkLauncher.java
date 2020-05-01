@@ -94,6 +94,7 @@ public class FrameworkLauncher implements Launcher {
         final Constructor<?> constructor = runnerClass.getDeclaredConstructor(Map.class, Map.class, List.class,
                 List.class);
         constructor.setAccessible(true);
+        @SuppressWarnings("unchecked")
         Callable<Integer> restart = (Callable<Integer>) constructor.newInstance(properties, context.getBundleMap(),
                 context.getConfigurations(), context.getInstallableArtifacts());
 

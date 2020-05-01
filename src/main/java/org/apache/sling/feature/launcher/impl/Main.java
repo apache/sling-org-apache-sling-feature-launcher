@@ -16,6 +16,12 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
+import java.io.File;
+import java.util.AbstractMap;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -23,14 +29,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.sling.feature.ArtifactId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.AbstractMap;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This is the launcher main class.
@@ -118,7 +119,7 @@ public class Main {
             }
             if ( cl.hasOption(artifactClashOverride.getOpt()) ) {
                 for(final String override : cl.getOptionValues(artifactClashOverride.getOpt())) {
-                    config.getArtifactClashOverrides().add(override);
+                    config.getArtifactClashOverrides().add(ArtifactId.parse(override));
                 }
             }
             if ( cl.hasOption(configClashOverride.getOpt()) ) {

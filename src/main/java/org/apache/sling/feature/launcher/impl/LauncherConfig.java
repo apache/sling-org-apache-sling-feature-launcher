@@ -19,12 +19,14 @@ package org.apache.sling.feature.launcher.impl;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.io.artifacts.ArtifactManagerConfig;
 import org.apache.sling.feature.io.artifacts.spi.ArtifactProviderContext;
 
@@ -39,7 +41,7 @@ public class LauncherConfig
 
     private static final String CACHE_DIR = "cache";
 
-    private final List<String> artifactClashOverrides = new ArrayList<>();
+    private final List<ArtifactId> artifactClashOverrides = new ArrayList<>();
 
     private final Map<String,String> configClashOverrides = new LinkedHashMap<>();
 
@@ -66,7 +68,7 @@ public class LauncherConfig
         this.setCacheDirectory(new File(getHomeDirectory(), CACHE_DIR));
     }
 
-    public List<String> getArtifactClashOverrides() {
+    public List<ArtifactId> getArtifactClashOverrides() {
         return this.artifactClashOverrides;
     }
 
@@ -90,8 +92,8 @@ public class LauncherConfig
      * Get the list of feature files.
      * @return The array of names.
      */
-    public String[] getFeatureFiles() {
-        return this.featureFiles.toArray(new String[0]);
+    public Collection<String> getFeatureFiles() {
+        return this.featureFiles;
     }
 
     /**

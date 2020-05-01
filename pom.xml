@@ -56,7 +56,7 @@
                         <outputDirectory>${project.build.directory}/classes</outputDirectory>
                         <overWriteReleases>false</overWriteReleases>
                         <overWriteSnapshots>true</overWriteSnapshots>
-                        <includeArtifactIds>osgi.core,commons-text,org.apache.sling.feature,org.apache.sling.feature.io,org.apache.sling.commons.johnzon,org.apache.felix.converter,commons-cli,slf4j-api,slf4j-simple</includeArtifactIds>
+                        <includeArtifactIds>osgi.core,commons-text,commons-lang3,org.apache.sling.feature,org.osgi.util.function,org.apache.felix.cm.json,org.apache.sling.commons.johnzon,org.apache.felix.converter,commons-cli,slf4j-api,slf4j-simple</includeArtifactIds>
                     </configuration>
                 </execution>
             </executions>
@@ -95,6 +95,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.10</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>osgi.core</artifactId>
             <version>7.0.0</version>
@@ -113,19 +119,25 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature</artifactId>
-            <version>1.1.8</version>
+            <version>1.2.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.feature.io</artifactId>
-            <version>1.3.0</version>
-            <scope>provided</scope>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.util.function</artifactId>
+            <version>1.0.0</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.converter</artifactId>
-            <version>1.0.12</version>
+            <version>1.0.14</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.cm.json</artifactId>
+            <version>1.0.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -137,7 +149,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.1.0</version>
+            <version>1.2.2</version>
             <scope>provided</scope>
         </dependency>
 

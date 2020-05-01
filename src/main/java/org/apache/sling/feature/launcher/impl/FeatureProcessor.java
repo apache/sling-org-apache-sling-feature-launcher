@@ -16,8 +16,12 @@
  */
 package org.apache.sling.feature.launcher.impl;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -32,12 +36,15 @@ import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Configuration;
 import org.apache.sling.feature.Extension;
+import org.apache.sling.feature.ExtensionState;
 import org.apache.sling.feature.Feature;
+import org.apache.sling.feature.builder.ArtifactProvider;
 import org.apache.sling.feature.builder.BuilderContext;
 import org.apache.sling.feature.builder.FeatureBuilder;
 import org.apache.sling.feature.builder.MergeHandler;
 import org.apache.sling.feature.builder.PostProcessHandler;
 import org.apache.sling.feature.io.IOUtils;
+import org.apache.sling.feature.io.archive.ArchiveReader;
 import org.apache.sling.feature.io.artifacts.ArtifactHandler;
 import org.apache.sling.feature.io.artifacts.ArtifactManager;
 import org.apache.sling.feature.io.json.FeatureJSONReader;
@@ -71,16 +78,22 @@ public class FeatureProcessor {
                 return null;
             }
         });
-        builderContext.setArtifactProvider(id -> {
-            try {
-                final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
-                return handler.getLocalURL();
-            } catch (final IOException e) {
-                // ignore
-                return null;
+        final ArtifactProvider provider = new ArtifactProvider() {
+
+            @Override
+            public URL provide(final ArtifactId id) {
+                try {
+                    final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
+                    return handler.getLocalURL();
+                } catch (final IOException e) {
+                    // ignore
+                    return null;
+                }
             }
-        });
-        builderContext.addArtifactsOverrides(config.getArtifactClashOverrides());
+        };
+        builderContext.setArtifactProvider(provider);
+
+        config.getArtifactClashOverrides().stream().forEach(id -> builderContext.addArtifactsOverride(id));
         builderContext.addConfigsOverrides(config.getConfigClashOverrides());
         builderContext.addVariablesOverrides(config.getVariables());
         builderContext.addFrameworkPropertiesOverrides(config.getInstallation().getFrameworkProperties());
@@ -95,16 +108,46 @@ public class FeatureProcessor {
         }
 
         List<Feature> features = new ArrayList<>();
+        final byte[] buffer = new byte[1024*1024*256];
         for (final String featureFile : config.getFeatureFiles()) {
             for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), featureFile)) {
-                logger.debug("Reading feature file {}", initFile);
-                final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
-                try (final Reader r = new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
-                    final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
-                    loadedFeatures.put(f.getId(), f);
-                    features.add(f);
-                } catch (Exception ex) {
-                    throw new IOException("Error reading feature: " + initFile, ex);
+                if ( initFile.endsWith(IOUtils.EXTENSION_FEATURE_ARCHIVE) ) {
+                    logger.debug("Reading feature archive {}", initFile);
+                    final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
+                    try (final InputStream is = featureArtifact.getLocalURL().openStream()) {
+                        for(final Feature feature : ArchiveReader.read(is, (id, stream) -> {
+
+                                if ( provider.provide(id) == null ) {
+                                    final File artifactFile = new File(config.getCacheDirectory(),
+                                            id.toMvnPath().replace('/', File.separatorChar));
+                                    if (!artifactFile.exists()) {
+                                        artifactFile.getParentFile().mkdirs();
+                                        try (final OutputStream os = new FileOutputStream(artifactFile)) {
+                                            int l = 0;
+                                            while ((l = stream.read(buffer)) > 0) {
+                                                os.write(buffer, 0, l);
+                                            }
+                                        }
+                                    }
+                                }
+                            })) {
+
+                            features.add(feature);
+                            loadedFeatures.put(feature.getId(), feature);
+                        }
+                    } catch (final IOException ioe) {
+                        logger.info("Unable to read feature archive from " + initFile, ioe);
+                    }
+                } else {
+                    logger.debug("Reading feature file {}", initFile);
+                    final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
+                    try (final Reader r = new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
+                        final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
+                        loadedFeatures.put(f.getId(), f);
+                        features.add(f);
+                    } catch (Exception ex) {
+                        throw new IOException("Error reading feature: " + initFile, ex);
+                    }
                 }
             }
         }
@@ -170,7 +213,7 @@ public class FeatureProcessor {
                     continue extensions;
                 }
             }
-            if ( ext.isRequired() ) {
+            if ( ext.getState() == ExtensionState.REQUIRED ) {
                 throw new Exception("Unknown required extension " + ext.getName());
             }
         }
