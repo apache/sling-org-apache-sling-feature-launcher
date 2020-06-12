@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.ServiceLoader;
 
 import org.apache.sling.feature.ArtifactId;
+import org.apache.sling.feature.ExecutionEnvironmentExtension;
 import org.apache.sling.feature.Feature;
 import org.apache.sling.feature.io.artifacts.ArtifactHandler;
 import org.apache.sling.feature.io.artifacts.ArtifactManager;
@@ -151,9 +152,7 @@ public class Bootstrap {
                     }
                 };
 
-                launcher.prepare(ctx, this.config.getFrameworkArtifact() != null ?
-                    ArtifactId.fromMvnId(this.config.getFrameworkArtifact()) :
-                    getFelixFrameworkId(this.config.getFrameworkVersion()), app);
+                launcher.prepare(ctx, this.getFrameworkArtifactId(app), app);
 
                 FeatureProcessor.prepareLauncher(ctx, this.config, app, loadedFeatures);
 
@@ -182,6 +181,21 @@ public class Bootstrap {
             this.logger.error("Error while running launcher: {}", iae.getMessage(), iae);
             System.exit(1);
         }
+    }
+
+    private ArtifactId getFrameworkArtifactId(final Feature app) {
+        if ( this.config.getFrameworkArtifact() != null ) {
+            return ArtifactId.parse(this.config.getFrameworkArtifact());
+        }
+        if ( this.config.getFrameworkVersion() != null ) {
+            return getFelixFrameworkId(this.config.getFrameworkVersion());
+        }
+
+        final ExecutionEnvironmentExtension env = ExecutionEnvironmentExtension.getExecutionEnvironmentExtension(app);
+        if ( env != null && env.getFramework() != null ) {
+            return env.getFramework().getId();
+        }
+        return null;
     }
 
     private Feature assemble(final ArtifactManager artifactManager,
