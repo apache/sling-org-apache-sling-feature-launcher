@@ -93,8 +93,8 @@ public class Main {
         final Option homeOption = new Option("p", true, "Set home dir");
 
         final Option extensionConfiguration = new Option("ec", true, "Provide extension configuration, format: extensionName:key1=val1,key2=val2");
-        final Option frameworkVersionOption = new Option("fv", true, "Set felix framework version");
-        final Option frameworkArtifactOption = new Option("fa", true, "Set framework artifact (overrides felix framework version)");
+        final Option frameworkVersionOption = new Option("fv", true, "Set Apache Felix framework version (default ".concat(Bootstrap.FELIX_FRAMEWORK_VERSION) + ")");
+        final Option frameworkArtifactOption = new Option("fa", true, "Set OSGi framework artifact (overrides Apache Felix framework version)");
 
         options.addOption(artifactClashOverride);
         options.addOption(configClashOverride);

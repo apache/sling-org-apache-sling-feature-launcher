@@ -40,9 +40,12 @@ import org.osgi.framework.FrameworkEvent;
 import org.slf4j.Logger;
 
 /**
- * This is the bootstrap class. ´ß
+ * This is the bootstrap class.
  */
 public class Bootstrap {
+
+    /** The Apache Felix Framework version used by default. */
+    public static final String FELIX_FRAMEWORK_VERSION = "6.0.3";
 
     private final LauncherConfig config;
 
@@ -61,7 +64,7 @@ public class Bootstrap {
      * @throws IllegalArgumentException If the provided version is invalid
      */
     private ArtifactId getFelixFrameworkId(final String version) {
-        return new ArtifactId("org.apache.felix", "org.apache.felix.framework", version != null ? version : "6.0.3",
+        return new ArtifactId("org.apache.felix", "org.apache.felix.framework", version != null ? version : FELIX_FRAMEWORK_VERSION,
                 null, null);
     }
 
@@ -195,7 +198,7 @@ public class Bootstrap {
         if ( env != null && env.getFramework() != null ) {
             return env.getFramework().getId();
         }
-        return null;
+        return getFelixFrameworkId(null);
     }
 
     private Feature assemble(final ArtifactManager artifactManager,
