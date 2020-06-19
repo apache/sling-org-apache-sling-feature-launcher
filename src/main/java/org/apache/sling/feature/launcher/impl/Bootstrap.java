@@ -126,7 +126,7 @@ public class Bootstrap {
         try (ArtifactManager artifactManager = ArtifactManager.getArtifactManager(this.config)) {
 
             this.logger.info("Artifact Repositories: {}", Arrays.toString(this.config.getRepositoryUrls()));
-            this.logger.info("Assembling provisioning model...");
+            this.logger.info("Assembling final feature model...");
 
             try {
                 final boolean restart = this.config.getFeatureFiles().isEmpty();
