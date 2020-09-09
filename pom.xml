@@ -23,7 +23,7 @@
     <artifactId>org.apache.sling.feature.launcher</artifactId>
     <version>1.1.5-SNAPSHOT</version>
 
-    <name>Apache Sling Feature Launcher</name>
+    <name>Apache Sling Feature Model Launcher</name>
     <description>
         A application launcher using Apache Sling Features
     </description>
