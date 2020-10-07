@@ -18,7 +18,6 @@ package org.apache.sling.feature.launcher.impl.launchers;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -39,11 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -225,30 +219,6 @@ public abstract class AbstractRunner implements Callable<Integer> {
             this.installerTracker.open();
         }
 
-        MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
-        Hashtable<String, Object> mbeanProps = new Hashtable<>();
-        try {
-            ObjectName beanName = ObjectName.getInstance("JMImplementation:type=MBeanServerDelegate");
-            AttributeList attrs = platformMBeanServer.getAttributes(beanName,
-                new String[] { "MBeanServerId", "SpecificationName",
-                    "SpecificationVersion", "SpecificationVendor",
-                    "ImplementationName", "ImplementationVersion",
-                    "ImplementationVendor" });
-            for (Object object : attrs) {
-                Attribute attr = (Attribute) object;
-                if (attr.getValue() != null) {
-                    mbeanProps.put(attr.getName(), attr.getValue().toString());
-                }
-            }
-        } catch (Exception je) {
-            logger.info(
-                "start: Cannot set service properties of Platform MBeanServer service, registering without",
-                je);
-        }
-        
-        framework.getBundleContext().registerService(MBeanServer.class.getName(),
-            platformMBeanServer, mbeanProps);
-            
         this.install(framework, bundlesMap);
     }
 
