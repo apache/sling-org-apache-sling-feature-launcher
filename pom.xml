@@ -21,7 +21,7 @@
     </parent>
 
     <artifactId>org.apache.sling.feature.launcher</artifactId>
-    <version>1.1.8</version>
+    <version>1.1.9-SNAPSHOT</version>
 
     <name>Apache Sling Feature Model Launcher</name>
     <description>
