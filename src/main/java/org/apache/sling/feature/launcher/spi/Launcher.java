@@ -33,6 +33,9 @@ public interface Launcher {
     }
 
     class LauncherClassLoader extends URLClassLoader {
+        static {
+            ClassLoader.registerAsParallelCapable();
+        }
         public LauncherClassLoader() {
             super(new URL[0]);
         }
@@ -44,30 +47,32 @@ public interface Launcher {
 
         @Override
         public final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            // First check if it's already loaded
-            Class<?> clazz = findLoadedClass(name);
+            synchronized (getClassLoadingLock(name)) {
+                // First check if it's already loaded
+                Class<?> clazz = findLoadedClass(name);
 
-            if (clazz == null) {
+                if (clazz == null) {
 
-                try {
-                    clazz = findClass(name);
-                } catch (ClassNotFoundException cnfe) {
-                    ClassLoader parent = getParent();
-                    if (parent != null) {
-                        // Ask to parent ClassLoader (can also throw a CNFE).
-                        clazz = parent.loadClass(name);
-                    } else {
-                        // Propagate exception
-                        throw cnfe;
+                    try {
+                        clazz = findClass(name);
+                    } catch (ClassNotFoundException cnfe) {
+                        ClassLoader parent = getParent();
+                        if (parent != null) {
+                            // Ask to parent ClassLoader (can also throw a CNFE).
+                            clazz = parent.loadClass(name);
+                        } else {
+                            // Propagate exception
+                            throw cnfe;
+                        }
                     }
                 }
-            }
 
-            if (resolve) {
-                resolveClass(clazz);
-            }
+                if (resolve) {
+                    resolveClass(clazz);
+                }
 
-            return clazz;
+                return clazz;
+            }
         }
 
         @Override
