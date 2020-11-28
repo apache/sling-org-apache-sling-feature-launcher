@@ -25,11 +25,14 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.sling.feature.Artifact;
@@ -207,7 +210,14 @@ public class FeatureProcessor {
         }
 
         extensions: for(final Extension ext : app.getExtensions()) {
-            for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
+            Iterator<ExtensionHandler> i = ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()).iterator();
+            // Stream the iterator, sort them based on Priority in reversed order and then collection into a list
+            List<ExtensionHandler> prioritizedExtensionHandlerList =
+                StreamSupport
+                    .stream(Spliterators.spliteratorUnknownSize(i, Spliterator.ORDERED), false)
+                    .sorted(Comparator.comparingInt(ExtensionHandler::getPriority).reversed())
+                    .collect(Collectors.toList());
+            for (ExtensionHandler handler : prioritizedExtensionHandlerList)
             {
                 if (handler.handle(new ExtensionContextImpl(ctx, config.getInstallation(), loadedFeatures), ext)) {
                     continue extensions;

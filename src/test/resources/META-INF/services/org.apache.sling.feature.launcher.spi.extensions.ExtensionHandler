@@ -1,0 +1,3 @@
+org.apache.sling.feature.launcher.handler.ExtensionHandlerDefault
+org.apache.sling.feature.launcher.handler.ExtensionHandler200
+org.apache.sling.feature.launcher.handler.ExtensionHandler100

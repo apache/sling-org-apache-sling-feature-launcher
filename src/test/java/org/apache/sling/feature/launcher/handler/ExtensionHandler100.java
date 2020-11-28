@@ -14,17 +14,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.sling.feature.launcher.spi.extensions;
+package org.apache.sling.feature.launcher.handler;
 
-import org.apache.sling.feature.Extension;
-
-public interface ExtensionHandler
+public class ExtensionHandler100
+    extends ExtensionHandlerBase
 {
-    /** Priority for Extension Handlers that are just a fallback instance **/
-    int FALLBACK_PRIORITY = -1;
-
-    /** @return The priority of the Extension Handler to select the most appropriate one. The one with the highest priority is selected **/
-    int getPriority();
-
-    public boolean handle(ExtensionContext context, Extension extension) throws Exception;
+    @Override
+    public int getPriority() {
+        return 100;
+    }
 }

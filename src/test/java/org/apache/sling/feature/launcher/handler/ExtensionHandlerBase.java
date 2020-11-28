@@ -14,35 +14,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.sling.feature.launcher.impl.extensions.handlers;
+package org.apache.sling.feature.launcher.handler;
 
-import java.io.IOException;
-
-import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.Extension;
-import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
-public class ContentPackageHandler implements ExtensionHandler
+public abstract class ExtensionHandlerBase
+    implements ExtensionHandler
 {
-    @Override
-    public int getPriority() {
-        return FALLBACK_PRIORITY;
+    private static int lastPriorityUsed = -100;
+
+    public static int getLastPriorityUsed() {
+        return lastPriorityUsed;
     }
 
     @Override
-    public boolean handle(ExtensionContext context, Extension extension) throws IOException
-    {
-        if (extension.getType() == ExtensionType.ARTIFACTS
-                && extension.getName().equals(Extension.EXTENSION_NAME_CONTENT_PACKAGES)) {
-            for(final Artifact a : extension.getArtifacts() ) {
-                context.addInstallableArtifact(context.getArtifactFile(a.getId()));
-            }
-            return true;
-        }
-        else {
-            return false;
-        }
+    public boolean handle(ExtensionContext context, Extension extension) throws Exception {
+        boolean answer = lastPriorityUsed == -100;
+        lastPriorityUsed = getPriority();
+        return answer;
     }
 }

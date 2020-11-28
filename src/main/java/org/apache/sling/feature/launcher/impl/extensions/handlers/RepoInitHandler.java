@@ -29,6 +29,11 @@ public class RepoInitHandler implements ExtensionHandler
     private static final AtomicInteger index = new AtomicInteger(1);
 
     @Override
+    public int getPriority() {
+        return FALLBACK_PRIORITY;
+    }
+
+    @Override
     public boolean handle(ExtensionContext context, Extension extension) throws Exception
     {
         if (extension.getName().equals(Extension.EXTENSION_NAME_REPOINIT)) {
