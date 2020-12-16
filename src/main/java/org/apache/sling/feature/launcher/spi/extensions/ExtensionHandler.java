@@ -18,7 +18,25 @@ package org.apache.sling.feature.launcher.spi.extensions;
 
 import org.apache.sling.feature.Extension;
 
-public interface ExtensionHandler
-{
+/**
+ * A extension handler can be used to add additional functionality to the launcher
+ * based on extension in the feature model. For example, the Apache Sling specific
+ * extension for repoinit is unknown to the launcher. An extension handler can be
+ * used to handle that extension and provide the information to the runtime.
+ * Before launching, the extension handlers are called until a handler returns {@code true}
+ * for an extension. Therefore only one handler can be invoked for a given extension.
+ * An extension handler is needed for every required extension in the feature model.
+ */
+public interface ExtensionHandler {
+
+   /**
+     * Try to handle the extension. As soon as a handler returns {@code true},
+     * no other handler is invoked for this extension.
+     *
+     * @param context  Context for the handler
+     * @param extension The feature model extension
+     * @return {@code true} if the handler handled the extension.
+     * @throws Exception If an error occurs during processing of the extension.
+     */    
     public boolean handle(ExtensionContext context, Extension extension) throws Exception;
 }
