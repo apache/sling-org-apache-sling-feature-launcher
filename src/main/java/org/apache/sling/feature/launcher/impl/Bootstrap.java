@@ -73,37 +73,10 @@ public class Bootstrap {
         this.config.getVariables().put("sling.home", this.config.getHomeDirectory().getAbsolutePath());
         if (this.config.getVariables().get("repository.home") == null) {
             this.config.getVariables().put("repository.home",
-                    this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
+                this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
         }
         this.config.getVariables().put("sling.launchpad",
-                this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
-
-        final Installation installation = this.config.getInstallation();
-        installation.setLogger(this.logger);
-
-        // set sling home, and use separate locations for launchpad and properties
-        installation.getFrameworkProperties().put("sling.home", this.config.getHomeDirectory().getAbsolutePath());
-        installation.getFrameworkProperties().put("sling.launchpad",
-                this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
-        if (!installation.getFrameworkProperties().containsKey("repository.home")) {
-            installation.getFrameworkProperties().put("repository.home",
-                    this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
-        }
-        installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
-        installation.getFrameworkProperties().put("sling.feature",
-                getApplicationFeatureFile(this.config).toURI().toString());
-
-
-        // additional OSGi properties
-        // move storage inside launcher
-        if ( installation.getFrameworkProperties().get(STORAGE_PROPERTY) == null ) {
-            installation.getFrameworkProperties().put(STORAGE_PROPERTY,
-                    this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
-        }
-        // set start level to 30
-        if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
-            installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
-        }
+            this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
     }
 
     public void run() {
@@ -256,6 +229,7 @@ public class Bootstrap {
         this.logger.info("");
 
         final Installation installation = config.getInstallation();
+        installation.setLogger(this.logger);
 
         // set sling home, and use separate locations for launchpad and properties
         installation.getFrameworkProperties().put("sling.home", config.getHomeDirectory().getAbsolutePath());
@@ -269,13 +243,12 @@ public class Bootstrap {
 
         // additional OSGi properties
         // move storage inside launcher
-        if ( installation.getFrameworkProperties().get(STORAGE_PROPERTY) == null ) {
-            installation.getFrameworkProperties().put(STORAGE_PROPERTY, config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
-        }
+        installation.getFrameworkProperties()
+            .putIfAbsent(STORAGE_PROPERTY,  config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
+
         // set start level to 30
-        if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
-            installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
-        }
+        installation.getFrameworkProperties()
+            .putIfAbsent(START_LEVEL_PROP, "30");
 
         while (launcher.run(installation, createClassLoader(installation, launcher)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
             this.logger.info("Framework restart due to extension refresh");
