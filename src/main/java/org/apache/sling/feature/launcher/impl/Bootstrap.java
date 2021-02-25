@@ -92,18 +92,6 @@ public class Bootstrap {
         installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
         installation.getFrameworkProperties().put("sling.feature",
                 getApplicationFeatureFile(this.config).toURI().toString());
-
-
-        // additional OSGi properties
-        // move storage inside launcher
-        if ( installation.getFrameworkProperties().get(STORAGE_PROPERTY) == null ) {
-            installation.getFrameworkProperties().put(STORAGE_PROPERTY,
-                    this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
-        }
-        // set start level to 30
-        if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
-            installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
-        }
     }
 
     public void run() {
@@ -269,13 +257,12 @@ public class Bootstrap {
 
         // additional OSGi properties
         // move storage inside launcher
-        if ( installation.getFrameworkProperties().get(STORAGE_PROPERTY) == null ) {
-            installation.getFrameworkProperties().put(STORAGE_PROPERTY, config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
-        }
+        installation.getFrameworkProperties()
+            .putIfAbsent(STORAGE_PROPERTY,  config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
+
         // set start level to 30
-        if ( installation.getFrameworkProperties().get(START_LEVEL_PROP) == null ) {
-            installation.getFrameworkProperties().put(START_LEVEL_PROP, "30");
-        }
+        installation.getFrameworkProperties()
+            .putIfAbsent(START_LEVEL_PROP, "30");
 
         while (launcher.run(installation, createClassLoader(installation, launcher)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
             this.logger.info("Framework restart due to extension refresh");
