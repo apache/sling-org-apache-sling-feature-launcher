@@ -28,7 +28,6 @@ usage: launcher
  -c <arg>    Set cache dir
  -D <arg>    Set framework properties
  -f <arg>    Set feature files (relative and absolute file path or URL including classloader resources)
- -fv <arg>   Set felix framework version
  -p <arg>    Set home dir
  -u <arg>    Set repository url
  -V <arg>    Set variable value
