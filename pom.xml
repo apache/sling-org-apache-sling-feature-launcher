@@ -166,4 +166,40 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    
+    <profiles>
+        <profile>
+            <id>container</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.34.1</version>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>sling-launcher-container:${project.version}</name>
+                                    <alias>sling-launcher-container</alias>
+                                    <build>
+                                        <contextDir>../../..</contextDir>
+                                        <dockerFile>Dockerfile</dockerFile>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>docker:start</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
