@@ -31,9 +31,12 @@ import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
 /**
  * Launcher directly using the OSGi launcher API.
  */
+@ServiceProvider(value = Launcher.class)
 public class FrameworkLauncher implements Launcher {
 
 
