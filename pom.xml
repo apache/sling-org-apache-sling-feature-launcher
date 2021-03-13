@@ -52,17 +52,18 @@
                  org.apache.sling.feature.launcher.spi.*
                 -conditionalpackage:\
                  javax.json*,\
-                 org.apache.commons.cli*,\
-                 org.apache.commons.lang3*,\
-                 org.apache.commons.text*,\
-                 org.apache.felix.cm.json*,\
-                 org.apache.felix.converter*,\
-                 org.apache.johnzon.core*,\
-                 org.apache.sling.feature*,\
+                 org.apache.commons.cli.*,\
+                 org.apache.commons.lang3.*,\
+                 org.apache.commons.text.*,\
+                 org.apache.felix.cm.json.*,\
+                 org.apache.felix.converter.*,\
+                 org.apache.johnzon.core.*,\
+                 org.apache.johnzon.core.util.*,\
+                 org.apache.sling.feature.*,\
                  org.osgi.*,\
-                 org.osgi.util.function*,\
+                 org.osgi.util.function.*,\
                  org.slf4j.*,\
-                 org.slf4j.impl*
+                 org.slf4j.impl.*
                         ]]></bnd>
                     </configuration>
                     <executions>
@@ -159,7 +160,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.2.2</version>
+            <version>1.2.6</version>
             <scope>provided</scope>
         </dependency>
         
