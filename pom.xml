@@ -60,8 +60,8 @@
                  org.apache.johnzon.core.*,\
                  org.apache.johnzon.core.util.*,\
                  org.apache.sling.feature.*,\
-                 org.osgi.*,\
                  org.osgi.util.function.*,\
+                 org.osgi.util.converter.*,\
                  org.slf4j.*,\
                  org.slf4j.impl.*
                         ]]></bnd>
