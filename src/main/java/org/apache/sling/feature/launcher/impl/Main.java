@@ -17,6 +17,7 @@
 package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +70,8 @@ public class Main {
     public static final String OPT_CONFIG_CLASH = "CC";
 
     public static final String OPT_ARTICACT_CLASH = "C";
+
+    public static final String OPT_PRINT_CONTAINER_ENV_HELP = "cenv";
 
     private static Logger LOGGER;
 
@@ -131,9 +134,10 @@ public class Main {
      * Parse the command line parameters and update a configuration object.
      * 
      * @param args Command line parameters
-     * @return Configuration object.
+     * @param config Configuration object
+     * @return Options object.
      */
-    protected static void parseArgs(final LauncherConfig config, final String[] args) {
+    protected static Options parseArgs(final LauncherConfig config, final String[] args) {
 
         final Option artifactClashOverride = Option.builder(OPT_ARTICACT_CLASH)
                 .longOpt("artifact-clash")
@@ -222,6 +226,12 @@ public class Main {
                 .numberOfArgs(1)
                 .build();
 
+        final Option printInsideContainerHelp = Option.builder(OPT_PRINT_CONTAINER_ENV_HELP)
+              
+                .desc("print additional help information for container env vars.")
+                .optionalArg(true)
+                .build();
+        
         final Options options = new Options().addOption(artifactClashOverride)
                 .addOption(configClashOverride)
                 .addOption(repoOption)
@@ -233,7 +243,8 @@ public class Main {
                 .addOption(homeOption)
                 .addOption(extensionConfiguration)
                 .addOption(frameworkVersionOption)
-                .addOption(frameworkArtifactOption);
+                .addOption(frameworkArtifactOption)
+                .addOption(printInsideContainerHelp);
 
         final CommandLineParser clp = new DefaultParser();
         try {
@@ -295,11 +306,47 @@ public class Main {
         } catch (final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
 
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("launcher", options);
+            printHelp(options);
 
             System.exit(1);
         }
+        return options;
+    }
+
+     static void printHelp(final Options options) {
+
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp("launcher", options);
+       if(options.getOption(OPT_PRINT_CONTAINER_ENV_HELP)!=null) {
+
+         try(  PrintWriter writer=new PrintWriter(System.out);){
+             
+           writer.println("");
+           writer.println(
+                   "If you are running sling-feature-launcher as an container please use env vars.");
+           writer.println("");
+           
+           writer.println(" cli-arg  -  container ENV variable");
+           writer.println("-------------------------------------");
+           writer.println(" -"+OPT_ARTICACT_CLASH+"       -  ARTIFACT_CLASH");
+           writer.println(" -"+OPT_CONFIG_CLASH+"      -  CONFIG_CLASH");
+           writer.println(" -"+OPT_CACHE_DIR+"       -  CACHE_DIR");
+           writer.println(" -"+OPT_FRAMEWORK_PROPERTIES+"       -  FRAMEWORK_PROPERTIES");
+           writer.println(" -"+OPT_FEATURE_FILES+"       -  FEATURE_FILES");
+           writer.println(" -"+OPT_HOME_DIR+"       -  HOME_DIR");
+           writer.println(" -"+OPT_REPOSITORY_URLS+"       -  REPOSITORY_URLS");
+           writer.println(" -"+OPT_VARIABLE_VALUES+"       -  VARIABLE_VALUES");
+           writer.println(" -"+OPT_EXTENSION_CONFIGURATION+"      -  EXTENSION_CONFIGURATION");
+           writer.println(" -"+OPT_FELIX_FRAMEWORK_VERSION+"      -  FELIX_FRAMEWORK_VERSION");
+           writer.println(" -"+OPT_OSGI_FRAMEWORK_ARTIFACT+"      -  OSGI_FRAMEWORK_ARTIFACT");
+           writer.println(" -"+OPT_VERBOSE+"       -  VERBOSE");
+           
+           writer.println("");
+           writer.println("Java options could be set using the env var 'JAVA_OPTS'");
+           writer.println("Classpath could be changed using the env var 'JAVA_CP' (default:`/opt/run/launcher.jar`)");
+           writer.flush();
+        }
+       }
     }
 
     public static void main(final String[] args) {
@@ -312,8 +359,15 @@ public class Main {
 
         // check if launcher has already been created
         final LauncherConfig launcherConfig = new LauncherConfig();
-        parseArgs(launcherConfig, args);
+        Options options=  parseArgs(launcherConfig, args);
 
+        if(launcherConfig.getFeatureFiles().isEmpty()) {
+            Main.LOG().warn("Missing Feature-File(s). Please set an Feature-File to run.");
+            
+            printHelp(options);
+            
+            System.exit(2);
+        }
         final Bootstrap bootstrap = new Bootstrap(launcherConfig, Main.LOG());
         bootstrap.run();
     }

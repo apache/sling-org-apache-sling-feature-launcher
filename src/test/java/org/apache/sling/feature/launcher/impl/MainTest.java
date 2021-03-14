@@ -18,18 +18,72 @@ package org.apache.sling.feature.launcher.impl;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.security.Permission;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.sling.feature.ArtifactId;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MainTest {
+
+    protected static class SystemExitException extends SecurityException {
+
+        private static final long serialVersionUID = 1L;
+
+        public final int status;
+
+        public SystemExitException(int status) {
+
+            super("NoExit");
+            this.status = status;
+        }
+    }
+
+    private static class NoSystemExitSecurityManager extends SecurityManager {
+
+        @Override
+        public void checkPermission(Permission perm) {
+
+            // allow anything.
+        }
+
+        @Override
+        public void checkPermission(Permission perm, Object context) {
+
+            // allow anything.
+        }
+
+        @Override
+        public void checkExit(int status) {
+
+            super.checkExit(status);
+            throw new SystemExitException(status);
+        }
+    }
+
+    @BeforeClass
+    public static void setUp() throws Exception {
+
+        System.setSecurityManager(new NoSystemExitSecurityManager());
+    }
+
+    @AfterClass
+    public static void tearDown() throws Exception {
+
+        System.setSecurityManager(null);
+    }
 
     @Test
     public void testSplitCommandlineArgs() {
@@ -65,15 +119,30 @@ public class MainTest {
     }
 
     @Test
+    public void testParseContainer() {
+
+        Options opts = Main.parseArgs(noActionAllowesConfig,
+                new String[] { "-" + Main.OPT_PRINT_CONTAINER_ENV_HELP });
+
+        assertNotNull(opts.getOption(Main.OPT_PRINT_CONTAINER_ENV_HELP));
+
+        Options os = mock(Options.class);
+        Option o = mock(Option.class);
+        when(os.getOption(Main.OPT_PRINT_CONTAINER_ENV_HELP)).thenReturn(o);
+
+        Main.printHelp(os);
+    }
+
+    @Test
     public void testParseVerbose() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-v", "debug" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VERBOSE, "debug" });
         assertEquals("debug", System.getProperty("org.slf4j.simpleLogger.defaultLogLevel"));
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-v" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VERBOSE });
         assertEquals("debug", System.getProperty("org.slf4j.simpleLogger.defaultLogLevel"));
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-v", "warn" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VERBOSE, "warn" });
         assertEquals("warn", System.getProperty("org.slf4j.simpleLogger.defaultLogLevel"));
 
     }
@@ -81,10 +150,10 @@ public class MainTest {
     @Test
     public void testParseHome() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-p" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_HOME_DIR });
 
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-p", "foo" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_HOME_DIR, "foo" });
         assertEquals("foo", config.getHomeDirectory().toString());
 
     }
@@ -92,10 +161,10 @@ public class MainTest {
     @Test
     public void testParseCacheDir() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-c" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_CACHE_DIR });
 
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-c", "foo" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_CACHE_DIR, "foo" });
         assertEquals("foo", config.getCacheDirectory().toString());
 
     }
@@ -103,10 +172,11 @@ public class MainTest {
     @Test
     public void testParseFelixFwVersion() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-fv" });
+        Main.parseArgs(noActionAllowesConfig,
+                new String[] { "-" + Main.OPT_FELIX_FRAMEWORK_VERSION });
 
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-fv", "foo" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_FELIX_FRAMEWORK_VERSION, "foo" });
         assertEquals("foo", config.getFrameworkVersion().toString());
 
     }
@@ -114,30 +184,100 @@ public class MainTest {
     @Test
     public void testParseOSGiFwArtifact() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-fa" });
+        Main.parseArgs(noActionAllowesConfig,
+                new String[] { "-" + Main.OPT_OSGI_FRAMEWORK_ARTIFACT });
 
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-fa", "foo" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_OSGI_FRAMEWORK_ARTIFACT, "foo" });
         assertEquals("foo", config.getFrameworkArtifact());
 
     }
 
     @Test
-    public void testParse_Artifact_Clash() {
+    public void testParse_Config_Clash() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-C" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_CONFIG_CLASH });
 
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-C", "foo:bar:1" });
+        // -C and -CC may have a conflict
+        // Main.parseArgs(config, new String[] { "-" + Main.OPT_CONFIG_CLASH + "a=1",
+        //         "-" + Main.OPT_CONFIG_CLASH + "b=2" });
+        //
+        // assertTrue(config.getConfigClashOverrides().containsKey("a"));
+        // assertEquals("1", config.getConfigClashOverrides().get("a"));
+        // assertTrue(config.getConfigClashOverrides().containsKey("b"));
+        // assertEquals("2", config.getConfigClashOverrides().get("b"));
+
+        config = new LauncherConfig();
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_CONFIG_CLASH, "a", "1",
+                "-" + Main.OPT_CONFIG_CLASH, "b", "2" });
+
+        assertTrue(config.getConfigClashOverrides().containsKey("a"));
+        assertEquals("1", config.getConfigClashOverrides().get("a"));
+        assertTrue(config.getConfigClashOverrides().containsKey("b"));
+        assertEquals("2", config.getConfigClashOverrides().get("b"));
+
+    }
+
+    @Test
+    public void testParse_OptVarVal() {
+
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VARIABLE_VALUES });
+
+        LauncherConfig config = new LauncherConfig();
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_VARIABLE_VALUES + "a=1",
+                "-" + Main.OPT_VARIABLE_VALUES + "b=2" });
+
+        assertTrue(config.getVariables().containsKey("a"));
+        assertEquals("1", config.getVariables().get("a"));
+        assertTrue(config.getVariables().containsKey("b"));
+        assertEquals("2", config.getVariables().get("b"));
+
+        config = new LauncherConfig();
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_VARIABLE_VALUES, "a", "1",
+                "-" + Main.OPT_VARIABLE_VALUES, "b", "2" });
+
+        assertTrue(config.getVariables().containsKey("a"));
+        assertEquals("1", config.getVariables().get("a"));
+        assertTrue(config.getVariables().containsKey("b"));
+        assertEquals("2", config.getVariables().get("b"));
+
+    }
+
+    @Test
+    public void testParse_FW_Prop() {
+
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_FRAMEWORK_PROPERTIES });
+
+        LauncherConfig config = new LauncherConfig();
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_FRAMEWORK_PROPERTIES + "a=1",
+                "-" + Main.OPT_FRAMEWORK_PROPERTIES + "b=2" });
+
+        assertTrue(config.getInstallation().getFrameworkProperties().containsKey("a"));
+        assertEquals("1", config.getInstallation().getFrameworkProperties().get("a"));
+
+        assertTrue(config.getInstallation().getFrameworkProperties().containsKey("b"));
+        assertEquals("2", config.getInstallation().getFrameworkProperties().get("b"));
+    }
+
+    @Test
+    public void testParse_Artifact_Clash() {
+
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_ARTICACT_CLASH });
+
+        LauncherConfig config = new LauncherConfig();
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_ARTICACT_CLASH, "foo:bar:1" });
         assertTrue(config.getArtifactClashOverrides().contains(ArtifactId.parse("foo:bar:1")));
 
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-C", "foo:bar:1", "foo:bar:2" });
+        Main.parseArgs(config,
+                new String[] { "-" + Main.OPT_ARTICACT_CLASH, "foo:bar:1", "foo:bar:2" });
         assertTrue(config.getArtifactClashOverrides().contains(ArtifactId.parse("foo:bar:1")));
         assertTrue(config.getArtifactClashOverrides().contains(ArtifactId.parse("foo:bar:2")));
 
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-C", "foo:bar:1", "-C", "foo:bar:2" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_ARTICACT_CLASH, "foo:bar:1",
+                "-" + Main.OPT_ARTICACT_CLASH, "foo:bar:2" });
         assertTrue(config.getArtifactClashOverrides().contains(ArtifactId.parse("foo:bar:1")));
         assertTrue(config.getArtifactClashOverrides().contains(ArtifactId.parse("foo:bar:2")));
 
@@ -146,18 +286,19 @@ public class MainTest {
     @Test
     public void testParse_RepoUrls() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-u" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_REPOSITORY_URLS });
 
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-u", "foo" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_REPOSITORY_URLS, "foo" });
         assertArrayEquals(config.getRepositoryUrls(), new Object[] { "foo" });
 
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-u", "foo", "bar" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_REPOSITORY_URLS, "foo", "bar" });
         assertArrayEquals(config.getRepositoryUrls(), new Object[] { "foo", "bar" });
 
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-u", "foo", "-u", "bar" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_REPOSITORY_URLS, "foo",
+                "-" + Main.OPT_REPOSITORY_URLS, "bar" });
         assertArrayEquals(config.getRepositoryUrls(), new Object[] { "foo", "bar" });
 
     }
@@ -165,22 +306,33 @@ public class MainTest {
     @Test
     public void testParse_FeatureFiles() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-f" });
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_FEATURE_FILES });
 
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-f", "foo" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_FEATURE_FILES, "foo" });
         assertTrue(config.getFeatureFiles().contains("foo"));
 
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-f", "foo", "bar" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_FEATURE_FILES, "foo", "bar" });
         assertTrue(config.getFeatureFiles().contains("foo"));
         assertTrue(config.getFeatureFiles().contains("bar"));
 
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-f", "foo", "-f", "bar" });
+        Main.parseArgs(config, new String[] { "-" + Main.OPT_FEATURE_FILES, "foo",
+                "-" + Main.OPT_FEATURE_FILES, "bar" });
         assertTrue(config.getFeatureFiles().contains("foo"));
         assertTrue(config.getFeatureFiles().contains("bar"));
 
     }
 
+    @Test
+    public void testMain_main() {
+
+        try {
+            Main.main(new String[] {});
+        } catch (SystemExitException e) {
+            assertEquals("Exit status", 2, e.status);
+        }
+
+    }
 }

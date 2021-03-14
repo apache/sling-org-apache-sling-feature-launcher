@@ -173,25 +173,34 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                    </plugin>
+                    <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.34.1</version>
                         <configuration>
                             <images>
                                 <image>
-                                    <name>sling-launcher-container:${project.version}</name>
-                                    <alias>sling-launcher-container</alias>
+                                    <name>apache/sling-feature-launcher:${project.version}</name>
                                     <build>
-                                        <contextDir>../../..</contextDir>
-                                        <dockerFile>Dockerfile</dockerFile>
+                                        <tags>
+                                            <tag>latest</tag>
+                                            <tag>${project.version}</tag>
+                                        </tags>
+                                         <dockerFileDir>.</dockerFileDir>
+                                         <assembly>
+                                              <descriptorRef>artifact</descriptorRef>
+                                         </assembly>
                                     </build>
                                 </image>
                             </images>
                         </configuration>
                         <executions>
                             <execution>
-                                <id>docker:start</id>
-                                <phase>install</phase>
+                                <id>docker:build</id>
+                                <phase>package</phase>
                                 <goals>
                                     <goal>build</goal>
                                 </goals>
