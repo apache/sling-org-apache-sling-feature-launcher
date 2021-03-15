@@ -18,7 +18,6 @@ package org.apache.sling.feature.launcher.impl;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -121,16 +120,10 @@ public class MainTest {
     @Test
     public void testParseContainer() {
 
-        Options opts = Main.parseArgs(noActionAllowesConfig,
-                new String[] { "-" + Main.OPT_PRINT_CONTAINER_ENV_HELP });
-
-        assertNotNull(opts.getOption(Main.OPT_PRINT_CONTAINER_ENV_HELP));
-
         Options os = mock(Options.class);
         Option o = mock(Option.class);
         when(os.getOption(Main.OPT_PRINT_CONTAINER_ENV_HELP)).thenReturn(o);
 
-        Main.printHelp(os);
     }
 
     @Test
@@ -331,7 +324,7 @@ public class MainTest {
         try {
             Main.main(new String[] {});
         } catch (SystemExitException e) {
-            assertEquals("Exit status", 2, e.status);
+            assertEquals("Exit status", 1, e.status);
         }
 
     }

@@ -75,6 +75,8 @@ public class Main {
 
     private static Logger LOGGER;
 
+    private static Options options;
+
     private static Logger LOG() {
 
         if (LOGGER == null) {
@@ -137,7 +139,7 @@ public class Main {
      * @param config Configuration object
      * @return Options object.
      */
-    protected static Options parseArgs(final LauncherConfig config, final String[] args) {
+    protected static void parseArgs(final LauncherConfig config, final String[] args) {
 
         final Option artifactClashOverride = Option.builder(OPT_ARTICACT_CLASH)
                 .longOpt("artifact-clash")
@@ -232,7 +234,7 @@ public class Main {
                 .optionalArg(true)
                 .build();
         
-        final Options options = new Options().addOption(artifactClashOverride)
+               options = new Options().addOption(artifactClashOverride)
                 .addOption(configClashOverride)
                 .addOption(repoOption)
                 .addOption(featureOption)
@@ -246,6 +248,7 @@ public class Main {
                 .addOption(frameworkArtifactOption)
                 .addOption(printInsideContainerHelp);
 
+        
         final CommandLineParser clp = new DefaultParser();
         try {
             final CommandLine cl = clp.parse(options, args);
@@ -306,47 +309,54 @@ public class Main {
         } catch (final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
 
-            printHelp(options);
+            printHelp();
 
             System.exit(1);
         }
-        return options;
     }
 
-     static void printHelp(final Options options) {
+    static void printHelp() {
 
+        if (options == null) {
+            return;
+        }
         HelpFormatter formatter = new HelpFormatter();
         formatter.printHelp("launcher", options);
-       if(options.getOption(OPT_PRINT_CONTAINER_ENV_HELP)!=null) {
+        if (options.getOption(OPT_PRINT_CONTAINER_ENV_HELP) != null) {
 
-         try(  PrintWriter writer=new PrintWriter(System.out);){
-             
-           writer.println("");
-           writer.println(
-                   "If you are running sling-feature-launcher as an container please use env vars.");
-           writer.println("");
-           
-           writer.println(" cli-arg  -  container ENV variable");
-           writer.println("-------------------------------------");
-           writer.println(" -"+OPT_ARTICACT_CLASH+"       -  ARTIFACT_CLASH");
-           writer.println(" -"+OPT_CONFIG_CLASH+"      -  CONFIG_CLASH");
-           writer.println(" -"+OPT_CACHE_DIR+"       -  CACHE_DIR");
-           writer.println(" -"+OPT_FRAMEWORK_PROPERTIES+"       -  FRAMEWORK_PROPERTIES");
-           writer.println(" -"+OPT_FEATURE_FILES+"       -  FEATURE_FILES");
-           writer.println(" -"+OPT_HOME_DIR+"       -  HOME_DIR");
-           writer.println(" -"+OPT_REPOSITORY_URLS+"       -  REPOSITORY_URLS");
-           writer.println(" -"+OPT_VARIABLE_VALUES+"       -  VARIABLE_VALUES");
-           writer.println(" -"+OPT_EXTENSION_CONFIGURATION+"      -  EXTENSION_CONFIGURATION");
-           writer.println(" -"+OPT_FELIX_FRAMEWORK_VERSION+"      -  FELIX_FRAMEWORK_VERSION");
-           writer.println(" -"+OPT_OSGI_FRAMEWORK_ARTIFACT+"      -  OSGI_FRAMEWORK_ARTIFACT");
-           writer.println(" -"+OPT_VERBOSE+"       -  VERBOSE");
-           
-           writer.println("");
-           writer.println("Java options could be set using the env var 'JAVA_OPTS'");
-           writer.println("Classpath could be changed using the env var 'JAVA_CP' (default:`/opt/run/launcher.jar`)");
-           writer.flush();
+            try (PrintWriter writer = new PrintWriter(System.out);) {
+
+                writer.println("");
+                writer.println(
+                        "If you are running sling-feature-launcher as an container please use env vars.");
+                writer.println("");
+
+                writer.println(" cli-arg  -  container ENV variable");
+                writer.println("-------------------------------------");
+                writer.println(" -" + OPT_ARTICACT_CLASH + "       -  ARTIFACT_CLASH");
+                writer.println(" -" + OPT_CONFIG_CLASH + "      -  CONFIG_CLASH");
+                writer.println(" -" + OPT_CACHE_DIR + "       -  CACHE_DIR");
+                writer.println(" -" + OPT_FRAMEWORK_PROPERTIES + "       -  FRAMEWORK_PROPERTIES");
+                writer.println(" -" + OPT_FEATURE_FILES + "       -  FEATURE_FILES");
+                writer.println(" -" + OPT_HOME_DIR + "       -  HOME_DIR");
+                writer.println(" -" + OPT_REPOSITORY_URLS + "       -  REPOSITORY_URLS");
+                writer.println(" -" + OPT_VARIABLE_VALUES + "       -  VARIABLE_VALUES");
+                writer.println(
+                        " -" + OPT_EXTENSION_CONFIGURATION + "      -  EXTENSION_CONFIGURATION");
+                writer.println(
+                        " -" + OPT_FELIX_FRAMEWORK_VERSION + "      -  FELIX_FRAMEWORK_VERSION");
+                writer.println(
+                        " -" + OPT_OSGI_FRAMEWORK_ARTIFACT + "      -  OSGI_FRAMEWORK_ARTIFACT");
+                writer.println(" -" + OPT_VERBOSE + "       -  VERBOSE");
+
+                writer.println("");
+                writer.println("Java options could be set using the env var 'JAVA_OPTS'");
+                writer.println(
+                        "Classpath could be changed using the env var 'JAVA_CP' (default:`/opt/run/launcher.jar`)");
+                writer.flush();
+            }
         }
-       }
+
     }
 
     public static void main(final String[] args) {
@@ -359,15 +369,8 @@ public class Main {
 
         // check if launcher has already been created
         final LauncherConfig launcherConfig = new LauncherConfig();
-        Options options=  parseArgs(launcherConfig, args);
 
-        if(launcherConfig.getFeatureFiles().isEmpty()) {
-            Main.LOG().warn("Missing Feature-File(s). Please set an Feature-File to run.");
-            
-            printHelp(options);
-            
-            System.exit(2);
-        }
+        parseArgs(launcherConfig, args);
         final Bootstrap bootstrap = new Bootstrap(launcherConfig, Main.LOG());
         bootstrap.run();
     }
