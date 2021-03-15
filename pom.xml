@@ -64,6 +64,11 @@
                  org.osgi.util.converter.*,\
                  org.slf4j.*,\
                  org.slf4j.impl.*
+                 Import-Package:\
+                 !org.osgi.framework.*,\
+                 !org.osgi.util.tracker.*,\
+                 !org.osgi.resource.*,\
+                 *
                         ]]></bnd>
                     </configuration>
                     <executions>
