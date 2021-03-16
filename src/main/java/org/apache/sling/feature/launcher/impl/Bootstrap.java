@@ -198,6 +198,7 @@ public class Bootstrap {
                 this.config.addFeatureFiles(application.toURI().toURL().toString());
             }
             else {
+                Main.printHelp();
                 throw new IllegalStateException("No feature(s) to launch found and none where specified");
             }
             return FeatureProcessor.createApplication(this.logger, this.config, artifactManager, loadedFeatures);
