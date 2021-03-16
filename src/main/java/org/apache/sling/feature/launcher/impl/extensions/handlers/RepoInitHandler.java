@@ -24,6 +24,9 @@ import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
+import aQute.bnd.annotation.spi.ServiceProvider;
+
+@ServiceProvider(value =ExtensionHandler.class )
 public class RepoInitHandler implements ExtensionHandler
 {
     private static final AtomicInteger index = new AtomicInteger(1);

@@ -30,6 +30,7 @@
 
     <properties>
         <sling.java.version>8</sling.java.version>
+        <bnd.version>5.3.0</bnd.version>
     </properties>
 
     <scm>
@@ -41,34 +42,49 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                <execution>
-                    <id>unpack-dependencies</id>
-                    <phase>prepare-package</phase>
-                    <goals>
-                        <goal>unpack-dependencies</goal>
-                    </goals>
-                    <configuration>
-                        <excludes>META-INF/**</excludes>
-                        <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                        <overWriteReleases>false</overWriteReleases>
-                        <overWriteSnapshots>true</overWriteSnapshots>
-                        <includeArtifactIds>osgi.core,commons-text,commons-lang3,org.apache.sling.feature,org.osgi.util.function,org.apache.felix.cm.json,org.apache.sling.commons.johnzon,org.apache.felix.converter,commons-cli,slf4j-api,slf4j-simple</includeArtifactIds>
+                <plugin>
+                    <groupId>biz.aQute.bnd</groupId>
+                    <artifactId>bnd-maven-plugin</artifactId>
+                        <configuration>
+                        <bnd><![CDATA[
+                 Main-Class: org.apache.sling.feature.launcher.impl.Main
+                -exportcontents:\
+                 org.apache.sling.feature.launcher.spi.*
+                -conditionalpackage:\
+                 javax.json*,\
+                 org.apache.commons.cli.*,\
+                 org.apache.commons.lang3.*,\
+                 org.apache.commons.text.*,\
+                 org.apache.felix.cm.json.*,\
+                 org.apache.felix.converter.*,\
+                 org.apache.johnzon.core.*,\
+                 org.apache.johnzon.core.util.*,\
+                 org.apache.sling.feature.*,\
+                 org.osgi.util.function.*,\
+                 org.osgi.util.converter.*,\
+                 org.slf4j.*,\
+                 org.slf4j.impl.*
+                 Import-Package:\
+                 !org.osgi.framework.*,\
+                 !org.osgi.util.tracker.*,\
+                 !org.osgi.resource.*,\
+                 *
+                        ]]></bnd>
                     </configuration>
-                </execution>
-            </executions>
-            </plugin>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>bnd-process</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
                 <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
-                        <manifest>
-                            <mainClass>org.apache.sling.feature.launcher.impl.Main</mainClass>
-                        </manifest>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
                     </archive>
                 </configuration>
             </plugin>
@@ -149,8 +165,15 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.2.2</version>
+            <version>1.2.6</version>
             <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+            <version>${bnd.version}</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Testing dependencies -->
