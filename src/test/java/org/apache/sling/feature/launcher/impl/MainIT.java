@@ -35,7 +35,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class MainTest {
+public class MainIT {
 
     protected static class SystemExitException extends SecurityException {
 
