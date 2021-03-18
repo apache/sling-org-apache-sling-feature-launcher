@@ -23,10 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import org.apache.commons.text.StringSubstitutor;
-import org.apache.commons.text.lookup.StringLookup;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
+import org.apache.sling.feature.launcher.impl.VariableSubstitutor;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
@@ -53,22 +52,11 @@ public class FrameworkLauncher implements Launcher {
      */
     @Override
     public int run(final LauncherRunContext context, final ClassLoader cl) throws Exception {
-        StringSubstitutor ss = new StringSubstitutor(new StringLookup() {
-
-            @Override
-            public String lookup(final String key) {
-                // Normally if a variable cannot be found, StrSubstitutor will
-                // leave the raw variable in place. We need to replace it with
-                // nothing in that case.
-                final String value = context.getFrameworkProperties().get(key);
-                return value == null ? "" : value;
-            }
-        });
-        ss.setEnableSubstitutionInVariables(true);
+        final VariableSubstitutor vs = new VariableSubstitutor(context);
 
         Map<String, String> properties = new HashMap<>();
         context.getFrameworkProperties().forEach((key, value) -> {
-            properties.put(key, ss.replace(value).replace("{dollar}", "$"));
+            properties.put(key, vs.replace(value).replace("{dollar}", "$"));
         });
         if (context.getLogger().isDebugEnabled()) {
             context.getLogger().debug("Bundles:");
