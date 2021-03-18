@@ -42,6 +42,51 @@
 
     <build>
         <plugins>
+               <plugin>
+         <groupId>org.apache.maven.plugins</groupId>
+         <artifactId>maven-dependency-plugin</artifactId>
+         <executions>
+           <execution>
+             <id>unpack</id>
+             <phase>compile</phase>
+             <goals>
+               <goal>unpack</goal>
+             </goals>
+             <configuration>
+               <artifactItems>
+                 <artifactItem>
+                   <groupId>org.apache.commons</groupId>
+                   <artifactId>commons-text</artifactId>
+                   <version>1.9</version>
+                   <type>jar</type>
+                   <overWrite>false</overWrite>
+                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                   <includes>
+                   org/apache/commons/text/Builder*,
+                   org/apache/commons/text/StringSubstitutor*,
+                   org/apache/commons/text/StringTokenizer*,
+                   org/apache/commons/text/TextStringBuilder*,
+                   org/apache/commons/text/lookup/StringLookup*,
+                   org/apache/commons/text/matcher/*</includes>
+                 </artifactItem>
+                 <artifactItem>
+                   <groupId>org.apache.commons</groupId>
+                   <artifactId>commons-lang3</artifactId>
+                   <version>3.12.0</version>
+                   <type>jar</type>
+                   <overWrite>false</overWrite>
+                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                   <includes>
+                   org/apache/commons/lang3/ArrayUtils*,
+                   org/apache/commons/lang3/StringUtils*,
+                   org/apache/commons/lang3/Validate*
+                   </includes>
+                 </artifactItem>
+               </artifactItems>
+             </configuration>
+           </execution>
+         </executions>
+       </plugin>
                 <plugin>
                     <groupId>biz.aQute.bnd</groupId>
                     <artifactId>bnd-maven-plugin</artifactId>
@@ -53,8 +98,6 @@
                 -conditionalpackage:\
                  javax.json*,\
                  org.apache.commons.cli.*,\
-                 org.apache.commons.lang3.*,\
-                 org.apache.commons.text.*,\
                  org.apache.felix.cm.json.*,\
                  org.apache.felix.converter.*,\
                  org.apache.johnzon.core.*,\
@@ -100,20 +143,35 @@
                     </excludes>
                 </configuration>
             </plugin>
-        </plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <classpathDependencyScopeExclude>compile+runtime</classpathDependencyScopeExclude>
+                </configuration>
+            </plugin>
+          </plugins>
     </build>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.8</version>
+            <version>1.9</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.10</version>
+            <version>3.12.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

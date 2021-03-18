@@ -35,7 +35,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class MainTest {
+/** Run this as part of integration tests to help make sure we
+ *  embed the right Apache commons classes.
+*/
+public class MainIT {
 
     protected static class SystemExitException extends SecurityException {
 
