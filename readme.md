@@ -14,14 +14,14 @@ java org.apache.sling.feature.launcher.impl.Main
 
 or via the Java Main class of the jar file:
 ```
-java -jar org.apache.sling.feature.launcher-1.0.0.jar
+java -jar org.apache.sling.feature.launcher.jar
 ```
 
 The launcher creates a local cache, by default in a subdirectory called `launcher`. If you want to run the launcher with a clean start, delete this directory before invoking the launcher.
 
 The following command line options are supported:
 ```
-$ rm -rf launcher && java -jar org.apache.sling.feature.launcher-1.0.0.jar -h
+$ rm -rf launcher && java -jar org.apache.sling.feature.launcher.jar -h
 usage: launcher
  -C <arg>    Set artifact clash override
  -CC <arg>   Set config class override
