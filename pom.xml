@@ -16,7 +16,7 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling</artifactId>
-        <version>40</version>
+        <version>41</version>
         <relativePath />
     </parent>
 
@@ -209,7 +209,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature</artifactId>
-            <version>1.2.20</version>
+            <version>1.2.22</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
