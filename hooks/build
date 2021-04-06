@@ -1,0 +1,2 @@
+#!/bin/bash
+apt-get update -y && apt-get install default-jdk maven -y && java -version && mvn -version && mvn clean package -P container && docker image ls && docker tag apache/sling-feature-launcher:latest $IMAGE_NAME && docker image ls
