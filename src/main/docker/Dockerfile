@@ -18,7 +18,7 @@
 # -----------------------------------------------------------------------------
 
 #Base
-FROM adoptopenjdk/openjdk11:alpine-slim
+FROM adoptopenjdk/openjdk11:alpine-jre
 LABEL maintainer dev@sling.apache.org
 
 #ENV for Sling
