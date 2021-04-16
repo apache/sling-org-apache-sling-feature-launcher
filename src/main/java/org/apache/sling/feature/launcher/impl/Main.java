@@ -20,13 +20,13 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,6 +77,8 @@ public class Main {
 
     private static Options options;
 
+    private static final List<String> logLevels = Arrays.asList("trace", "debug", "info", "warn",
+            "error", "off");
     private static Logger LOG() {
 
         if (LOGGER == null) {
@@ -95,7 +97,7 @@ public class Main {
         return new String[] { keyVal.substring(0, pos), keyVal.substring(pos + 1) };
     }
 
-    static Map.Entry<String, Map<String, String>> splitMap(final String val) {
+    static Map.Entry<String, Map<String, String>> splitMap2(final String val) {
 
         String[] split1 = val.split(":");
 
@@ -103,13 +105,18 @@ public class Main {
             return new AbstractMap.SimpleEntry<>(split1[0], Collections.emptyMap());
         }
 
+        Map<String, String> m = splitMap(split1[1]);
+
+        return new AbstractMap.SimpleEntry<>(split1[0], m);
+    }
+
+    private static Map<String, String> splitMap(String value) {
         Map<String, String> m = new HashMap<>();
-        for (String kv : split1[1].split(",")) {
+        for (String kv : value.split(",")) {
             String[] keyval = splitKeyVal(kv);
             m.put(keyval[0], keyval[1]);
         }
-
-        return new AbstractMap.SimpleEntry<>(split1[0], m);
+        return m;
     }
 
     private static Optional<String> extractValueFromOption(CommandLine cl, String opt) {
@@ -172,15 +179,15 @@ public class Main {
                 .build();
 
         final Option fwkProperties = Option.builder(OPT_FRAMEWORK_PROPERTIES)
-                .longOpt("framework-properties")
-                .desc("Set framework properties")
+                .longOpt("framework-property")
+                .desc("Set framework property, format: -D key1=val1 -D key2=val2")
+                .hasArg()
                 .optionalArg(true)
-                .numberOfArgs(Option.UNLIMITED_VALUES)
                 .build();
 
         final Option varValue = Option.builder(OPT_VARIABLE_VALUES)
-                .longOpt("variable-values")
-                .desc("Set variable values")
+                .longOpt("variable-value")
+                .desc("Set variable value, format: -V key1=val1 -V key2=val2")
                 .optionalArg(true)
                 .numberOfArgs(Option.UNLIMITED_VALUES)
                 .build();
@@ -259,25 +266,32 @@ public class Main {
             extractValuesFromOption(cl, OPT_ARTICACT_CLASH).ifPresent(values -> values
                     .forEach(v -> config.getArtifactClashOverrides().add(ArtifactId.parse(v))));
 
-            Properties cfgCProps = cl.getOptionProperties(OPT_CONFIG_CLASH);
-            for (final String name : cfgCProps.stringPropertyNames()) {
-                config.getConfigClashOverrides().put(name, cfgCProps.getProperty(name));
-            }
+            extractValuesFromOption(cl, OPT_CONFIG_CLASH).orElseGet(ArrayList::new)
+            .forEach(value -> {
+                final String[] keyVal = split(value);
+                config.getConfigClashOverrides().put(keyVal[0], keyVal[1]);
+            });
 
-            Properties fwProps = cl.getOptionProperties(OPT_FRAMEWORK_PROPERTIES);
-            for (final String name : fwProps.stringPropertyNames()) {
-                config.getInstallation()
-                        .getFrameworkProperties()
-                        .put(name, fwProps.getProperty(name));
-            }
+            extractValuesFromOption(cl, OPT_FRAMEWORK_PROPERTIES).orElseGet(ArrayList::new)
+            .forEach(value -> {
+                final String[] keyVal = split(value);
+                config.getInstallation().getFrameworkProperties().put(keyVal[0], keyVal[1]);
+            });
 
-            Properties varProps = cl.getOptionProperties(OPT_VARIABLE_VALUES);
-            for (final String name : varProps.stringPropertyNames()) {
-                config.getVariables().put(name, varProps.getProperty(name));
-            }
+            extractValuesFromOption(cl, OPT_VARIABLE_VALUES).orElseGet(ArrayList::new)
+            .forEach(value -> {
+                final String[] keyVal = split(value);
+                config.getVariables().put(keyVal[0], keyVal[1]);
+            });
 
-            extractValueFromOption(cl, OPT_VERBOSE, "debug").ifPresent(
-                    value -> System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", value));
+            if (cl.hasOption(OPT_VERBOSE)) {
+                extractValueFromOption(cl, OPT_VERBOSE, "debug").ifPresent(value -> {
+
+                    if (isLoglevel(value)) {
+                        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", value);
+                    }
+                });
+            } // if not the `org.slf4j.simpleLogger.defaultLogLevel` is by default `info`
 
             extractValuesFromOption(cl, OPT_FEATURE_FILES).orElseGet(ArrayList::new)
                     .forEach(config::addFeatureFiles);
@@ -290,7 +304,7 @@ public class Main {
 
             extractValuesFromOption(cl, OPT_EXTENSION_CONFIGURATION)
                     .ifPresent(values -> values.forEach(v -> {
-                        Map.Entry<String, Map<String, String>> xc = splitMap(v);
+                        Map.Entry<String, Map<String, String>> xc = splitMap2(v);
                         Map<String, Map<String, String>> ec = config.getExtensionConfiguration();
                         Map<String, String> c = ec.get(xc.getKey());
                         if (c == null) {
@@ -315,6 +329,11 @@ public class Main {
         }
     }
 
+    private static boolean isLoglevel(String value) {
+
+        return logLevels.contains(value);
+    }
+
     static void printHelp() {
 
         if (options == null) {
@@ -336,18 +355,18 @@ public class Main {
                 writer.println(" -" + OPT_ARTICACT_CLASH + "       -  ARTIFACT_CLASH");
                 writer.println(" -" + OPT_CONFIG_CLASH + "      -  CONFIG_CLASH");
                 writer.println(" -" + OPT_CACHE_DIR + "       -  CACHE_DIR");
-                writer.println(" -" + OPT_FRAMEWORK_PROPERTIES + "       -  FRAMEWORK_PROPERTIES");
+                writer.println(" -" + OPT_FRAMEWORK_PROPERTIES + "       -  FRAMEWORK_PROPERTIES format: `key1=val1` for more `key1=val1 -D key2=val2`");
                 writer.println(" -" + OPT_FEATURE_FILES + "       -  FEATURE_FILES");
                 writer.println(" -" + OPT_HOME_DIR + "       -  HOME_DIR");
                 writer.println(" -" + OPT_REPOSITORY_URLS + "       -  REPOSITORY_URLS");
-                writer.println(" -" + OPT_VARIABLE_VALUES + "       -  VARIABLE_VALUES");
+                writer.println(" -" + OPT_VARIABLE_VALUES + "       -  VARIABLE_VALUES format: `variable1=value1` for more `variable1=val1 -V variable2=val2`");
                 writer.println(
                         " -" + OPT_EXTENSION_CONFIGURATION + "      -  EXTENSION_CONFIGURATION");
                 writer.println(
                         " -" + OPT_FELIX_FRAMEWORK_VERSION + "      -  FELIX_FRAMEWORK_VERSION");
                 writer.println(
                         " -" + OPT_OSGI_FRAMEWORK_ARTIFACT + "      -  OSGI_FRAMEWORK_ARTIFACT");
-                writer.println(" -" + OPT_VERBOSE + "       -  VERBOSE");
+                writer.println(" -" + OPT_VERBOSE + "       -  VERBOSE {trace, debug, info, warn, error, off}");
 
                 writer.println("");
                 writer.println("Java options could be set using the env var 'JAVA_OPTS'");
@@ -359,6 +378,14 @@ public class Main {
 
     }
 
+    /** Split a string into key and value */
+    private static String[] split(final String val) {
+        final int pos = val.indexOf('=');
+        if ( pos == -1 ) {
+            return new String[] {val, "true"};
+        }
+        return new String[] {val.substring(0, pos), val.substring(pos + 1)};
+    }
     public static void main(final String[] args) {
 
         // setup logging
