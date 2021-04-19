@@ -281,12 +281,8 @@
                         <configuration>
                             <images>
                                 <image>
-                                    <name>apache/sling-feature-launcher:${project.version}</name>
+                                    <name>sling/feature-launcher</name>
                                     <build>
-                                        <tags>
-                                            <tag>latest</tag>
-                                            <tag>${project.version}</tag>
-                                        </tags>
                                          <dockerFileDir>.</dockerFileDir>
                                          <assembly>
                                               <descriptorRef>artifact</descriptorRef>

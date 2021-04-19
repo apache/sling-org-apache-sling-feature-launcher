@@ -1,0 +1,49 @@
+#!/bin/bash
+# -----------------------------------------------------------------------------
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+# -----------------------------------------------------------------------------
+
+# tags the maven-generated image with the Docker-Hub estimated image-name:latest and additional tags 
+
+# name of the image, given by pom.xml
+BASE_IMAGE_NAME="sling/feature-launcher"
+
+# latest tag
+docker tag $BASE_IMAGE_NAME $DOCKER_REPO:latest
+docker push $DOCKER_REPO:latest
+
+# additional tag with the SHA1 hash of the commit.
+docker tag $BASE_IMAGE_NAME $DOCKER_REPO:$SOURCE_COMMIT
+docker push $DOCKER_REPO:$SOURCE_COMMIT
+
+# additional tag with project version,
+PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+docker tag $BASE_IMAGE_NAME $DOCKER_REPO:$PROJECT_VERSION
+docker push $DOCKER_REPO:$PROJECT_VERSION
+
+# additional tag with snapshot or stable
+SNAPSHOT_REGEX="^(.*)-SNAPSHOT"
+if [[ $PROJECT_VERSION =~ $SNAPSHOT_REGEX ]];
+then
+  docker tag $BASE_IMAGE_NAME $DOCKER_REPO:snapshot
+  docker push $DOCKER_REPO:snapshot
+else
+  docker tag $BASE_IMAGE_NAME $DOCKER_REPO:stable
+  docker push $DOCKER_REPO:stable
+fi
+

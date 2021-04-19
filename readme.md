@@ -23,18 +23,25 @@ The following command line options are supported:
 ```
 $ rm -rf launcher && java -jar org.apache.sling.feature.launcher.jar -h
 usage: launcher
- -C <arg>    Set artifact clash override
- -CC <arg>   Set config class override
- -c <arg>    Set cache dir
- -D <arg>    Set framework properties
- -f <arg>    Set feature files (relative and absolute file path or URL including classloader resources)
- -p <arg>    Set home dir
- -u <arg>    Set repository url
- -V <arg>    Set variable value
- -ec <arg>   Set Extension Configuration (format: extensionName:key1=val1,key2=val2)
- -fv <arg>   Set Felix Framework version
- -fa <arg>   Set Framework Artifact (overrides felix framework version)
- -v          Verbose
+ -C,--artifact-clash <arg>             Set artifact clash override
+ -c,--cache_dir <arg>                  Set cache dir
+ -CC,--config-clash <arg>              Set config clash override
+ -cenv                                 print additional help information
+                                       for container env vars.
+ -D,--framework-properties <arg>       Set framework properties
+ -ec,--extension_configuration <arg>   Provide extension configuration,
+                                       format:
+                                       extensionName:key1=val1,key2=val2
+ -f,--feature-files <arg>              Set feature files
+ -fa,--osgi-framework-artifact <arg>   Set OSGi framework artifact
+                                       (overrides Apache Felix framework
+                                       version)
+ -fv,--felix-framework-version <arg>   Set Apache Felix framework version
+                                       (default 7.0.0)
+ -p,--home_dir <arg>                   Set home dir
+ -u,--repository-urls <arg>            Set repository urls
+ -V,--variable-values <arg>            Set variable values
+ -v,--verbose <arg>                    Verbose
 ```
 
 **Note**: if feature files are provided as a Classloader Resource like in an
@@ -46,6 +53,38 @@ String[] arguments = new String[] {
     "-f", url.toString()
 };
 org.apache.sling.feature.launcher.impl.Main.main(arguments);
+```
+
+# Container
+
+The container-image `apache/sling-org-apache-sling-feature-launcher:latest` is avaiable on DockerHub.
+
+Available tags:
+- **latest**    - latest build, could be a `snapshot` **or** `release` version.
+- **snapshot**  - latest build of a `*-SNAPSHOT` version.
+- **stable**    - latest build of a **release** version.
+- **(version)** - latest build of a fixed version, could be a `snapshot - (1.1.9-SNAPSHOT)` **or** `release - (1.1.9)` version.
+- **(sha1)**    - uses SHA1 hash of the git commit as tag
+
+
+If you are running sling-feature-launcher as an container please use env vars.
+```
+$docker run -it --rm --env FEATURE_FILES=https://path.to/feature-model.json apache/sling-org-apache-sling-feature-launcher:latest
+
+ cli-arg  -  container ENV variable
+-------------------------------------
+ -C       -  ARTIFACT_CLASH
+ -CC      -  CONFIG_CLASH
+ -c       -  CACHE_DIR
+ -D       -  FRAMEWORK_PROPERTIES
+ -f       -  FEATURE_FILES
+ -p       -  HOME_DIR
+ -u       -  REPOSITORY_URLS
+ -V       -  VARIABLE_VALUES
+ -ec      -  EXTENSION_CONFIGURATION
+ -fv      -  FELIX_FRAMEWORK_VERSION
+ -fa      -  OSGI_FRAMEWORK_ARTIFACT
+ -v       -  VERBOSE
 ```
 
 For further documentation see: https://github.com/apache/sling-org-apache-sling-feature/blob/master/readme.md
