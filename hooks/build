@@ -21,7 +21,7 @@
 # we are on ubuntu xenial (16.4) java-11 is hard to install so we tage java 8
 
 echo "start docker build"
-docker run -it --rm -v "$(pwd)":/root -w /root adoptopenjdk/maven-openjdk11:latest mvn clean package -P container
+docker run -it --rm -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn clean package -P container
 echo "end docker build"
 
 # next hook is hook/push
