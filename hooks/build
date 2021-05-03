@@ -20,6 +20,13 @@
 
 # we are on ubuntu xenial (16.4) java-11 is hard to install so we tage java 8
 
+apt-get update -y
+apt-get install default-jdk maven -y
+java -version
+mvn -version
+mvn clean package -P container
+
+
 echo "start docker build"
 docker run -i --rm -v "$(pwd)":/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 mvn clean package -P container
 echo "end docker build"
