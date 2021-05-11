@@ -18,6 +18,7 @@ package org.apache.sling.feature.launcher.impl;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -35,9 +36,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/** Run this as part of integration tests to help make sure we
- *  embed the right Apache commons classes.
-*/
+/**
+ * Run this as part of integration tests to help make sure we embed the right
+ * Apache commons classes.
+ */
 public class MainIT {
 
     protected static class SystemExitException extends SecurityException {
@@ -98,16 +100,16 @@ public class MainIT {
     public void testSplitMapCommandlineArgs() {
 
         assertEquals(new AbstractMap.SimpleEntry<>("foo", Collections.singletonMap("bar", "tar")),
-                Main.splitMap("foo:bar=tar"));
+                Main.splitMap2("foo:bar=tar"));
 
         assertEquals(new AbstractMap.SimpleEntry<>("hello", Collections.emptyMap()),
-                Main.splitMap("hello"));
+                Main.splitMap2("hello"));
 
         Map<String, String> em = new HashMap<>();
         em.put("a.b.c", "d.e.f");
         em.put("h.i.j", "k.l.m");
         Map.Entry<String, Map<String, String>> e = new AbstractMap.SimpleEntry<>("ding.dong", em);
-        assertEquals(e, Main.splitMap("ding.dong:a.b.c=d.e.f,h.i.j=k.l.m"));
+        assertEquals(e, Main.splitMap2("ding.dong:a.b.c=d.e.f,h.i.j=k.l.m"));
     }
 
     LauncherConfig noActionAllowesConfig = mock(LauncherConfig.class, invocationOnMock -> {
@@ -132,10 +134,13 @@ public class MainIT {
     @Test
     public void testParseVerbose() {
 
-        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VERBOSE, "debug" });
-        assertEquals("debug", System.getProperty("org.slf4j.simpleLogger.defaultLogLevel"));
+        Main.parseArgs(noActionAllowesConfig, new String[] {  });
+        assertNull(System.getProperty("org.slf4j.simpleLogger.defaultLogLevel"));
 
         Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VERBOSE });
+        assertEquals("debug", System.getProperty("org.slf4j.simpleLogger.defaultLogLevel"));
+
+        Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VERBOSE, "debug" });
         assertEquals("debug", System.getProperty("org.slf4j.simpleLogger.defaultLogLevel"));
 
         Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VERBOSE, "warn" });
@@ -194,19 +199,17 @@ public class MainIT {
 
         Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_CONFIG_CLASH });
 
-        LauncherConfig config = new LauncherConfig();
-        // -C and -CC may have a conflict
-        // Main.parseArgs(config, new String[] { "-" + Main.OPT_CONFIG_CLASH + "a=1",
-        //         "-" + Main.OPT_CONFIG_CLASH + "b=2" });
-        //
-        // assertTrue(config.getConfigClashOverrides().containsKey("a"));
-        // assertEquals("1", config.getConfigClashOverrides().get("a"));
-        // assertTrue(config.getConfigClashOverrides().containsKey("b"));
-        // assertEquals("2", config.getConfigClashOverrides().get("b"));
+        assertEquals( Main.OPT_CONFIG_CLASH,"CC");
 
+        LauncherConfig config = new LauncherConfig();
+        Main.parseArgs(config,args("-CC a=1"));
+
+        assertTrue(config.getConfigClashOverrides().containsKey("a"));
+        assertEquals("1", config.getConfigClashOverrides().get("a"));
+
+        
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-" + Main.OPT_CONFIG_CLASH, "a", "1",
-                "-" + Main.OPT_CONFIG_CLASH, "b", "2" });
+        Main.parseArgs(config, args("-CC a=1 -CC b=2"));
 
         assertTrue(config.getConfigClashOverrides().containsKey("a"));
         assertEquals("1", config.getConfigClashOverrides().get("a"));
@@ -220,18 +223,17 @@ public class MainIT {
 
         Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_VARIABLE_VALUES });
 
+        assertEquals( Main.OPT_VARIABLE_VALUES,"V");
+
         LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-" + Main.OPT_VARIABLE_VALUES + "a=1",
-                "-" + Main.OPT_VARIABLE_VALUES + "b=2" });
+        Main.parseArgs(config,args("-V a=1"));
 
         assertTrue(config.getVariables().containsKey("a"));
         assertEquals("1", config.getVariables().get("a"));
-        assertTrue(config.getVariables().containsKey("b"));
-        assertEquals("2", config.getVariables().get("b"));
+
 
         config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-" + Main.OPT_VARIABLE_VALUES, "a", "1",
-                "-" + Main.OPT_VARIABLE_VALUES, "b", "2" });
+        Main.parseArgs(config,args("-V a=1 -V b=2"));
 
         assertTrue(config.getVariables().containsKey("a"));
         assertEquals("1", config.getVariables().get("a"));
@@ -245,15 +247,26 @@ public class MainIT {
 
         Main.parseArgs(noActionAllowesConfig, new String[] { "-" + Main.OPT_FRAMEWORK_PROPERTIES });
 
-        LauncherConfig config = new LauncherConfig();
-        Main.parseArgs(config, new String[] { "-" + Main.OPT_FRAMEWORK_PROPERTIES + "a=1",
-                "-" + Main.OPT_FRAMEWORK_PROPERTIES + "b=2" });
+        assertEquals( Main.OPT_FRAMEWORK_PROPERTIES,"D");
 
-        assertTrue(config.getInstallation().getFrameworkProperties().containsKey("a"));
-        assertEquals("1", config.getInstallation().getFrameworkProperties().get("a"));
+        LauncherConfig configSpaceSingle = new LauncherConfig();
+        Main.parseArgs(configSpaceSingle, args("-D a=1"));
 
-        assertTrue(config.getInstallation().getFrameworkProperties().containsKey("b"));
-        assertEquals("2", config.getInstallation().getFrameworkProperties().get("b"));
+        assertTrue(configSpaceSingle.getInstallation().getFrameworkProperties().containsKey("a"));
+        assertEquals("1", configSpaceSingle.getInstallation().getFrameworkProperties().get("a"));
+
+        LauncherConfig configSpaceNoSeparator = new LauncherConfig();
+        Main.parseArgs(configSpaceNoSeparator, args("-D a=1,b=2"));
+       
+        assertTrue(configSpaceNoSeparator.getInstallation().getFrameworkProperties().containsKey("a"));
+        assertEquals("1,b=2", configSpaceNoSeparator.getInstallation().getFrameworkProperties().get("a"));
+
+        LauncherConfig configSpaceMultiple = new LauncherConfig();
+        Main.parseArgs(configSpaceMultiple, args("-D a=1 -D b=2"));
+        assertTrue(configSpaceMultiple.getInstallation().getFrameworkProperties().containsKey("a"));
+        assertEquals("1", configSpaceMultiple.getInstallation().getFrameworkProperties().get("a"));
+        assertTrue(configSpaceMultiple.getInstallation().getFrameworkProperties().containsKey("b"));
+        assertEquals("2", configSpaceMultiple.getInstallation().getFrameworkProperties().get("b"));
     }
 
     @Test
@@ -319,6 +332,13 @@ public class MainIT {
         assertTrue(config.getFeatureFiles().contains("foo"));
         assertTrue(config.getFeatureFiles().contains("bar"));
 
+    }
+
+    public static String[] args(String value) {
+        if (value == null) {
+            return new String[] {};
+        }
+        return value.split(" ");
     }
 
     @Test
