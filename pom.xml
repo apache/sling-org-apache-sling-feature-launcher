@@ -16,7 +16,7 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling</artifactId>
-        <version>43</version>
+        <version>44</version>
         <relativePath />
     </parent>
 
@@ -31,13 +31,13 @@
     <properties>
         <sling.java.version>8</sling.java.version>
         <bnd.version>5.3.0</bnd.version>
+        <project.build.outputTimestamp>1</project.build.outputTimestamp>
     </properties>
 
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</developerConnection>
         <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-feature-launcher.git</url>
-      <tag>org.apache.sling.feature.launcher-1.1.8</tag>
   </scm>
 
     <build>
@@ -210,7 +210,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature</artifactId>
-            <version>1.2.24</version>
+            <version>1.2.28</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -240,7 +240,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.2.6</version>
+            <version>1.2.13-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         
