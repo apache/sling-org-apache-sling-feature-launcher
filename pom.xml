@@ -103,8 +103,6 @@
                             org.apache.commons.cli.*,\
                             org.apache.felix.cm.json.*,\
                             org.apache.felix.converter.*,\
-                            org.apache.johnzon.core.*,\
-                            org.apache.johnzon.core.util.*,\
                             org.apache.sling.feature.*,\
                             org.osgi.util.function.*,\
                             org.osgi.util.converter.*,\
@@ -115,6 +113,10 @@
                             !org.osgi.util.tracker.*,\
                             !org.osgi.resource.*,\
                             *
+                            Private-Package:\
+                            org.apache.sling.feature.launcher.impl.*,\
+                            org.apache.johnzon.core.*,\
+                            org.apache.johnzon.core.util.*
                         ]]>
                     </bnd>
                 </configuration>
@@ -238,9 +240,15 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.2.13-SNAPSHOT</version>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-json_1.1_spec</artifactId>
+            <version>1.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.johnzon</groupId>
+            <artifactId>johnzon-core</artifactId>
+            <version>1.2.14</version>
             <scope>provided</scope>
         </dependency>
         
