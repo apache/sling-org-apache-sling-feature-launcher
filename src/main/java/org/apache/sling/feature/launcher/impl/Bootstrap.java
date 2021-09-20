@@ -45,7 +45,7 @@ import org.slf4j.Logger;
 public class Bootstrap {
 
     /** The Apache Felix Framework version used by default. */
-    public static final String FELIX_FRAMEWORK_VERSION = "7.0.0";
+    public static final String FELIX_FRAMEWORK_VERSION = "7.0.1";
 
     private final LauncherConfig config;
 
