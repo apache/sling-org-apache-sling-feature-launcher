@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -210,7 +211,7 @@ public class Bootstrap {
 
             // write application back
             final File file = getApplicationFeatureFile(this.config);
-            file.getParentFile().mkdirs();
+            Files.createDirectories(file.getParentFile().toPath());
 
             try (final FileWriter writer = new FileWriter(file))
             {
