@@ -24,7 +24,7 @@ The following command line options are supported:
 $ rm -rf launcher && java -jar org.apache.sling.feature.launcher.jar -h
 usage: launcher
  -C <arg>    Set artifact clash override
- -CC <arg>   Set config class override
+ -CC <arg>   Set config clash override
  -c <arg>    Set cache dir
  -D <arg>    Set framework properties
  -f <arg>    Set feature files (relative and absolute file path or URL including classloader resources)
