@@ -38,6 +38,7 @@ ENV VERBOSE=info
 
 #ENV for java
 ENV JAVA_OPTS=
+ENV JAVA_CP=/opt/run/launcher.jar
 
 WORKDIR /opt/run
 RUN addgroup -S launcher && adduser -S launcher -G launcher && \
@@ -46,10 +47,10 @@ RUN addgroup -S launcher && adduser -S launcher -G launcher && \
 USER launcher
 
 # copy the packaged jar file into our docker image
-COPY maven/${project.artifactId}-${project.version} /opt/run/launcher
+COPY maven/${project.artifactId}-${project.version}.jar /opt/run/launcher.jar
 
 #maybe cleanup
 #RUN echo "rm -rf launcherecho "rm -rf launcher \n"
 
 # set the startup command to execute the jar
-CMD /opt/run/launcher/bin/launcher -cenv -C $ARTIFACT_CLASH -CC $CONFIG_CLASH -c $CACHE_DIR -D $FRAMEWORK_PROPERTIES -f $FEATURE_FILES -p $HOME_DIR -u $REPOSITORY_URLS -V $VARIABLE_VALUES -ec $EXTENSION_CONFIGURATION -fv $FELIX_FRAMEWORK_VERSION -fa $OSGI_FRAMEWORK_ARTIFACT -v $VERBOSE
+CMD java $JAVA_OPTS -cp $JAVA_CP org.apache.sling.feature.launcher.impl.Main -cenv -C $ARTIFACT_CLASH -CC $CONFIG_CLASH -c $CACHE_DIR -D $FRAMEWORK_PROPERTIES -f $FEATURE_FILES -p $HOME_DIR -u $REPOSITORY_URLS -V $VARIABLE_VALUES -ec $EXTENSION_CONFIGURATION -fv $FELIX_FRAMEWORK_VERSION -fa $OSGI_FRAMEWORK_ARTIFACT -v $VERBOSE

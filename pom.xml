@@ -31,8 +31,6 @@
     <properties>
         <sling.java.version>8</sling.java.version>
         <bnd.version>5.3.0</bnd.version>
-        <license-maven-plugin.version>1.16</license-maven-plugin.version>
-        <appassembler-maven-plugin.version>2.0.0</appassembler-maven-plugin.version>
         <project.build.outputTimestamp>1</project.build.outputTimestamp>
     </properties>
 
@@ -46,6 +44,52 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.apache.commons</groupId>
+                                    <artifactId>commons-text</artifactId>
+                                    <version>1.9</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                                    <includes>
+                                        org/apache/commons/text/Builder*,
+                                        org/apache/commons/text/StringSubstitutor*,
+                                        org/apache/commons/text/StringTokenizer*,
+                                        org/apache/commons/text/TextStringBuilder*,
+                                        org/apache/commons/text/lookup/StringLookup*,
+                                        org/apache/commons/text/matcher/*
+                                    </includes>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.apache.commons</groupId>
+                                    <artifactId>commons-lang3</artifactId>
+                                    <version>3.12.0</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                                    <includes>
+                                        org/apache/commons/lang3/ArrayUtils*,
+                                        org/apache/commons/lang3/StringUtils*,
+                                        org/apache/commons/lang3/Validate*
+                                    </includes>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
                 <version>5.3.0</version>
@@ -55,11 +99,25 @@
                             Main-Class: org.apache.sling.feature.launcher.impl.Main
                             -exportcontents:\
                             org.apache.sling.feature.launcher.spi.*
-                            Private-Package:\
-                            org.apache.sling.feature.launcher.impl.*
+                            -conditionalpackage:\
+                            javax.json*,\
+                            org.apache.commons.cli.*,\
+                            org.apache.felix.cm.json.*,\
+                            org.apache.felix.converter.*,\
+                            org.apache.sling.feature.*,\
+                            org.osgi.util.function.*,\
+                            org.osgi.util.converter.*,\
+                            org.slf4j.*,\
+                            org.slf4j.impl.*
                             Import-Package:\
-                            org.apache.commons.cli;resolution:=optional,\
+                            !org.osgi.framework.*,\
+                            !org.osgi.util.tracker.*,\
+                            !org.osgi.resource.*,\
                             *
+                            Private-Package:\
+                            org.apache.sling.feature.launcher.impl.*,\
+                            org.apache.johnzon.core.*,\
+                            org.apache.johnzon.core.util.*
                         ]]>
                     </bnd>
                 </configuration>
@@ -103,6 +161,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <classpathDependencyScopeExclude>compile+runtime</classpathDependencyScopeExclude>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
@@ -115,88 +176,6 @@
                             </includes>
                         </fileset>
                     </filesets>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>${license-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>add-third-party</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>add-third-party</goal>
-                        </goals>
-                        <configuration>
-                            <fileTemplate>${basedir}/src/main/legal/LICENSE-with-deps</fileTemplate>
-                            <thirdPartyFilename>LICENSE-with-deps</thirdPartyFilename>
-                            <sortArtifactByName>true</sortArtifactByName>
-                            <excludedScopes>test</excludedScopes>
-                            <licenseMerges>
-                                <licenseMerge>The Apache Software License, Version 2.0|Apache License, Version 2.0|Apache Public License 2.0</licenseMerge>
-                            </licenseMerges>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>appassembler-maven-plugin</artifactId>
-                <version>${appassembler-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>assemble</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <repositoryLayout>flat</repositoryLayout>
-                    <repositoryName>lib</repositoryName>
-                    <useWildcardClassPath>true</useWildcardClassPath>
-                    <extraJvmArguments>-Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Dfile.encoding=UTF-8</extraJvmArguments>
-                    <licenseHeaderFile>${basedir}/src/main/legal/license-header</licenseHeaderFile>
-                    <programs>
-                        <program>
-                            <mainClass>org.apache.sling.feature.launcher.impl.Main</mainClass>
-                            <id>launcher</id>
-                        </program>
-                    </programs>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>${project.build.finalName}</finalName>
-                            <tarLongFileMode>gnu</tarLongFileMode>
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <descriptors>
-                                <descriptor>${basedir}/src/main/assembly/bin.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>src/main/legal/NOTICE-with-deps</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
@@ -239,9 +218,15 @@
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.annotation.versioning</artifactId>
+            <version>1.1.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
             <artifactId>org.osgi.util.function</artifactId>
             <version>1.0.0</version>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
@@ -262,9 +247,15 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.2.13-SNAPSHOT</version>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-json_1.1_spec</artifactId>
+            <version>1.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.johnzon</groupId>
+            <artifactId>johnzon-core</artifactId>
+            <version>1.2.14</version>
             <scope>provided</scope>
         </dependency>
         
@@ -313,7 +304,7 @@
                                         </tags>
                                          <dockerFileDir>.</dockerFileDir>
                                          <assembly>
-                                             <descriptor>${project.basedir}/src/main/assembly/bin.xml</descriptor>
+                                              <descriptorRef>artifact</descriptorRef>
                                          </assembly>
                                     </build>
                                 </image>
