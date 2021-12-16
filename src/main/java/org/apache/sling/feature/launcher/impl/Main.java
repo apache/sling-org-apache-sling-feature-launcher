@@ -370,8 +370,6 @@ public class Main {
 
                 writer.println("");
                 writer.println("Java options could be set using the env var 'JAVA_OPTS'");
-                writer.println(
-                        "Classpath could be changed using the env var 'JAVA_CP' (default:`/opt/run/launcher.jar`)");
                 writer.flush();
             }
         }
