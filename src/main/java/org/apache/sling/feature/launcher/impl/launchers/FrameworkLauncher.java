@@ -16,19 +16,29 @@
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
+import org.apache.sling.feature.Artifact;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
+import org.apache.sling.feature.io.json.FeatureJSONWriter;
 import org.apache.sling.feature.launcher.impl.VariableSubstitutor;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.Constants;
 
 import aQute.bnd.annotation.spi.ServiceProvider;
 
@@ -38,12 +48,14 @@ import aQute.bnd.annotation.spi.ServiceProvider;
 @ServiceProvider(value = Launcher.class)
 public class FrameworkLauncher implements Launcher {
 
+    private Feature feature;
 
     @Override
     public void prepare(final LauncherPrepareContext context,
             final ArtifactId frameworkId,
             final Feature app) throws Exception {
         context.addAppJar(context.getArtifactFile(frameworkId));
+        this.feature = app;
     }
 
     /**
@@ -89,11 +101,62 @@ public class FrameworkLauncher implements Launcher {
         Callable<Integer> restart = (Callable<Integer>) constructor.newInstance(properties, context.getBundleMap(),
                 context.getConfigurations(), context.getInstallableArtifacts());
 
+        setOptionalSupplier(restart, "setFeatureSupplier", new Supplier<Object>() {
+
+            @Override
+            public Object get() {
+                try ( final StringWriter writer = new StringWriter()) {
+                    FeatureJSONWriter.write(writer, feature);
+                    writer.flush();
+                    return writer.toString();
+                } catch ( final IOException ignore) {
+                    // ignore
+                }
+                return null;
+            }
+            
+        });
+
+        setOptionalBiConsumer(restart, "setBundleReporter", new BiConsumer<URL, Map<String, String>>() {
+            @Override
+            public void accept(final URL url, final Map<String, String> values) {
+                final String urlString = url.toString();
+                for(final Artifact a : feature.getBundles()) {
+                    if ( urlString.equals(a.getMetadata().get(URL.class.getName()))) {
+                        for(final Map.Entry<String, String> entry : values.entrySet()) {
+                            a.getMetadata().put(entry.getKey(), entry.getValue());
+                        }
+                        break;
+                    }
+                }
+            }
+            
+        });
         return restart.call();
         // nothing else to do, constructor starts everything
     }
 
     protected String getFrameworkRunnerClass() {
         return FrameworkRunner.class.getName();
+    }
+
+    private void setOptionalSupplier(final Object restart, final String name, final Supplier<Object> supplier) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        try {
+            final Method setSupplier = restart.getClass().getMethod(name, Supplier.class);
+            setSupplier.setAccessible(true);
+            setSupplier.invoke(restart, supplier);
+        } catch ( final NoSuchMethodException nsme) {
+            // ignore
+        }
+    }
+
+    private void setOptionalBiConsumer(final Object restart, final String name, final BiConsumer consumer) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        try {
+            final Method setMethod = restart.getClass().getMethod(name, BiConsumer.class);
+            setMethod.setAccessible(true);
+            setMethod.invoke(restart, consumer);
+        } catch ( final NoSuchMethodException nsme) {
+            // ignore
+        }
     }
 }

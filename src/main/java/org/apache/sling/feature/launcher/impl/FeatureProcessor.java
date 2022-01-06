@@ -187,6 +187,8 @@ public class FeatureProcessor {
             for(final Artifact a : entry.getValue()) {
                 final URL artifactFile = ctx.getArtifactFile(a.getId());
 
+                // add URL to feature metadata
+                a.getMetadata().put(URL.class.getName(), artifactFile.toString());
                 config.getInstallation().addBundle(entry.getKey(), artifactFile);
             }
         }
