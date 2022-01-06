@@ -16,4 +16,5 @@ maven-eclipse.xml
 jcr.log
 atlassian-ide-plugin.xml
 license.properties
+.vscode
 /launcher
