@@ -152,8 +152,7 @@ public class FeatureProcessor {
             }
         }
 
-        // TODO make feature id configurable
-        final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, features.toArray(new Feature[0]));
+        final Feature app = FeatureBuilder.assemble(config.getLaunchFeatureId(), builderContext, features.toArray(new Feature[0]));
         loadedFeatures.put(app.getId(), app);
 
         // TODO: this sucks

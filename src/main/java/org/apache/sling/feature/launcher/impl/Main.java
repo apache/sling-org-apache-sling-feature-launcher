@@ -73,6 +73,8 @@ public class Main {
 
     public static final String OPT_PRINT_CONTAINER_ENV_HELP = "cenv";
 
+    public static final String OPT_LAUNCH_FEATURE_ID = "i";
+
     private static Logger LOGGER;
 
     private static Options options;
@@ -178,6 +180,13 @@ public class Main {
                 .numberOfArgs(Option.UNLIMITED_VALUES)
                 .build();
 
+        final Option featureIdOption = Option.builder(OPT_LAUNCH_FEATURE_ID)
+                .longOpt("launch-feature-id")
+                .desc("Set the id for the launch feature")
+                .optionalArg(true)
+                .numberOfArgs(1)
+                .build();
+
         final Option fwkProperties = Option.builder(OPT_FRAMEWORK_PROPERTIES)
                 .longOpt("framework-property")
                 .desc("Set framework property, format: -D key1=val1 -D key2=val2")
@@ -245,6 +254,7 @@ public class Main {
                 .addOption(configClashOverride)
                 .addOption(repoOption)
                 .addOption(featureOption)
+                .addOption(featureIdOption)
                 .addOption(fwkProperties)
                 .addOption(varValue)
                 .addOption(debugOption)
@@ -295,6 +305,9 @@ public class Main {
 
             extractValuesFromOption(cl, OPT_FEATURE_FILES).orElseGet(ArrayList::new)
                     .forEach(config::addFeatureFiles);
+
+            extractValueFromOption(cl, OPT_LAUNCH_FEATURE_ID)
+                    .ifPresent(config::setLaunchFeatureId);
 
             extractValueFromOption(cl, OPT_CACHE_DIR).map(File::new)
                     .ifPresent(config::setCacheDirectory);

@@ -28,14 +28,12 @@ import java.util.Map;
 
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.io.artifacts.ArtifactManagerConfig;
-import org.apache.sling.feature.io.artifacts.spi.ArtifactProviderContext;
 
 /**
  * This class holds the configuration of the launcher.
  */
 public class LauncherConfig
-    extends ArtifactManagerConfig
-    implements ArtifactProviderContext {
+    extends ArtifactManagerConfig {
 
     private static final String HOME = "launcher";
 
@@ -60,12 +58,15 @@ public class LauncherConfig
 
     private volatile String frameworkArtifact;
 
+    private volatile ArtifactId launchFeatureId;
+
     /**
      * Create a new configuration object.
      * Set the default values
      */
     public LauncherConfig() {
         this.setCacheDirectory(new File(getHomeDirectory(), CACHE_DIR));
+        this.launchFeatureId = ArtifactId.parse("group:assembled:1.0.0");
     }
 
     public List<ArtifactId> getArtifactClashOverrides() {
@@ -130,5 +131,22 @@ public class LauncherConfig
 
     public void setFrameworkArtifact(final String frameworkArtifact) {
         this.frameworkArtifact = frameworkArtifact;
+    }
+
+    /**
+     * Set the feature id for the launch feature
+     * @param id The id
+     * @throws IllegalArgumentException If the id is invalid
+     */
+    public void setLaunchFeatureId(final String id) {
+        this.launchFeatureId = ArtifactId.parse(id);
+    }
+
+    /**
+     * Get the feature id for the launch feature
+     * @return The feature id
+     */
+    public ArtifactId getLaunchFeatureId() {
+        return this.launchFeatureId;
     }
 }
