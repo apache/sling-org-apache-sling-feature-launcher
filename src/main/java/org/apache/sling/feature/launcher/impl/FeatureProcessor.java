@@ -156,14 +156,6 @@ public class FeatureProcessor {
         final Feature app = FeatureBuilder.assemble(ArtifactId.fromMvnId("group:assembled:1.0.0"), builderContext, features.toArray(new Feature[0]));
         loadedFeatures.put(app.getId(), app);
 
-        // TODO: this sucks
-        for (Artifact bundle : app.getBundles()) {
-            if ( bundle.getStartOrder() == 0) {
-                final int so = bundle.getMetadata().get("start-level") != null ? Integer.parseInt(bundle.getMetadata().get("start-level")) : 1;
-                bundle.setStartOrder(so);
-            }
-        }
-
         FeatureBuilder.resolveVariables(app, config.getVariables());
 
         return app;
