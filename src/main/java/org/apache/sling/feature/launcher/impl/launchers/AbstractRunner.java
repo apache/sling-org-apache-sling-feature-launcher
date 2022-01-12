@@ -18,6 +18,7 @@ package org.apache.sling.feature.launcher.impl.launchers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -38,16 +40,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.PrototypeServiceFactory;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.startlevel.BundleStartLevel;
+import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 import org.slf4j.Logger;
@@ -81,10 +87,22 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     protected final Logger logger;
 
+    private Supplier<String> featureSupplier;
+
+    private BiConsumer<URL, Map<String, String>> bundleReporter;
+
     public AbstractRunner(final List<Object[]> configurations, final List<URL> installables) {
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
         this.logger = LoggerFactory.getLogger("launcher");
+    }
+
+    public void setFeatureSupplier(final Supplier<String> supplier) {
+        this.featureSupplier = supplier;
+    }
+
+    public void setBundleReporter(final BiConsumer<URL, Map<String, String>> reporter) {
+        this.bundleReporter = reporter;
     }
 
     protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap) throws BundleException {
@@ -313,7 +331,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                 if (file.getProtocol().equals("file")) {
                     location = "reference:";
                 }
-                location = location + file.toString();
+                location = location.concat(file.toString());
 
                 final Bundle bundle = bc.installBundle(location, null);
 
@@ -324,7 +342,61 @@ public abstract class AbstractRunner implements Callable<Integer> {
                     }
                     bundle.start();
                 }
+
+                if ( this.bundleReporter != null ) {
+                    final Map<String, String> params = new HashMap<>();
+                    params.put(Constants.BUNDLE_SYMBOLICNAME, bundle.getSymbolicName());
+                    params.put(Constants.BUNDLE_VERSION, bundle.getVersion().toString());
+                    params.put("Bundle-Id", String.valueOf(bundle.getBundleId()));
+
+                    this.bundleReporter.accept(file, params);
+                }
+                    
             }
+        }
+    }
+
+    protected void finishStartup(final Framework framework) {
+        Bundle featureBundle = null;
+        for(final Bundle bundle : framework.getBundleContext().getBundles()) {
+            if ( featureSupplier != null && "org.apache.sling.feature".equals(bundle.getSymbolicName()) ) {
+                featureBundle = bundle;
+            }
+        }
+        if ( featureBundle != null ) {
+            final Bundle bundle = featureBundle;
+            // the feature is registered as a prototype to give each client a copy as feature models are mutable
+            final Dictionary<String, Object> properties = new Hashtable<>();
+            properties.put("name", "org.apache.sling.feature.launcher");
+            featureBundle.getBundleContext().registerService(new String[] {"org.apache.sling.feature.Feature"}, 
+                new PrototypeServiceFactory<Object>() {
+
+                    @Override
+                    public Object getService(final Bundle client, final ServiceRegistration<Object> registration) {
+                        final ClassLoader cl = bundle.adapt(BundleWiring.class).getClassLoader();
+                        final ClassLoader oldTCCL = Thread.currentThread().getContextClassLoader();
+                        Thread.currentThread().setContextClassLoader(cl);
+                        try {
+                            final Class<?> readerClass = cl.loadClass("org.apache.sling.feature.io.json.FeatureJSONReader");
+                            final Method readMethod = readerClass.getDeclaredMethod("read", java.io.Reader.class, String.class);
+                            try( final StringReader reader = new StringReader(featureSupplier.get())) {
+                                return readMethod.invoke(null, reader, null);
+                            }
+                        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+                            // ignore
+                        } finally {
+                            Thread.currentThread().setContextClassLoader(oldTCCL);
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public void ungetService(final Bundle client, final ServiceRegistration<Object> registration,
+                            final Object service) {
+                        // nothing to do
+                    }
+                    
+                }, properties);
         }
     }
 

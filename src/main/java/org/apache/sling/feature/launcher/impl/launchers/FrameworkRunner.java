@@ -39,12 +39,20 @@ public class FrameworkRunner extends AbstractRunner {
 
     private volatile int type = -1;
 
+    private final Map<String, String> frameworkProperties;
+
+    private final Map<Integer, List<URL>> bundlesMap;
+
     public FrameworkRunner(final Map<String, String> frameworkProperties,
             final Map<Integer, List<URL>> bundlesMap,
             final List<Object[]> configurations,
             final List<URL> installables) throws Exception {
         super(configurations, installables);
-
+        this.frameworkProperties = frameworkProperties;
+        this.bundlesMap = bundlesMap;
+    }
+    
+    public Integer call() throws Exception {
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);
         FrameworkFactory factory = null;
         for(FrameworkFactory f : loader) {
@@ -81,7 +89,6 @@ public class FrameworkRunner extends AbstractRunner {
 
         this.setupFramework(framework, bundlesMap);
 
-
         long time = System.currentTimeMillis();
         long startTimeout = Long.parseLong(frameworkProperties.getOrDefault(START_TIMEOUT, String.valueOf(10 * 60)));
 
@@ -89,6 +96,7 @@ public class FrameworkRunner extends AbstractRunner {
         if (!this.startFramework(framework, startTimeout, TimeUnit.SECONDS)) {
             throw new TimeoutException("Waited for more than " + startTimeout + " seconds to startup framework.");
         }
+        this.finishStartup(framework);
         logger.info("Framework started");
 
         logger.debug("Startup took: " + (System.currentTimeMillis() - time));
@@ -101,10 +109,6 @@ public class FrameworkRunner extends AbstractRunner {
             }
             logger.debug("Restart took: " + (System.currentTimeMillis() - time));
         }
-    }
-
-    @Override
-    public Integer call() {
         return type;
     }
 }
