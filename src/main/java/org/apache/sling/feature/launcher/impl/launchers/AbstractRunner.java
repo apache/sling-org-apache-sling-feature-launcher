@@ -173,7 +173,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                 // the filter is constant so this should really not happen
                 throw new RuntimeException(e);
             }
-            this.configAdminTracker.open();
+            this.configAdminTracker.open(true);
         } else if (!configurations.isEmpty()) {
 
             this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
@@ -203,7 +203,7 @@ public abstract class AbstractRunner implements Callable<Integer> {
                             // nothing to do
                         }
                     });
-            this.configAdminTracker.open();
+            this.configAdminTracker.open(true);
         }
         if ( !installables.isEmpty() ) {
             this.installerTracker = new ServiceTracker<>(framework.getBundleContext(),
