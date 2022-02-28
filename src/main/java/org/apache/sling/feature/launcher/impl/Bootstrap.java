@@ -96,6 +96,15 @@ public class Bootstrap {
     }
 
     public void run() {
+        try {
+            runWithException();
+        } catch (Exception ex) {
+            this.logger.error("Error during bootstrap", ex);
+            System.exit(1);
+        }
+    }
+
+    public void runWithException() throws Exception {
         this.logger.info("");
         this.logger.info("Apache Sling Application Launcher");
         this.logger.info("---------------------------------");
@@ -106,8 +115,7 @@ public class Bootstrap {
 
         Iterator<Launcher> iterator = ServiceLoader.load(Launcher.class).iterator();
         if (!iterator.hasNext()) {
-            this.logger.error("Unable to find launcher service.");
-            System.exit(1);
+            throw new IllegalStateException("Unable to find launcher service.");
         }
 
         final Launcher launcher = iterator.next();
@@ -158,21 +166,14 @@ public class Bootstrap {
                     this.config.getInstallation().getBundleMap().clear();
                 }
             } catch ( final Exception iae) {
-                this.logger.error("Error while assembling launcher: {}", iae.getMessage(), iae);
-                System.exit(1);
+                throw new IllegalStateException("Error while assembling launcher: " + iae.getMessage(), iae);
             }
         }
         catch (IOException ex) {
-            this.logger.error("Unable to setup artifact manager: {}", ex.getMessage(), ex);
-            System.exit(1);
+            throw new IOException("Unable to setup artifact manager: " + ex.getMessage(), ex);
         }
 
-        try {
-            run(launcher);
-        } catch ( final Exception iae) {
-            this.logger.error("Error while running launcher: {}", iae.getMessage(), iae);
-            System.exit(1);
-        }
+        run(launcher);
     }
 
     private ArtifactId getFrameworkArtifactId(final Feature app) {
@@ -217,11 +218,7 @@ public class Bootstrap {
             {
                 FeatureJSONWriter.write(writer, app);
             }
-            catch (final IOException ioe)
-            {
-                this.logger.error("Error while writing application file: {}", ioe.getMessage(), ioe);
-                System.exit(1);
-            }
+
             return app;
         }
     }
