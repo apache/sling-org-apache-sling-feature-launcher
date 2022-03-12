@@ -86,6 +86,7 @@
                 <configuration>
                     <excludes>
                         <exclude>readme.md</exclude>
+                        <exclude>src/main/legal/NOTICE-with-deps</exclude>
                         <exclude>src/main/resources/META-INF/services/**</exclude>
                         <exclude>**/*.properties</exclude>
                         <exclude>launcher/**</exclude>
@@ -188,16 +189,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>src/main/legal/NOTICE-with-deps</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>
