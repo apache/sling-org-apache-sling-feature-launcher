@@ -116,17 +116,14 @@ public class FeatureProcessor {
                     final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
                     try (final InputStream is = featureArtifact.getLocalURL().openStream()) {
                         for(final Feature feature : ArchiveReader.read(is, (id, stream) -> {
-
-                                if ( provider.provide(id) == null ) {
-                                    final File artifactFile = new File(config.getCacheDirectory(),
+                                final File artifactFile = new File(config.getCacheDirectory(),
                                             id.toMvnPath().replace('/', File.separatorChar));
-                                    if (!artifactFile.exists()) {
-                                        artifactFile.getParentFile().mkdirs();
-                                        try (final OutputStream os = new FileOutputStream(artifactFile)) {
-                                            int l = 0;
-                                            while ((l = stream.read(buffer)) > 0) {
-                                                os.write(buffer, 0, l);
-                                            }
+                                if (!artifactFile.exists()) {
+                                    artifactFile.getParentFile().mkdirs();
+                                    try (final OutputStream os = new FileOutputStream(artifactFile)) {
+                                        int l = 0;
+                                        while ((l = stream.read(buffer)) > 0) {
+                                            os.write(buffer, 0, l);
                                         }
                                     }
                                 }
