@@ -22,7 +22,6 @@ import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;

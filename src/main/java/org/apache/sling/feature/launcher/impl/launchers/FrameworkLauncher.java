@@ -37,8 +37,6 @@ import org.apache.sling.feature.launcher.impl.VariableSubstitutor;
 import org.apache.sling.feature.launcher.spi.Launcher;
 import org.apache.sling.feature.launcher.spi.LauncherPrepareContext;
 import org.apache.sling.feature.launcher.spi.LauncherRunContext;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.Constants;
 
 import aQute.bnd.annotation.spi.ServiceProvider;
 
