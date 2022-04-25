@@ -52,7 +52,12 @@ public class FrameworkRunner extends AbstractRunner {
         this.bundlesMap = bundlesMap;
     }
     
-    public Integer call() throws Exception {
+    /**
+     * Get the framework factory
+     * @return Return the first factory found via service loaders
+     * @throws Exception If no factory can be found
+     */
+    protected FrameworkFactory getFrameworkFactory() throws Exception {
         final ServiceLoader<FrameworkFactory> loader = ServiceLoader.load(FrameworkFactory.class);
         FrameworkFactory factory = null;
         for(FrameworkFactory f : loader) {
@@ -62,6 +67,12 @@ public class FrameworkRunner extends AbstractRunner {
         if ( factory == null ) {
             throw new Exception("Unable to locate framework factory.");
         }
+        return factory;
+    }
+
+    public Integer call() throws Exception {
+        // get the framework factory
+        final FrameworkFactory factory = this.getFrameworkFactory();
 
         // create the framework
         final Framework framework = factory.newFramework(frameworkProperties);
