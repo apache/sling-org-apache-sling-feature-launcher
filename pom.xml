@@ -16,7 +16,7 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling</artifactId>
-        <version>46</version>
+        <version>48</version>
         <relativePath />
     </parent>
 
@@ -30,7 +30,7 @@
 
     <properties>
         <sling.java.version>8</sling.java.version>
-        <bnd.version>5.3.0</bnd.version>
+        <bnd.version>6.3.1</bnd.version>
         <license-maven-plugin.version>1.16</license-maven-plugin.version>
         <appassembler-maven-plugin.version>2.0.0</appassembler-maven-plugin.version>
         <project.build.outputTimestamp>1</project.build.outputTimestamp>
@@ -48,7 +48,7 @@
             <plugin>
                 <groupId>biz.aQute.bnd</groupId>
                 <artifactId>bnd-maven-plugin</artifactId>
-                <version>5.3.0</version>
+                <version>${bnd.version}</version>
                 <configuration>
                     <bnd>
                         <![CDATA[
@@ -258,12 +258,12 @@
             <version>1.2.14</version>
             <scope>provided</scope>
         </dependency>
-        
+        <!-- for generating service descriptor files -->
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
+            <artifactId>biz.aQute.bnd.annotation</artifactId>
             <version>${bnd.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope><!-- not necessary at run time -->
         </dependency>
 
         <!-- Testing dependencies -->
