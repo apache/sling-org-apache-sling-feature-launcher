@@ -142,6 +142,43 @@
                 </executions>
             </plugin>
 
+             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>maven-enforcer-rules</artifactId>
+                        <version>1.0.0</version>
+                    </dependency>
+                </dependencies>
+                     <executions>
+                        <execution>
+                            <id>enforce-complete-runtime-classpath</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <requireProvidedDependenciesInRuntimeClasspath
+                                        implementation="org.apache.sling.maven.enforcer.RequireProvidedDependenciesInRuntimeClasspath">
+                                        <excludes>
+                                            <exclude>org.jetbrains:annotations</exclude><!-- exclude all annotations with class retention -->
+                                            <exclude>org.osgi:osgi.annotation</exclude>
+                                            <exclude>org.osgi:org.osgi.annotation.versioning</exclude>
+                                            <exclude>org.apache.felix:org.apache.felix.converter</exclude><!-- relocated to org.osgi.util.converter -->
+                                            <exclude>org.apache.johnzon:johnzon-core</exclude><!-- embedded in org.apache.sling.commons.johnzon -->
+                                            <exclude>org.apache.geronimo.specs:geronimo-json_1.1_spec</exclude><!-- embedded in org.apache.sling.commons.johnzon -->
+                                            <exclude>org.apache.felix:org.apache.felix.utils</exclude><!-- embedded in org.apache.sling.feature -->
+                                            <exclude>org.osgi:org.osgi.core</exclude><!-- contained in org.osgi:osgi.core -->
+                                        </excludes>
+                                    </requireProvidedDependenciesInRuntimeClasspath>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
+            </plugin>
+      
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>appassembler-maven-plugin</artifactId>
@@ -157,7 +194,6 @@
                 <configuration>
                     <repositoryLayout>flat</repositoryLayout>
                     <repositoryName>lib</repositoryName>
-                    <useWildcardClassPath>true</useWildcardClassPath>
                     <extraJvmArguments>-Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Dfile.encoding=UTF-8</extraJvmArguments>
                     <licenseHeaderFile>${basedir}/src/main/legal/license-header</licenseHeaderFile>
                     <programs>
@@ -198,24 +234,24 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
             <version>1.9</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.12.0</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>osgi.core</artifactId>
             <version>8.0.0</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -226,37 +262,50 @@
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature</artifactId>
             <version>1.2.30</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.util.function</artifactId>
             <version>1.0.0</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.util.converter</artifactId>
             <version>1.0.9</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.cm.json</artifactId>
             <version>1.0.6</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
+        </dependency>
+        <!-- transitive dependency of org.apache.felix.cm.json -->
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.configurator</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
-             <groupId>commons-cli</groupId>
-             <artifactId>commons-cli</artifactId>
-             <version>1.4</version>
-            <scope>provided</scope>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>1.4</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.johnzon</artifactId>
             <version>1.2.14</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.osgi</groupId>
+                    <artifactId>org.osgi.annotation.versioning</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- for generating service descriptor files -->
         <dependency>
