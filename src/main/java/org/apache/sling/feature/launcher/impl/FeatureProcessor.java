@@ -108,16 +108,20 @@ public class FeatureProcessor {
         }
 
         List<Feature> features = new ArrayList<>();
-        final byte[] buffer = new byte[1024*1024*256];
+        // lazily initialised, we don't want to allocate that much memory unless needed
+        final byte[][] bufferHolder = new byte[1][];
         for (final String featureFile : config.getFeatureFiles()) {
             for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), featureFile)) {
                 if ( initFile.endsWith(IOUtils.EXTENSION_FEATURE_ARCHIVE) ) {
+                    if ( bufferHolder[0] == null )
+                        bufferHolder[0] = new byte[1024*1024*256];
                     logger.debug("Reading feature archive {}", initFile);
                     final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
                     try (final InputStream is = featureArtifact.getLocalURL().openStream()) {
                         for(final Feature feature : ArchiveReader.read(is, (id, stream) -> {
                                 final File artifactFile = new File(config.getCacheDirectory(),
                                             id.toMvnPath().replace('/', File.separatorChar));
+                                byte[] buffer = bufferHolder[0];
                                 if (!artifactFile.exists()) {
                                     artifactFile.getParentFile().mkdirs();
                                     try (final OutputStream os = new FileOutputStream(artifactFile)) {
