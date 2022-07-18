@@ -17,13 +17,12 @@
 package org.apache.sling.feature.launcher.impl;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +107,6 @@ public class FeatureProcessor {
         }
 
         List<Feature> features = new ArrayList<>();
-        final byte[] buffer = new byte[1024*1024*256];
         for (final String featureFile : config.getFeatureFiles()) {
             for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), featureFile)) {
                 if ( initFile.endsWith(IOUtils.EXTENSION_FEATURE_ARCHIVE) ) {
@@ -120,12 +118,7 @@ public class FeatureProcessor {
                                             id.toMvnPath().replace('/', File.separatorChar));
                                 if (!artifactFile.exists()) {
                                     artifactFile.getParentFile().mkdirs();
-                                    try (final OutputStream os = new FileOutputStream(artifactFile)) {
-                                        int l = 0;
-                                        while ((l = stream.read(buffer)) > 0) {
-                                            os.write(buffer, 0, l);
-                                        }
-                                    }
+                                    Files.copy(stream, artifactFile.toPath());
                                 }
                             })) {
 
