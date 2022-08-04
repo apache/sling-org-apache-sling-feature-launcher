@@ -74,6 +74,7 @@ public class FrameworkRunner extends AbstractRunner {
         // get the framework factory
         final FrameworkFactory factory = this.getFrameworkFactory();
 
+        logger.info("Using framework factory {}", factory.getClass());
         // create the framework
         final Framework framework = factory.newFramework(frameworkProperties);
         // initialize the framework
