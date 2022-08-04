@@ -171,6 +171,7 @@
                                             <exclude>org.apache.geronimo.specs:geronimo-json_1.1_spec</exclude><!-- embedded in org.apache.sling.commons.johnzon -->
                                             <exclude>org.apache.felix:org.apache.felix.utils</exclude><!-- embedded in org.apache.sling.feature -->
                                             <exclude>org.osgi:org.osgi.core</exclude><!-- contained in org.osgi:osgi.core -->
+                                            <exclude>org.osgi:org.osgi.service.configurator</exclude><!-- wrongly flagged to be needed by cm.json -->
                                         </excludes>
                                     </requireProvidedDependenciesInRuntimeClasspath>
                                 </rules>
@@ -281,13 +282,6 @@
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.cm.json</artifactId>
             <version>1.0.6</version>
-            <scope>compile</scope>
-        </dependency>
-        <!-- transitive dependency of org.apache.felix.cm.json -->
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.configurator</artifactId>
-            <version>1.0.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
