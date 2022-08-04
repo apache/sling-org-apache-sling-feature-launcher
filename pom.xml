@@ -192,6 +192,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <useWildcardClassPath>true</useWildcardClassPath>
                     <repositoryLayout>flat</repositoryLayout>
                     <repositoryName>lib</repositoryName>
                     <extraJvmArguments>-Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Dfile.encoding=UTF-8</extraJvmArguments>
@@ -256,7 +257,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
