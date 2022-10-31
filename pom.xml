@@ -172,6 +172,9 @@
                                             <exclude>org.apache.felix:org.apache.felix.utils</exclude><!-- embedded in org.apache.sling.feature -->
                                             <exclude>org.osgi:org.osgi.core</exclude><!-- contained in org.osgi:osgi.core -->
                                             <exclude>org.osgi:org.osgi.service.configurator</exclude><!-- wrongly flagged to be needed by cm.json -->
+                                            <exclude>org.osgi:org.osgi.service.feature</exclude><!-- Optional dependency for feature model -->
+                                            <exclude>org.osgi:org.osgi.framework</exclude><!-- Included via osgi.core -->
+                                            <exclude>org.osgi:org.osgi.resource</exclude><!-- Included via osgi.core -->
                                         </excludes>
                                     </requireProvidedDependenciesInRuntimeClasspath>
                                 </rules>
@@ -263,7 +266,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature</artifactId>
-            <version>1.2.30</version>
+            <version>1.3.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
