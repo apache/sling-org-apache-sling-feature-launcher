@@ -166,9 +166,8 @@
                                             <exclude>org.osgi:osgi.annotation</exclude>
                                             <exclude>org.osgi:org.osgi.annotation.versioning</exclude>
                                             <exclude>org.apache.felix:org.apache.felix.converter</exclude><!-- relocated to org.osgi.util.converter -->
-                                            <exclude>org.apache.johnzon:johnzon-core</exclude><!-- embedded in org.apache.sling.commons.johnzon -->
-                                            <exclude>org.apache.geronimo.specs:geronimo-json_1.1_spec</exclude><!-- embedded in org.apache.sling.commons.johnzon -->
                                             <exclude>org.apache.felix:org.apache.felix.utils</exclude><!-- embedded in org.apache.sling.feature -->
+                                            <exclude>org.apache.geronimo.specs:geronimo-json_1.1_spec</exclude><!-- not needed, jakarta.json is used -->
                                             <exclude>org.osgi:org.osgi.core</exclude><!-- contained in org.osgi:osgi.core -->
                                             <exclude>org.osgi:org.osgi.service.configurator</exclude><!-- wrongly flagged to be needed by cm.json -->
                                             <exclude>org.osgi:org.osgi.service.feature</exclude><!-- Optional dependency for feature model -->
@@ -265,7 +264,7 @@
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature</artifactId>
-            <version>1.3.0</version>
+            <version>2.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -283,7 +282,7 @@
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.cm.json</artifactId>
-            <version>1.0.6</version>
+            <version>2.0.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -293,16 +292,17 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.2.14</version>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <version>2.0.2</version>
             <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.osgi</groupId>
-                    <artifactId>org.osgi.annotation.versioning</artifactId>
-                </exclusion>
-            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.johnzon</groupId>
+            <artifactId>johnzon-core</artifactId>
+            <classifier>jakarta</classifier>
+            <version>1.2.19</version>
+            <scope>compile</scope>
         </dependency>
         <!-- for generating service descriptor files -->
         <dependency>
