@@ -21,7 +21,7 @@
     </parent>
 
     <artifactId>org.apache.sling.feature.launcher</artifactId>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>1.2.2</version>
 
     <name>Apache Sling Feature Model Launcher</name>
     <description>
@@ -33,14 +33,14 @@
         <bnd.version>6.3.1</bnd.version>
         <license-maven-plugin.version>1.16</license-maven-plugin.version>
         <appassembler-maven-plugin.version>2.0.0</appassembler-maven-plugin.version>
-        <project.build.outputTimestamp>1</project.build.outputTimestamp>
+        <project.build.outputTimestamp>1670304512</project.build.outputTimestamp>
     </properties>
 
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</developerConnection>
         <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-feature-launcher.git</url>
-    <tag>HEAD</tag>
+    <tag>org.apache.sling.feature.launcher-1.2.2</tag>
   </scm>
 
     <build>
@@ -160,8 +160,7 @@
                             </goals>
                             <configuration>
                                 <rules>
-                                    <requireProvidedDependenciesInRuntimeClasspath
-                                        implementation="org.apache.sling.maven.enforcer.RequireProvidedDependenciesInRuntimeClasspath">
+                                    <requireProvidedDependenciesInRuntimeClasspath implementation="org.apache.sling.maven.enforcer.RequireProvidedDependenciesInRuntimeClasspath">
                                         <excludes>
                                             <exclude>org.jetbrains:annotations</exclude><!-- exclude all annotations with class retention -->
                                             <exclude>org.osgi:osgi.annotation</exclude>
