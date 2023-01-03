@@ -197,6 +197,7 @@
                     <useWildcardClassPath>true</useWildcardClassPath>
                     <repositoryLayout>flat</repositoryLayout>
                     <repositoryName>lib</repositoryName>
+                    <endorsedDir>endorsed</endorsedDir>
                     <extraJvmArguments>-Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Dfile.encoding=UTF-8</extraJvmArguments>
                     <licenseHeaderFile>${basedir}/src/main/legal/license-header</licenseHeaderFile>
                     <programs>
