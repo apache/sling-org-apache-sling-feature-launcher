@@ -192,7 +192,9 @@ public class FeatureProcessor {
         extensions: for(final Extension ext : app.getExtensions()) {
             for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
             {
+                ctx.getLogger().debug("Loaded handler {}", handler.getClass().getName());
                 if (handler.handle(new ExtensionContextImpl(ctx, config.getInstallation(), loadedFeatures), ext)) {
+                    ctx.getLogger().debug("Handled extension {} with handler {}", ext.getName(), handler.getClass().getName());
                     continue extensions;
                 }
             }
