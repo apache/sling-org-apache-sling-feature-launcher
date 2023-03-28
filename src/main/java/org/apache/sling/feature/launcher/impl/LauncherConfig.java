@@ -60,6 +60,8 @@ public class LauncherConfig
 
     private volatile ArtifactId launchFeatureId;
 
+    private volatile boolean cacheOnly = false;
+
     /**
      * Create a new configuration object.
      * Set the default values
@@ -148,5 +150,13 @@ public class LauncherConfig
      */
     public ArtifactId getLaunchFeatureId() {
         return this.launchFeatureId;
+    }
+
+    public boolean getCacheOnly() {
+        return this.cacheOnly;
+    }
+
+    public void setCacheOnly(final boolean value) {
+        this.cacheOnly = value;
     }
 }

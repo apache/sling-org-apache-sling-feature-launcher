@@ -160,6 +160,11 @@ public class Bootstrap {
                         this.config.getLocalArtifacts(), this.config.getCachedArtifacts(),
                         this.config.getDownloadedArtifacts());
 
+                if (this.config.getCacheOnly()) {
+                    this.logger.info("Finished downloading any requirements...exiting!");
+                    System.exit(0);
+                }
+
                 if (restart) {
                     this.config.getInstallation().getInstallableArtifacts().clear();
                     this.config.getInstallation().getConfigurations().clear();

@@ -75,6 +75,8 @@ public class Main {
 
     public static final String OPT_LAUNCH_FEATURE_ID = "i";
 
+    public static final String OPT_CACHE_ONLY = "CO";
+
     private static Logger LOGGER;
 
     private static Options options;
@@ -208,6 +210,12 @@ public class Main {
                 .numberOfArgs(1)
                 .build();
 
+        final Option cacheOnlyOption = Option.builder(OPT_CACHE_ONLY)
+                .longOpt("cacheOnly")
+                .desc("Cache only the required dependencies. Don't start the framework.")
+                .optionalArg(true)
+                .build();
+
         final Option cacheOption = Option.builder(OPT_CACHE_DIR)
                 .longOpt("cache_dir")
                 .desc("Set cache dir")
@@ -258,6 +266,7 @@ public class Main {
                 .addOption(fwkProperties)
                 .addOption(varValue)
                 .addOption(debugOption)
+                .addOption(cacheOnlyOption)
                 .addOption(cacheOption)
                 .addOption(homeOption)
                 .addOption(extensionConfiguration)
@@ -267,6 +276,7 @@ public class Main {
 
         
         final CommandLineParser clp = new DefaultParser();
+
         try {
             final CommandLine cl = clp.parse(options, args);
 
@@ -302,6 +312,10 @@ public class Main {
                     }
                 });
             } // if not the `org.slf4j.simpleLogger.defaultLogLevel` is by default `info`
+
+            if (cl.hasOption(OPT_CACHE_ONLY)) {
+                    config.setCacheOnly(true);
+            }
 
             extractValuesFromOption(cl, OPT_FEATURE_FILES).orElseGet(ArrayList::new)
                     .forEach(config::addFeatureFiles);
