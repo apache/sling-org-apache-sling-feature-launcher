@@ -16,7 +16,7 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling</artifactId>
-        <version>48</version>
+        <version>62</version>
         <relativePath />
     </parent>
 
@@ -149,7 +149,7 @@
                     <dependency>
                         <groupId>org.apache.sling</groupId>
                         <artifactId>maven-enforcer-rules</artifactId>
-                        <version>1.0.0</version>
+                        <version>1.2.0</version>
                     </dependency>
                 </dependencies>
                      <executions>
