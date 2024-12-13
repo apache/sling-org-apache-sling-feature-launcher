@@ -1,18 +1,20 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.feature.launcher.impl;
 
@@ -62,13 +64,17 @@ public class FeatureProcessor {
      * @return The merged feature representing the application
      * @throws IOException when an IO exception occurs during application creation
      */
-    public static Feature createApplication(final Logger logger, final LauncherConfig config,
-            final ArtifactManager artifactManager, final Map<ArtifactId, Feature> loadedFeatures) throws IOException
-    {
+    public static Feature createApplication(
+            final Logger logger,
+            final LauncherConfig config,
+            final ArtifactManager artifactManager,
+            final Map<ArtifactId, Feature> loadedFeatures)
+            throws IOException {
         final BuilderContext builderContext = new BuilderContext(id -> {
             try {
                 final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
-                try (final Reader r = new InputStreamReader(handler.getLocalURL().openStream(), "UTF-8")) {
+                try (final Reader r =
+                        new InputStreamReader(handler.getLocalURL().openStream(), "UTF-8")) {
                     final Feature f = FeatureJSONReader.read(r, handler.getUrl());
                     return f;
                 }
@@ -96,31 +102,36 @@ public class FeatureProcessor {
         builderContext.addConfigsOverrides(config.getConfigClashOverrides());
         builderContext.addVariablesOverrides(config.getVariables());
         builderContext.addFrameworkPropertiesOverrides(config.getInstallation().getFrameworkProperties());
-        builderContext.addMergeExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                ServiceLoader.load(MergeHandler.class).iterator(), Spliterator.ORDERED), false)
-                    .toArray(MergeHandler[]::new));
-        builderContext.addPostProcessExtensions(StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-            ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED), false)
+        builderContext.addMergeExtensions(StreamSupport.stream(
+                        Spliterators.spliteratorUnknownSize(
+                                ServiceLoader.load(MergeHandler.class).iterator(), Spliterator.ORDERED),
+                        false)
+                .toArray(MergeHandler[]::new));
+        builderContext.addPostProcessExtensions(StreamSupport.stream(
+                        Spliterators.spliteratorUnknownSize(
+                                ServiceLoader.load(PostProcessHandler.class).iterator(), Spliterator.ORDERED),
+                        false)
                 .toArray(PostProcessHandler[]::new));
-        for (Map.Entry<String, Map<String,String>> entry : config.getExtensionConfiguration().entrySet()) {
+        for (Map.Entry<String, Map<String, String>> entry :
+                config.getExtensionConfiguration().entrySet()) {
             builderContext.setHandlerConfiguration(entry.getKey(), entry.getValue());
         }
 
         List<Feature> features = new ArrayList<>();
         for (final String featureFile : config.getFeatureFiles()) {
             for (final String initFile : IOUtils.getFeatureFiles(config.getHomeDirectory(), featureFile)) {
-                if ( initFile.endsWith(IOUtils.EXTENSION_FEATURE_ARCHIVE) ) {
+                if (initFile.endsWith(IOUtils.EXTENSION_FEATURE_ARCHIVE)) {
                     logger.debug("Reading feature archive {}", initFile);
                     final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
                     try (final InputStream is = featureArtifact.getLocalURL().openStream()) {
-                        for(final Feature feature : ArchiveReader.read(is, (id, stream) -> {
-                                final File artifactFile = new File(config.getCacheDirectory(),
-                                            id.toMvnPath().replace('/', File.separatorChar));
-                                if (!artifactFile.exists()) {
-                                    artifactFile.getParentFile().mkdirs();
-                                    Files.copy(stream, artifactFile.toPath());
-                                }
-                            })) {
+                        for (final Feature feature : ArchiveReader.read(is, (id, stream) -> {
+                            final File artifactFile = new File(
+                                    config.getCacheDirectory(), id.toMvnPath().replace('/', File.separatorChar));
+                            if (!artifactFile.exists()) {
+                                artifactFile.getParentFile().mkdirs();
+                                Files.copy(stream, artifactFile.toPath());
+                            }
+                        })) {
 
                             features.add(feature);
                             loadedFeatures.put(feature.getId(), feature);
@@ -131,7 +142,8 @@ public class FeatureProcessor {
                 } else {
                     logger.debug("Reading feature file {}", initFile);
                     final ArtifactHandler featureArtifact = artifactManager.getArtifactHandler(initFile);
-                    try (final Reader r = new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
+                    try (final Reader r =
+                            new InputStreamReader(featureArtifact.getLocalURL().openStream(), "UTF-8")) {
                         final Feature f = FeatureJSONReader.read(r, featureArtifact.getUrl());
                         loadedFeatures.put(f.getId(), f);
                         features.add(f);
@@ -142,7 +154,8 @@ public class FeatureProcessor {
             }
         }
 
-        final Feature app = FeatureBuilder.assemble(config.getLaunchFeatureId(), builderContext, features.toArray(new Feature[0]));
+        final Feature app =
+                FeatureBuilder.assemble(config.getLaunchFeatureId(), builderContext, features.toArray(new Feature[0]));
         loadedFeatures.put(app.getId(), app);
 
         FeatureBuilder.resolveVariables(app, config.getVariables());
@@ -162,10 +175,15 @@ public class FeatureProcessor {
      * were passed in via file:// URLs from the commandline
      * @throws Exception when something goes wrong
      */
-    public static void prepareLauncher(final LauncherPrepareContext ctx, final LauncherConfig config,
-            final Feature app, Map<ArtifactId, Feature> loadedFeatures) throws Exception {
-        for(final Map.Entry<Integer, List<Artifact>> entry : app.getBundles().getBundlesByStartOrder().entrySet()) {
-            for(final Artifact a : entry.getValue()) {
+    public static void prepareLauncher(
+            final LauncherPrepareContext ctx,
+            final LauncherConfig config,
+            final Feature app,
+            Map<ArtifactId, Feature> loadedFeatures)
+            throws Exception {
+        for (final Map.Entry<Integer, List<Artifact>> entry :
+                app.getBundles().getBundlesByStartOrder().entrySet()) {
+            for (final Artifact a : entry.getValue()) {
                 final URL artifactFile = ctx.getArtifactFile(a.getId());
 
                 // add URL to feature metadata
@@ -176,29 +194,37 @@ public class FeatureProcessor {
 
         for (final Configuration cfg : app.getConfigurations()) {
             if (Configuration.isFactoryConfiguration(cfg.getPid())) {
-                config.getInstallation().addConfiguration(Configuration.getName(cfg.getPid()),
-                        Configuration.getFactoryPid(cfg.getPid()), cfg.getConfigurationProperties());
+                config.getInstallation()
+                        .addConfiguration(
+                                Configuration.getName(cfg.getPid()),
+                                Configuration.getFactoryPid(cfg.getPid()),
+                                cfg.getConfigurationProperties());
             } else {
                 config.getInstallation().addConfiguration(cfg.getPid(), null, cfg.getConfigurationProperties());
             }
         }
 
         for (final Map.Entry<String, String> prop : app.getFrameworkProperties().entrySet()) {
-            if ( !config.getInstallation().getFrameworkProperties().containsKey(prop.getKey()) ) {
+            if (!config.getInstallation().getFrameworkProperties().containsKey(prop.getKey())) {
                 config.getInstallation().getFrameworkProperties().put(prop.getKey(), prop.getValue());
             }
         }
 
-        extensions: for(final Extension ext : app.getExtensions()) {
-            for (ExtensionHandler handler : ServiceLoader.load(ExtensionHandler.class,  FeatureProcessor.class.getClassLoader()))
-            {
+        extensions:
+        for (final Extension ext : app.getExtensions()) {
+            for (ExtensionHandler handler :
+                    ServiceLoader.load(ExtensionHandler.class, FeatureProcessor.class.getClassLoader())) {
                 ctx.getLogger().debug("Loaded handler {}", handler.getClass().getName());
                 if (handler.handle(new ExtensionContextImpl(ctx, config.getInstallation(), loadedFeatures), ext)) {
-                    ctx.getLogger().debug("Handled extension {} with handler {}", ext.getName(), handler.getClass().getName());
+                    ctx.getLogger()
+                            .debug(
+                                    "Handled extension {} with handler {}",
+                                    ext.getName(),
+                                    handler.getClass().getName());
                     continue extensions;
                 }
             }
-            if ( ext.getState() == ExtensionState.REQUIRED ) {
+            if (ext.getState() == ExtensionState.REQUIRED) {
                 throw new Exception("Unknown required extension " + ext.getName());
             }
         }

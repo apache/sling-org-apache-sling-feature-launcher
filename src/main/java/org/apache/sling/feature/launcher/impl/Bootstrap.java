@@ -1,18 +1,20 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.feature.launcher.impl;
 
@@ -65,34 +67,52 @@ public class Bootstrap {
      * @throws IllegalArgumentException If the provided version is invalid
      */
     private ArtifactId getFelixFrameworkId(final String version) {
-        return new ArtifactId("org.apache.felix", "org.apache.felix.framework", version != null ? version : FELIX_FRAMEWORK_VERSION,
-                null, null);
+        return new ArtifactId(
+                "org.apache.felix",
+                "org.apache.felix.framework",
+                version != null ? version : FELIX_FRAMEWORK_VERSION,
+                null,
+                null);
     }
 
-
     private void prepare() {
-        this.config.getVariables().put("sling.home", this.config.getHomeDirectory().getAbsolutePath());
+        this.config
+                .getVariables()
+                .put("sling.home", this.config.getHomeDirectory().getAbsolutePath());
         if (this.config.getVariables().get("repository.home") == null) {
-            this.config.getVariables().put("repository.home",
-                    this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
+            this.config
+                    .getVariables()
+                    .put(
+                            "repository.home",
+                            this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
         }
-        this.config.getVariables().put("sling.launchpad",
-                this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
+        this.config
+                .getVariables()
+                .put("sling.launchpad", this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
 
         final Installation installation = this.config.getInstallation();
         installation.setLogger(this.logger);
 
         // set sling home, and use separate locations for launchpad and properties
-        installation.getFrameworkProperties().put("sling.home", this.config.getHomeDirectory().getAbsolutePath());
-        installation.getFrameworkProperties().put("sling.launchpad",
-                this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
+        installation
+                .getFrameworkProperties()
+                .put("sling.home", this.config.getHomeDirectory().getAbsolutePath());
+        installation
+                .getFrameworkProperties()
+                .put("sling.launchpad", this.config.getHomeDirectory().getAbsolutePath() + "/launchpad");
         if (!installation.getFrameworkProperties().containsKey("repository.home")) {
-            installation.getFrameworkProperties().put("repository.home",
-                    this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
+            installation
+                    .getFrameworkProperties()
+                    .put(
+                            "repository.home",
+                            this.config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
         }
         installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
-        installation.getFrameworkProperties().put("sling.feature",
-                getApplicationFeatureFile(this.config).toURI().toString());
+        installation
+                .getFrameworkProperties()
+                .put(
+                        "sling.feature",
+                        getApplicationFeatureFile(this.config).toURI().toString());
     }
 
     public void run() {
@@ -108,7 +128,6 @@ public class Bootstrap {
         this.logger.info("");
         this.logger.info("Apache Sling Application Launcher");
         this.logger.info("---------------------------------");
-
 
         this.logger.info("Initializing...");
         prepare();
@@ -156,8 +175,10 @@ public class Bootstrap {
 
                 FeatureProcessor.prepareLauncher(ctx, this.config, app, loadedFeatures);
 
-                this.logger.info("Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
-                        this.config.getLocalArtifacts(), this.config.getCachedArtifacts(),
+                this.logger.info(
+                        "Using {} local artifacts, {} cached artifacts, and {} downloaded artifacts",
+                        this.config.getLocalArtifacts(),
+                        this.config.getCachedArtifacts(),
                         this.config.getDownloadedArtifacts());
 
                 if (this.config.getCacheOnly()) {
@@ -170,11 +191,10 @@ public class Bootstrap {
                     this.config.getInstallation().getConfigurations().clear();
                     this.config.getInstallation().getBundleMap().clear();
                 }
-            } catch ( final Exception iae) {
+            } catch (final Exception iae) {
                 throw new IllegalStateException("Error while assembling launcher: " + iae.getMessage(), iae);
             }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             throw new IOException("Unable to setup artifact manager: " + ex.getMessage(), ex);
         }
 
@@ -182,45 +202,40 @@ public class Bootstrap {
     }
 
     private ArtifactId getFrameworkArtifactId(final Feature app) {
-        if ( this.config.getFrameworkArtifact() != null ) {
+        if (this.config.getFrameworkArtifact() != null) {
             return ArtifactId.parse(this.config.getFrameworkArtifact());
         }
-        if ( this.config.getFrameworkVersion() != null ) {
+        if (this.config.getFrameworkVersion() != null) {
             return getFelixFrameworkId(this.config.getFrameworkVersion());
         }
 
         final ExecutionEnvironmentExtension env = ExecutionEnvironmentExtension.getExecutionEnvironmentExtension(app);
-        if ( env != null && env.getFramework() != null ) {
+        if (env != null && env.getFramework() != null) {
             return env.getFramework().getId();
         }
         return getFelixFrameworkId(null);
     }
 
-    private Feature assemble(final ArtifactManager artifactManager,
-            Map<ArtifactId, Feature> loadedFeatures) throws IOException
-    {
-        if (this.config.getFeatureFiles().isEmpty() ) {
+    private Feature assemble(final ArtifactManager artifactManager, Map<ArtifactId, Feature> loadedFeatures)
+            throws IOException {
+        if (this.config.getFeatureFiles().isEmpty()) {
             File application = getApplicationFeatureFile(this.config);
             if (application.isFile()) {
                 this.config.addFeatureFiles(application.toURI().toURL().toString());
-            }
-            else {
+            } else {
                 Main.printHelp();
                 throw new IllegalStateException("No feature(s) to launch found and none where specified");
             }
             return FeatureProcessor.createApplication(this.logger, this.config, artifactManager, loadedFeatures);
-        }
-        else
-        {
-            final Feature app = FeatureProcessor.createApplication(this.logger, this.config, artifactManager,
-                    loadedFeatures);
+        } else {
+            final Feature app =
+                    FeatureProcessor.createApplication(this.logger, this.config, artifactManager, loadedFeatures);
 
             // write application back
             final File file = getApplicationFeatureFile(this.config);
             Files.createDirectories(file.getParentFile().toPath());
 
-            try (final FileWriter writer = new FileWriter(file))
-            {
+            try (final FileWriter writer = new FileWriter(file)) {
                 FeatureJSONWriter.write(writer, app);
             }
 
@@ -229,7 +244,9 @@ public class Bootstrap {
     }
 
     private static File getApplicationFeatureFile(final LauncherConfig launcherConfig) {
-        return new File(launcherConfig.getHomeDirectory(), "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
+        return new File(
+                launcherConfig.getHomeDirectory(),
+                "resources" + File.separatorChar + "provisioning" + File.separatorChar + "application.json");
     }
 
     private static final String STORAGE_PROPERTY = "org.osgi.framework.storage";
@@ -250,25 +267,37 @@ public class Bootstrap {
         final Installation installation = config.getInstallation();
 
         // set sling home, and use separate locations for launchpad and properties
-        installation.getFrameworkProperties().put("sling.home", config.getHomeDirectory().getAbsolutePath());
-        installation.getFrameworkProperties().put("sling.launchpad", config.getHomeDirectory().getAbsolutePath() + "/launchpad");
+        installation
+                .getFrameworkProperties()
+                .put("sling.home", config.getHomeDirectory().getAbsolutePath());
+        installation
+                .getFrameworkProperties()
+                .put("sling.launchpad", config.getHomeDirectory().getAbsolutePath() + "/launchpad");
         if (!installation.getFrameworkProperties().containsKey("repository.home")) {
-            installation.getFrameworkProperties().put("repository.home", config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
+            installation
+                    .getFrameworkProperties()
+                    .put(
+                            "repository.home",
+                            config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "repository");
         }
         installation.getFrameworkProperties().put("sling.properties", "conf/sling.properties");
-        installation.getFrameworkProperties().put("sling.feature", getApplicationFeatureFile(config).toURI().toString());
-
+        installation
+                .getFrameworkProperties()
+                .put("sling.feature", getApplicationFeatureFile(config).toURI().toString());
 
         // additional OSGi properties
         // move storage inside launcher
-        installation.getFrameworkProperties()
-            .putIfAbsent(STORAGE_PROPERTY,  config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
+        installation
+                .getFrameworkProperties()
+                .putIfAbsent(
+                        STORAGE_PROPERTY,
+                        config.getHomeDirectory().getAbsolutePath() + File.separatorChar + "framework");
 
         // set start level to 30
-        installation.getFrameworkProperties()
-            .putIfAbsent(START_LEVEL_PROP, "30");
+        installation.getFrameworkProperties().putIfAbsent(START_LEVEL_PROP, "30");
 
-        while (launcher.run(installation, createClassLoader(installation, launcher)) == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
+        while (launcher.run(installation, createClassLoader(installation, launcher))
+                == FrameworkEvent.STOPPED_SYSTEM_REFRESHED) {
             this.logger.info("Framework restart due to extension refresh");
         }
     }
@@ -285,7 +314,6 @@ public class Bootstrap {
         list.addAll(installation.getAppJars());
 
         list.add(Bootstrap.class.getProtectionDomain().getCodeSource().getLocation());
-
 
         // create a paranoid class loader, loading from parent last
         final Launcher.LauncherClassLoader cl = launcher.createClassLoader();
