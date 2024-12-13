@@ -1,18 +1,20 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.feature.launcher.impl;
 
@@ -81,8 +83,8 @@ public class Main {
 
     private static Options options;
 
-    private static final List<String> logLevels = Arrays.asList("trace", "debug", "info", "warn",
-            "error", "off");
+    private static final List<String> logLevels = Arrays.asList("trace", "debug", "info", "warn", "error", "off");
+
     private static Logger LOG() {
 
         if (LOGGER == null) {
@@ -96,9 +98,9 @@ public class Main {
 
         final int pos = keyVal.indexOf('=');
         if (pos == -1) {
-            return new String[] { keyVal, "true" };
+            return new String[] {keyVal, "true"};
         }
-        return new String[] { keyVal.substring(0, pos), keyVal.substring(pos + 1) };
+        return new String[] {keyVal.substring(0, pos), keyVal.substring(pos + 1)};
     }
 
     static Map.Entry<String, Map<String, String>> splitMap2(final String val) {
@@ -128,8 +130,7 @@ public class Main {
         return extractValueFromOption(cl, opt, null);
     }
 
-    private static Optional<String> extractValueFromOption(CommandLine cl, String opt,
-            String defaultVaue) {
+    private static Optional<String> extractValueFromOption(CommandLine cl, String opt, String defaultVaue) {
 
         return Optional.ofNullable(cl.getOptionValue(opt, defaultVaue));
     }
@@ -145,7 +146,7 @@ public class Main {
 
     /**
      * Parse the command line parameters and update a configuration object.
-     * 
+     *
      * @param args Command line parameters
      * @param config Configuration object
      * @return Options object.
@@ -239,8 +240,7 @@ public class Main {
 
         final Option frameworkVersionOption = Option.builder(OPT_FELIX_FRAMEWORK_VERSION)
                 .longOpt("felix-framework-version")
-                .desc("Set Apache Felix framework version (default "
-                        .concat(Bootstrap.FELIX_FRAMEWORK_VERSION) + ")")
+                .desc("Set Apache Felix framework version (default ".concat(Bootstrap.FELIX_FRAMEWORK_VERSION) + ")")
                 .optionalArg(true)
                 .numberOfArgs(1)
                 .build();
@@ -253,12 +253,12 @@ public class Main {
                 .build();
 
         final Option printInsideContainerHelp = Option.builder(OPT_PRINT_CONTAINER_ENV_HELP)
-              
                 .desc("print additional help information for container env vars.")
                 .optionalArg(true)
                 .build();
-        
-               options = new Options().addOption(artifactClashOverride)
+
+        options = new Options()
+                .addOption(artifactClashOverride)
                 .addOption(configClashOverride)
                 .addOption(repoOption)
                 .addOption(featureOption)
@@ -274,39 +274,42 @@ public class Main {
                 .addOption(frameworkArtifactOption)
                 .addOption(printInsideContainerHelp);
 
-        
         final CommandLineParser clp = new DefaultParser();
 
         try {
             final CommandLine cl = clp.parse(options, args);
 
-            extractValuesFromOption(cl, OPT_REPOSITORY_URLS).ifPresent(
-                    values -> config.setRepositoryUrls(values.stream().toArray(String[]::new)));
+            extractValuesFromOption(cl, OPT_REPOSITORY_URLS)
+                    .ifPresent(
+                            values -> config.setRepositoryUrls(values.stream().toArray(String[]::new)));
 
-            extractValuesFromOption(cl, OPT_ARTICACT_CLASH).ifPresent(values -> values
-                    .forEach(v -> config.getArtifactClashOverrides().add(ArtifactId.parse(v))));
+            extractValuesFromOption(cl, OPT_ARTICACT_CLASH)
+                    .ifPresent(values -> values.forEach(
+                            v -> config.getArtifactClashOverrides().add(ArtifactId.parse(v))));
 
-            extractValuesFromOption(cl, OPT_CONFIG_CLASH).orElseGet(ArrayList::new)
-            .forEach(value -> {
-                final String[] keyVal = split(value);
-                config.getConfigClashOverrides().put(keyVal[0], keyVal[1]);
-            });
+            extractValuesFromOption(cl, OPT_CONFIG_CLASH)
+                    .orElseGet(ArrayList::new)
+                    .forEach(value -> {
+                        final String[] keyVal = split(value);
+                        config.getConfigClashOverrides().put(keyVal[0], keyVal[1]);
+                    });
 
-            extractValuesFromOption(cl, OPT_FRAMEWORK_PROPERTIES).orElseGet(ArrayList::new)
-            .forEach(value -> {
-                final String[] keyVal = split(value);
-                config.getInstallation().getFrameworkProperties().put(keyVal[0], keyVal[1]);
-            });
+            extractValuesFromOption(cl, OPT_FRAMEWORK_PROPERTIES)
+                    .orElseGet(ArrayList::new)
+                    .forEach(value -> {
+                        final String[] keyVal = split(value);
+                        config.getInstallation().getFrameworkProperties().put(keyVal[0], keyVal[1]);
+                    });
 
-            extractValuesFromOption(cl, OPT_VARIABLE_VALUES).orElseGet(ArrayList::new)
-            .forEach(value -> {
-                final String[] keyVal = split(value);
-                config.getVariables().put(keyVal[0], keyVal[1]);
-            });
+            extractValuesFromOption(cl, OPT_VARIABLE_VALUES)
+                    .orElseGet(ArrayList::new)
+                    .forEach(value -> {
+                        final String[] keyVal = split(value);
+                        config.getVariables().put(keyVal[0], keyVal[1]);
+                    });
 
             if (cl.hasOption(OPT_VERBOSE)) {
                 extractValueFromOption(cl, OPT_VERBOSE, "debug").ifPresent(value -> {
-
                     if (isLoglevel(value)) {
                         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", value);
                     }
@@ -314,20 +317,18 @@ public class Main {
             } // if not the `org.slf4j.simpleLogger.defaultLogLevel` is by default `info`
 
             if (cl.hasOption(OPT_CACHE_ONLY)) {
-                    config.setCacheOnly(true);
+                config.setCacheOnly(true);
             }
 
-            extractValuesFromOption(cl, OPT_FEATURE_FILES).orElseGet(ArrayList::new)
+            extractValuesFromOption(cl, OPT_FEATURE_FILES)
+                    .orElseGet(ArrayList::new)
                     .forEach(config::addFeatureFiles);
 
-            extractValueFromOption(cl, OPT_LAUNCH_FEATURE_ID)
-                    .ifPresent(config::setLaunchFeatureId);
+            extractValueFromOption(cl, OPT_LAUNCH_FEATURE_ID).ifPresent(config::setLaunchFeatureId);
 
-            extractValueFromOption(cl, OPT_CACHE_DIR).map(File::new)
-                    .ifPresent(config::setCacheDirectory);
+            extractValueFromOption(cl, OPT_CACHE_DIR).map(File::new).ifPresent(config::setCacheDirectory);
 
-            extractValueFromOption(cl, OPT_HOME_DIR).map(File::new)
-                    .ifPresent(config::setHomeDirectory);
+            extractValueFromOption(cl, OPT_HOME_DIR).map(File::new).ifPresent(config::setHomeDirectory);
 
             extractValuesFromOption(cl, OPT_EXTENSION_CONFIGURATION)
                     .ifPresent(values -> values.forEach(v -> {
@@ -341,11 +342,9 @@ public class Main {
                         c.putAll(xc.getValue());
                     }));
 
-            extractValueFromOption(cl, OPT_FELIX_FRAMEWORK_VERSION)
-                    .ifPresent(config::setFrameworkVersion);
+            extractValueFromOption(cl, OPT_FELIX_FRAMEWORK_VERSION).ifPresent(config::setFrameworkVersion);
 
-            extractValueFromOption(cl, OPT_OSGI_FRAMEWORK_ARTIFACT)
-                    .ifPresent(config::setFrameworkArtifact);
+            extractValueFromOption(cl, OPT_OSGI_FRAMEWORK_ARTIFACT).ifPresent(config::setFrameworkArtifact);
 
         } catch (final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
@@ -370,11 +369,10 @@ public class Main {
         formatter.printHelp("launcher", options);
         if (options.getOption(OPT_PRINT_CONTAINER_ENV_HELP) != null) {
 
-            try (PrintWriter writer = new PrintWriter(System.out);) {
+            try (PrintWriter writer = new PrintWriter(System.out); ) {
 
                 writer.println("");
-                writer.println(
-                        "If you are running sling-feature-launcher as an container please use env vars.");
+                writer.println("If you are running sling-feature-launcher as an container please use env vars.");
                 writer.println("");
 
                 writer.println(" cli-arg  -  container ENV variable");
@@ -382,17 +380,17 @@ public class Main {
                 writer.println(" -" + OPT_ARTICACT_CLASH + "       -  ARTIFACT_CLASH");
                 writer.println(" -" + OPT_CONFIG_CLASH + "      -  CONFIG_CLASH");
                 writer.println(" -" + OPT_CACHE_DIR + "       -  CACHE_DIR");
-                writer.println(" -" + OPT_FRAMEWORK_PROPERTIES + "       -  FRAMEWORK_PROPERTIES format: `key1=val1` for more `key1=val1 -D key2=val2`");
+                writer.println(" -" + OPT_FRAMEWORK_PROPERTIES
+                        + "       -  FRAMEWORK_PROPERTIES format: `key1=val1` for more `key1=val1 -D key2=val2`");
                 writer.println(" -" + OPT_FEATURE_FILES + "       -  FEATURE_FILES");
                 writer.println(" -" + OPT_HOME_DIR + "       -  HOME_DIR");
                 writer.println(" -" + OPT_REPOSITORY_URLS + "       -  REPOSITORY_URLS");
-                writer.println(" -" + OPT_VARIABLE_VALUES + "       -  VARIABLE_VALUES format: `variable1=value1` for more `variable1=val1 -V variable2=val2`");
                 writer.println(
-                        " -" + OPT_EXTENSION_CONFIGURATION + "      -  EXTENSION_CONFIGURATION");
-                writer.println(
-                        " -" + OPT_FELIX_FRAMEWORK_VERSION + "      -  FELIX_FRAMEWORK_VERSION");
-                writer.println(
-                        " -" + OPT_OSGI_FRAMEWORK_ARTIFACT + "      -  OSGI_FRAMEWORK_ARTIFACT");
+                        " -" + OPT_VARIABLE_VALUES
+                                + "       -  VARIABLE_VALUES format: `variable1=value1` for more `variable1=val1 -V variable2=val2`");
+                writer.println(" -" + OPT_EXTENSION_CONFIGURATION + "      -  EXTENSION_CONFIGURATION");
+                writer.println(" -" + OPT_FELIX_FRAMEWORK_VERSION + "      -  FELIX_FRAMEWORK_VERSION");
+                writer.println(" -" + OPT_OSGI_FRAMEWORK_ARTIFACT + "      -  OSGI_FRAMEWORK_ARTIFACT");
                 writer.println(" -" + OPT_VERBOSE + "       -  VERBOSE {trace, debug, info, warn, error, off}");
 
                 writer.println("");
@@ -400,17 +398,17 @@ public class Main {
                 writer.flush();
             }
         }
-
     }
 
     /** Split a string into key and value */
     private static String[] split(final String val) {
         final int pos = val.indexOf('=');
-        if ( pos == -1 ) {
+        if (pos == -1) {
             return new String[] {val, "true"};
         }
         return new String[] {val.substring(0, pos), val.substring(pos + 1)};
     }
+
     public static void main(final String[] args) {
 
         // setup logging

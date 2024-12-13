@@ -1,18 +1,20 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.feature.launcher.impl;
 
@@ -32,8 +34,7 @@ import org.apache.sling.feature.io.artifacts.ArtifactManagerConfig;
 /**
  * This class holds the configuration of the launcher.
  */
-public class LauncherConfig
-    extends ArtifactManagerConfig {
+public class LauncherConfig extends ArtifactManagerConfig {
 
     private static final String HOME = "launcher";
 
@@ -41,9 +42,9 @@ public class LauncherConfig
 
     private final List<ArtifactId> artifactClashOverrides = new ArrayList<>();
 
-    private final Map<String,String> configClashOverrides = new LinkedHashMap<>();
+    private final Map<String, String> configClashOverrides = new LinkedHashMap<>();
 
-    private final Map<String, Map<String,String>> extensionConfiguration = new HashMap<>();
+    private final Map<String, Map<String, String>> extensionConfiguration = new HashMap<>();
 
     /** The feature files or directories. */
     private final LinkedHashSet<String> featureFiles = new LinkedHashSet<>();
@@ -52,7 +53,7 @@ public class LauncherConfig
 
     private volatile File home = new File(HOME);
 
-    private final Map<String,String> variables = new HashMap<>();
+    private final Map<String, String> variables = new HashMap<>();
 
     private volatile String frameworkVersion;
 
@@ -115,7 +116,7 @@ public class LauncherConfig
         return this.installation;
     }
 
-    public Map<String,String> getVariables() {
+    public Map<String, String> getVariables() {
         return this.variables;
     }
 

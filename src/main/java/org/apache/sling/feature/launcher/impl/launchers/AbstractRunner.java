@@ -1,22 +1,23 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.sling.feature.launcher.impl.launchers;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.lang.reflect.Array;
@@ -74,8 +75,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
     private static final String PM_FEATURE_LAUNCHER = "featurelauncher";
 
     /** Filter expression to get the memory persistence manager. */
-    private static final String PM_MEMORY_FILTER = "(&(" + Constants.OBJECTCLASS
-            + "=org.apache.felix.cm.PersistenceManager)(name=memory))";
+    private static final String PM_MEMORY_FILTER =
+            "(&(" + Constants.OBJECTCLASS + "=org.apache.felix.cm.PersistenceManager)(name=memory))";
 
     private volatile ServiceTracker<Object, Object> configAdminTracker;
 
@@ -105,32 +106,35 @@ public abstract class AbstractRunner implements Callable<Integer> {
         this.bundleReporter = reporter;
     }
 
-    protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap) throws BundleException {
+    protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap)
+            throws BundleException {
         // check for Apache Felix CM persistence manager config
         final String pm = framework.getBundleContext().getProperty(CM_CONFIG_PM);
         if (PM_FEATURE_LAUNCHER.equals(pm)) {
             logger.info("Using feature launcher configuration admin persistence manager");
             try {
                 // we start a tracker for the memory PM
-                this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
+                this.configAdminTracker = new ServiceTracker<>(
+                        framework.getBundleContext(),
                         framework.getBundleContext().createFilter(PM_MEMORY_FILTER),
-
                         new ServiceTrackerCustomizer<Object, Object>() {
                             private volatile ServiceRegistration<?> reg;
 
                             @Override
                             public Object addingService(final ServiceReference<Object> reference) {
                                 // get memory pm
-                                final Object memoryPM = framework.getBundleContext().getService(reference);
+                                final Object memoryPM =
+                                        framework.getBundleContext().getService(reference);
                                 if (memoryPM != null) {
                                     try {
                                         // we re use the memory PM (it is not used anyway)
                                         // and simply store the configs there using reflection
-                                        final Method storeMethod = memoryPM.getClass().getDeclaredMethod("store",
-                                                String.class, Dictionary.class);
+                                        final Method storeMethod = memoryPM.getClass()
+                                                .getDeclaredMethod("store", String.class, Dictionary.class);
                                         for (final Object[] obj : configurations) {
                                             @SuppressWarnings("unchecked")
-                                            final Dictionary<String, Object> props = (Dictionary<String, Object>) obj[2];
+                                            final Dictionary<String, Object> props =
+                                                    (Dictionary<String, Object>) obj[2];
                                             final String pid;
                                             if (obj[1] != null) {
                                                 final String factoryPid = (String) obj[1];
@@ -145,10 +149,16 @@ public abstract class AbstractRunner implements Callable<Integer> {
                                         // register feature launcher pm
                                         final Dictionary<String, Object> properties = new Hashtable<>();
                                         properties.put("name", PM_FEATURE_LAUNCHER);
-                                        reg = reference.getBundle().getBundleContext().registerService(
-                                                "org.apache.felix.cm.PersistenceManager", memoryPM, properties);
-                                    } catch (IllegalAccessException | IllegalArgumentException
-                                            | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                                        reg = reference
+                                                .getBundle()
+                                                .getBundleContext()
+                                                .registerService(
+                                                        "org.apache.felix.cm.PersistenceManager", memoryPM, properties);
+                                    } catch (IllegalAccessException
+                                            | IllegalArgumentException
+                                            | InvocationTargetException
+                                            | NoSuchMethodException
+                                            | SecurityException e) {
                                         throw new RuntimeException(e);
                                     }
                                 }
@@ -176,8 +186,10 @@ public abstract class AbstractRunner implements Callable<Integer> {
             this.configAdminTracker.open(true);
         } else if (!configurations.isEmpty()) {
 
-            this.configAdminTracker = new ServiceTracker<>(framework.getBundleContext(),
-                    "org.osgi.service.cm.ConfigurationAdmin", new ServiceTrackerCustomizer<Object, Object>() {
+            this.configAdminTracker = new ServiceTracker<>(
+                    framework.getBundleContext(),
+                    "org.osgi.service.cm.ConfigurationAdmin",
+                    new ServiceTrackerCustomizer<Object, Object>() {
 
                         @Override
                         public Object addingService(final ServiceReference<Object> reference) {
@@ -205,16 +217,18 @@ public abstract class AbstractRunner implements Callable<Integer> {
                     });
             this.configAdminTracker.open(true);
         }
-        if ( !installables.isEmpty() ) {
-            this.installerTracker = new ServiceTracker<>(framework.getBundleContext(),
+        if (!installables.isEmpty()) {
+            this.installerTracker = new ServiceTracker<>(
+                    framework.getBundleContext(),
                     "org.apache.sling.installer.api.OsgiInstaller",
                     new ServiceTrackerCustomizer<Object, Object>() {
 
                         @Override
                         public Object addingService(final ServiceReference<Object> reference) {
                             // get installer
-                            final Object installer = framework.getBundleContext().getService(reference);
-                            if ( installer != null ) {
+                            final Object installer =
+                                    framework.getBundleContext().getService(reference);
+                            if (installer != null) {
                                 try {
                                     install(installer);
                                 } finally {
@@ -233,20 +247,19 @@ public abstract class AbstractRunner implements Callable<Integer> {
                         public void removedService(ServiceReference<Object> reference, Object service) {
                             // nothing to do
                         }
-            });
+                    });
             this.installerTracker.open();
         }
 
         this.install(framework, bundlesMap);
     }
 
-    protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit) throws BundleException, InterruptedException {
+    protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit)
+            throws BundleException, InterruptedException {
         Executor executor = Executors.newSingleThreadExecutor();
-        Future<Void> result = ((ExecutorService) executor).submit(new Callable<Void>()
-        {
+        Future<Void> result = ((ExecutorService) executor).submit(new Callable<Void>() {
             @Override
-            public Void call() throws Exception
-            {
+            public Void call() throws Exception {
                 framework.start();
                 return null;
             }
@@ -264,35 +277,40 @@ public abstract class AbstractRunner implements Callable<Integer> {
             } else {
                 throw (RuntimeException) cause;
             }
-        }
-        finally {
+        } finally {
             ((ExecutorService) executor).shutdownNow();
         }
     }
 
     private void configure(final Object configAdmin) {
         try {
-            final Method createConfig = configAdmin.getClass().getDeclaredMethod("getConfiguration", String.class, String.class);
-            final Method createFactoryConfig = configAdmin.getClass().getDeclaredMethod("getFactoryConfiguration", String.class, String.class, String.class);
+            final Method createConfig =
+                    configAdmin.getClass().getDeclaredMethod("getConfiguration", String.class, String.class);
+            final Method createFactoryConfig = configAdmin
+                    .getClass()
+                    .getDeclaredMethod("getFactoryConfiguration", String.class, String.class, String.class);
 
             Method updateMethod = null;
-            for(final Object[] obj : this.configurations) {
+            for (final Object[] obj : this.configurations) {
                 final Object cfg;
-                if ( obj[1] != null ) {
+                if (obj[1] != null) {
                     cfg = createFactoryConfig.invoke(configAdmin, obj[1], obj[0], null);
                 } else {
                     cfg = createConfig.invoke(configAdmin, obj[0], null);
                 }
-                if ( updateMethod == null ) {
+                if (updateMethod == null) {
                     updateMethod = cfg.getClass().getDeclaredMethod("update", Dictionary.class);
                 }
                 updateMethod.invoke(cfg, obj[2]);
             }
-        } catch ( final Exception e) {
+        } catch (final Exception e) {
             logger.error("Unable to create configurations", e);
             throw new RuntimeException(e);
         }
-        final Thread t = new Thread(() -> { configAdminTracker.close(); configAdminTracker = null; });
+        final Thread t = new Thread(() -> {
+            configAdminTracker.close();
+            configAdminTracker = null;
+        });
         t.setDaemon(false);
         t.start();
         this.configurations.clear();
@@ -300,15 +318,14 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     private boolean isSystemBundleFragment(final Bundle installedBundle) {
         final String fragmentHeader = getFragmentHostHeader(installedBundle);
-        return fragmentHeader != null
-            && fragmentHeader.indexOf(Constants.EXTENSION_DIRECTIVE) > 0;
+        return fragmentHeader != null && fragmentHeader.indexOf(Constants.EXTENSION_DIRECTIVE) > 0;
     }
 
     /**
      * Gets the bundle's Fragment-Host header.
      */
     private String getFragmentHostHeader(final Bundle b) {
-        return b.getHeaders().get( Constants.FRAGMENT_HOST );
+        return b.getHeaders().get(Constants.FRAGMENT_HOST);
     }
 
     /**
@@ -319,10 +336,10 @@ public abstract class AbstractRunner implements Callable<Integer> {
     private void install(final Framework framework, final Map<Integer, List<URL>> bundleMap) throws BundleException {
         final BundleContext bc = framework.getBundleContext();
         int defaultStartLevel = getProperty(bc, "felix.startlevel.bundle", 1);
-        for(final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
+        for (final Integer startLevel : sortStartLevels(bundleMap.keySet(), defaultStartLevel)) {
             logger.debug("Installing bundles with start level {}", startLevel);
 
-            for(final URL file : bundleMap.get(startLevel)) {
+            for (final URL file : bundleMap.get(startLevel)) {
                 logger.debug("- {}", file);
 
                 // use reference protocol if possible. This avoids copying the binary to the cache directory
@@ -336,14 +353,14 @@ public abstract class AbstractRunner implements Callable<Integer> {
                 final Bundle bundle = bc.installBundle(location, null);
 
                 // fragment?
-                if ( !isSystemBundleFragment(bundle) && getFragmentHostHeader(bundle) == null ) {
-                    if ( startLevel > 0 ) {
+                if (!isSystemBundleFragment(bundle) && getFragmentHostHeader(bundle) == null) {
+                    if (startLevel > 0) {
                         bundle.adapt(BundleStartLevel.class).setStartLevel(startLevel);
                     }
                     bundle.start();
                 }
 
-                if ( this.bundleReporter != null ) {
+                if (this.bundleReporter != null) {
                     final Map<String, String> params = new HashMap<>();
                     params.put(Constants.BUNDLE_SYMBOLICNAME, bundle.getSymbolicName());
                     params.put(Constants.BUNDLE_VERSION, bundle.getVersion().toString());
@@ -351,52 +368,66 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
                     this.bundleReporter.accept(file, params);
                 }
-                    
             }
         }
     }
 
     protected void finishStartup(final Framework framework) {
         Bundle featureBundle = null;
-        for(final Bundle bundle : framework.getBundleContext().getBundles()) {
-            if ( featureSupplier != null && "org.apache.sling.feature".equals(bundle.getSymbolicName()) ) {
+        for (final Bundle bundle : framework.getBundleContext().getBundles()) {
+            if (featureSupplier != null && "org.apache.sling.feature".equals(bundle.getSymbolicName())) {
                 featureBundle = bundle;
             }
         }
-        if ( featureBundle != null ) {
+        if (featureBundle != null) {
             final Bundle bundle = featureBundle;
             // the feature is registered as a prototype to give each client a copy as feature models are mutable
             final Dictionary<String, Object> properties = new Hashtable<>();
             properties.put("name", "org.apache.sling.feature.launcher");
-            featureBundle.getBundleContext().registerService(new String[] {"org.apache.sling.feature.Feature"}, 
-                new PrototypeServiceFactory<Object>() {
+            featureBundle
+                    .getBundleContext()
+                    .registerService(
+                            new String[] {"org.apache.sling.feature.Feature"},
+                            new PrototypeServiceFactory<Object>() {
 
-                    @Override
-                    public Object getService(final Bundle client, final ServiceRegistration<Object> registration) {
-                        final ClassLoader cl = bundle.adapt(BundleWiring.class).getClassLoader();
-                        final ClassLoader oldTCCL = Thread.currentThread().getContextClassLoader();
-                        Thread.currentThread().setContextClassLoader(cl);
-                        try {
-                            final Class<?> readerClass = cl.loadClass("org.apache.sling.feature.io.json.FeatureJSONReader");
-                            final Method readMethod = readerClass.getDeclaredMethod("read", java.io.Reader.class, String.class);
-                            try( final StringReader reader = new StringReader(featureSupplier.get())) {
-                                return readMethod.invoke(null, reader, null);
-                            }
-                        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-                            // ignore
-                        } finally {
-                            Thread.currentThread().setContextClassLoader(oldTCCL);
-                        }
-                        return null;
-                    }
+                                @Override
+                                public Object getService(
+                                        final Bundle client, final ServiceRegistration<Object> registration) {
+                                    final ClassLoader cl =
+                                            bundle.adapt(BundleWiring.class).getClassLoader();
+                                    final ClassLoader oldTCCL =
+                                            Thread.currentThread().getContextClassLoader();
+                                    Thread.currentThread().setContextClassLoader(cl);
+                                    try {
+                                        final Class<?> readerClass =
+                                                cl.loadClass("org.apache.sling.feature.io.json.FeatureJSONReader");
+                                        final Method readMethod = readerClass.getDeclaredMethod(
+                                                "read", java.io.Reader.class, String.class);
+                                        try (final StringReader reader = new StringReader(featureSupplier.get())) {
+                                            return readMethod.invoke(null, reader, null);
+                                        }
+                                    } catch (ClassNotFoundException
+                                            | NoSuchMethodException
+                                            | SecurityException
+                                            | IllegalArgumentException
+                                            | IllegalAccessException
+                                            | InvocationTargetException e) {
+                                        // ignore
+                                    } finally {
+                                        Thread.currentThread().setContextClassLoader(oldTCCL);
+                                    }
+                                    return null;
+                                }
 
-                    @Override
-                    public void ungetService(final Bundle client, final ServiceRegistration<Object> registration,
-                            final Object service) {
-                        // nothing to do
-                    }
-                    
-                }, properties);
+                                @Override
+                                public void ungetService(
+                                        final Bundle client,
+                                        final ServiceRegistration<Object> registration,
+                                        final Object service) {
+                                    // nothing to do
+                                }
+                            },
+                            properties);
         }
     }
 
@@ -407,7 +438,8 @@ public abstract class AbstractRunner implements Callable<Integer> {
      * @param startLevels integer start levels
      * @return sorted start levels
      */
-    private static Iterable<Integer> sortStartLevels(final Collection<Integer> startLevels, final int defaultStartLevel) {
+    private static Iterable<Integer> sortStartLevels(
+            final Collection<Integer> startLevels, final int defaultStartLevel) {
         final List<Integer> result = new ArrayList<>(startLevels);
         Collections.sort(result, (o1, o2) -> {
             int i1 = o1 == 0 ? defaultStartLevel : o1;
@@ -428,33 +460,29 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     private void install(final Object installer) {
         try {
-            final Class<?> installableResourceClass = installer.getClass().getClassLoader().loadClass("org.apache.sling.installer.api.InstallableResource");
+            final Class<?> installableResourceClass = installer
+                    .getClass()
+                    .getClassLoader()
+                    .loadClass("org.apache.sling.installer.api.InstallableResource");
             final Object resources = Array.newInstance(installableResourceClass, this.installables.size());
-            final Method registerResources = installer.getClass().getDeclaredMethod("registerResources", String.class, resources.getClass());
-            final Constructor<?> constructor = installableResourceClass.getDeclaredConstructor(String.class,
-                    InputStream.class,
-                    Dictionary.class,
-                    String.class,
-                    String.class,
-                    Integer.class);
+            final Method registerResources =
+                    installer.getClass().getDeclaredMethod("registerResources", String.class, resources.getClass());
+            final Constructor<?> constructor = installableResourceClass.getDeclaredConstructor(
+                    String.class, InputStream.class, Dictionary.class, String.class, String.class, Integer.class);
 
-            for(int i=0; i<this.installables.size();i++) {
+            for (int i = 0; i < this.installables.size(); i++) {
                 final URL f = this.installables.get(i);
                 final Dictionary<String, Object> dict = new Hashtable<>();
                 dict.put("resource.uri.hint", f.toURI().toString());
-                final Object rsrc = constructor.newInstance(f.getPath(),
-                        f.openStream(),
-                        dict,
-                        f.getPath(),
-                        "file",
-                        null);
+                final Object rsrc =
+                        constructor.newInstance(f.getPath(), f.openStream(), dict, f.getPath(), "file", null);
                 Array.set(resources, i, rsrc);
             }
             registerResources.invoke(installer, "cloudlauncher", resources);
-        } catch ( final Exception e) {
+        } catch (final Exception e) {
             logger.error("Unable to contact installer and install additional artifacts", e);
             throw new RuntimeException(e);
-        } finally  {
+        } finally {
             final Thread t = new Thread(() -> {
                 installerTracker.close();
                 installerTracker = null;

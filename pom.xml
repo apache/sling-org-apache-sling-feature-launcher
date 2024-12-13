@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-    <!--
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
         Licensed to the Apache Software Foundation (ASF) under one or more contributor license
         agreements. See the NOTICE file distributed with this work for additional information
         regarding copyright ownership. The ASF licenses this file to you under the Apache License,
@@ -24,9 +24,14 @@
     <version>1.3.1-SNAPSHOT</version>
 
     <name>Apache Sling Feature Model Launcher</name>
-    <description>
-        A application launcher using Apache Sling Features
-    </description>
+    <description>A application launcher using Apache Sling Features</description>
+
+    <scm>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/apache/sling-org-apache-sling-feature-launcher.git</url>
+    </scm>
 
     <properties>
         <sling.java.version>8</sling.java.version>
@@ -35,203 +40,6 @@
         <appassembler-maven-plugin.version>2.0.0</appassembler-maven-plugin.version>
         <project.build.outputTimestamp>1675867591</project.build.outputTimestamp>
     </properties>
-
-    <scm>
-        <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</connection>
-        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-feature-launcher.git</developerConnection>
-        <url>https://github.com/apache/sling-org-apache-sling-feature-launcher.git</url>
-    <tag>HEAD</tag>
-  </scm>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>bnd-maven-plugin</artifactId>
-                <version>${bnd.version}</version>
-                <configuration>
-                    <bnd>
-                        <![CDATA[
-                            Main-Class: org.apache.sling.feature.launcher.impl.Main
-                            -exportcontents:\
-                            org.apache.sling.feature.launcher.spi.*
-                            Private-Package:\
-                            org.apache.sling.feature.launcher.impl.*
-                            Import-Package:\
-                            org.apache.commons.cli;resolution:=optional,\
-                            *
-                        ]]>
-                    </bnd>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>bnd-process</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.rat</groupId>
-                <artifactId>apache-rat-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>readme.md</exclude>
-                        <exclude>src/main/legal/NOTICE-with-deps</exclude>
-                        <exclude>src/main/resources/META-INF/services/**</exclude>
-                        <exclude>**/*.properties</exclude>
-                        <exclude>launcher/**</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-clean-plugin</artifactId>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>${basedir}</directory>
-                            <includes>
-                                <include>launcher/**</include>
-                            </includes>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>${license-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>add-third-party</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>add-third-party</goal>
-                        </goals>
-                        <configuration>
-                            <fileTemplate>${basedir}/src/main/legal/LICENSE-with-deps</fileTemplate>
-                            <thirdPartyFilename>LICENSE-with-deps</thirdPartyFilename>
-                            <sortArtifactByName>true</sortArtifactByName>
-                            <excludedScopes>test</excludedScopes>
-                            <licenseMerges>
-                                <licenseMerge>The Apache Software License, Version 2.0|Apache License, Version 2.0|Apache Public License 2.0</licenseMerge>
-                            </licenseMerges>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.sling</groupId>
-                        <artifactId>maven-enforcer-rules</artifactId>
-                        <version>1.2.0</version>
-                    </dependency>
-                </dependencies>
-                     <executions>
-                        <execution>
-                            <id>enforce-complete-runtime-classpath</id>
-                            <goals>
-                                <goal>enforce</goal>
-                            </goals>
-                            <configuration>
-                                <rules>
-                                    <requireProvidedDependenciesInRuntimeClasspath implementation="org.apache.sling.maven.enforcer.RequireProvidedDependenciesInRuntimeClasspath">
-                                        <excludes>
-                                            <exclude>org.jetbrains:annotations</exclude><!-- exclude all annotations with class retention -->
-                                            <exclude>org.osgi:osgi.annotation</exclude>
-                                            <exclude>org.osgi:org.osgi.annotation.versioning</exclude>
-                                            <exclude>org.apache.felix:org.apache.felix.converter</exclude><!-- relocated to org.osgi.util.converter -->
-                                            <exclude>org.apache.felix:org.apache.felix.utils</exclude><!-- embedded in org.apache.sling.feature -->
-                                            <exclude>org.apache.geronimo.specs:geronimo-json_1.1_spec</exclude><!-- not needed, jakarta.json is used -->
-                                            <exclude>org.osgi:org.osgi.core</exclude><!-- contained in org.osgi:osgi.core -->
-                                            <exclude>org.osgi:org.osgi.service.configurator</exclude><!-- wrongly flagged to be needed by cm.json -->
-                                            <exclude>org.osgi:org.osgi.service.feature</exclude><!-- Optional dependency for feature model -->
-                                            <exclude>org.osgi:org.osgi.framework</exclude><!-- Included via osgi.core -->
-                                            <exclude>org.osgi:org.osgi.resource</exclude><!-- Included via osgi.core -->
-                                        </excludes>
-                                    </requireProvidedDependenciesInRuntimeClasspath>
-                                </rules>
-                            </configuration>
-                        </execution>
-                    </executions>
-            </plugin>
-      
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>appassembler-maven-plugin</artifactId>
-                <version>${appassembler-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>assemble</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <useWildcardClassPath>true</useWildcardClassPath>
-                    <repositoryLayout>flat</repositoryLayout>
-                    <repositoryName>lib</repositoryName>
-                    <endorsedDir>endorsed</endorsedDir>
-                    <extraJvmArguments>-Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Dfile.encoding=UTF-8</extraJvmArguments>
-                    <licenseHeaderFile>${basedir}/src/main/legal/license-header</licenseHeaderFile>
-                    <programs>
-                        <program>
-                            <mainClass>org.apache.sling.feature.launcher.impl.Main</mainClass>
-                            <id>launcher</id>
-                        </program>
-                    </programs>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <configuration>
-                            <finalName>${project.build.finalName}</finalName>
-                            <tarLongFileMode>gnu</tarLongFileMode>
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <descriptors>
-                                <descriptor>${basedir}/src/main/assembly/bin.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 
     <dependencies>
         <dependency>
@@ -301,8 +109,8 @@
         <dependency>
             <groupId>org.apache.johnzon</groupId>
             <artifactId>johnzon-core</artifactId>
-            <classifier>jakarta</classifier>
             <version>1.2.19</version>
+            <classifier>jakarta</classifier>
             <scope>compile</scope>
         </dependency>
         <!-- for generating service descriptor files -->
@@ -310,7 +118,8 @@
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bnd.annotation</artifactId>
             <version>${bnd.version}</version>
-            <scope>provided</scope><!-- not necessary at run time -->
+            <scope>provided</scope>
+            <!-- not necessary at run time -->
         </dependency>
 
         <!-- Testing dependencies -->
@@ -326,7 +135,204 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-maven-plugin</artifactId>
+                <version>${bnd.version}</version>
+                <configuration>
+                    <bnd><![CDATA[
+                            Main-Class: org.apache.sling.feature.launcher.impl.Main
+                            -exportcontents:\
+                            org.apache.sling.feature.launcher.spi.*
+                            Private-Package:\
+                            org.apache.sling.feature.launcher.impl.*
+                            Import-Package:\
+                            org.apache.commons.cli;resolution:=optional,\
+                            *
+                        ]]></bnd>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bnd-process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>readme.md</exclude>
+                        <exclude>src/main/legal/NOTICE-with-deps</exclude>
+                        <exclude>src/main/resources/META-INF/services/**</exclude>
+                        <exclude>**/*.properties</exclude>
+                        <exclude>launcher/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${basedir}</directory>
+                            <includes>
+                                <include>launcher/**</include>
+                            </includes>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${license-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>add-third-party</id>
+                        <goals>
+                            <goal>add-third-party</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <fileTemplate>${basedir}/src/main/legal/LICENSE-with-deps</fileTemplate>
+                            <thirdPartyFilename>LICENSE-with-deps</thirdPartyFilename>
+                            <sortArtifactByName>true</sortArtifactByName>
+                            <excludedScopes>test</excludedScopes>
+                            <licenseMerges>
+                                <licenseMerge>The Apache Software License, Version 2.0|Apache License, Version 2.0|Apache Public License 2.0</licenseMerge>
+                            </licenseMerges>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.sling</groupId>
+                        <artifactId>maven-enforcer-rules</artifactId>
+                        <version>1.2.0</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>enforce-complete-runtime-classpath</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireProvidedDependenciesInRuntimeClasspath implementation="org.apache.sling.maven.enforcer.RequireProvidedDependenciesInRuntimeClasspath">
+                                    <excludes>
+                                        <exclude>org.jetbrains:annotations</exclude>
+                                        <!-- exclude all annotations with class retention -->
+                                        <exclude>org.osgi:osgi.annotation</exclude>
+                                        <exclude>org.osgi:org.osgi.annotation.versioning</exclude>
+                                        <exclude>org.apache.felix:org.apache.felix.converter</exclude>
+                                        <!-- relocated to org.osgi.util.converter -->
+                                        <exclude>org.apache.felix:org.apache.felix.utils</exclude>
+                                        <!-- embedded in org.apache.sling.feature -->
+                                        <exclude>org.apache.geronimo.specs:geronimo-json_1.1_spec</exclude>
+                                        <!-- not needed, jakarta.json is used -->
+                                        <exclude>org.osgi:org.osgi.core</exclude>
+                                        <!-- contained in org.osgi:osgi.core -->
+                                        <exclude>org.osgi:org.osgi.service.configurator</exclude>
+                                        <!-- wrongly flagged to be needed by cm.json -->
+                                        <exclude>org.osgi:org.osgi.service.feature</exclude>
+                                        <!-- Optional dependency for feature model -->
+                                        <exclude>org.osgi:org.osgi.framework</exclude>
+                                        <!-- Included via osgi.core -->
+                                        <exclude>org.osgi:org.osgi.resource</exclude>
+                                        <!-- Included via osgi.core -->
+                                    </excludes>
+                                </requireProvidedDependenciesInRuntimeClasspath>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>${appassembler-maven-plugin.version}</version>
+                <configuration>
+                    <useWildcardClassPath>true</useWildcardClassPath>
+                    <repositoryLayout>flat</repositoryLayout>
+                    <repositoryName>lib</repositoryName>
+                    <endorsedDir>endorsed</endorsedDir>
+                    <extraJvmArguments>-Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Dfile.encoding=UTF-8</extraJvmArguments>
+                    <licenseHeaderFile>${basedir}/src/main/legal/license-header</licenseHeaderFile>
+                    <programs>
+                        <program>
+                            <mainClass>org.apache.sling.feature.launcher.impl.Main</mainClass>
+                            <id>launcher</id>
+                        </program>
+                    </programs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>assembly</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <finalName>${project.build.finalName}</finalName>
+                            <tarLongFileMode>gnu</tarLongFileMode>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <descriptors>
+                                <descriptor>${basedir}/src/main/assembly/bin.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
         <profile>
             <id>container</id>
@@ -349,10 +355,10 @@
                                             <tag>latest</tag>
                                             <tag>${project.version}</tag>
                                         </tags>
-                                         <dockerFileDir>.</dockerFileDir>
-                                         <assembly>
-                                             <descriptor>${project.basedir}/src/main/assembly/bin.xml</descriptor>
-                                         </assembly>
+                                        <dockerFileDir>.</dockerFileDir>
+                                        <assembly>
+                                            <descriptor>${project.basedir}/src/main/assembly/bin.xml</descriptor>
+                                        </assembly>
                                     </build>
                                 </image>
                             </images>
@@ -360,10 +366,10 @@
                         <executions>
                             <execution>
                                 <id>docker:build</id>
-                                <phase>package</phase>
                                 <goals>
                                     <goal>build</goal>
                                 </goals>
+                                <phase>package</phase>
                             </execution>
                         </executions>
                     </plugin>
