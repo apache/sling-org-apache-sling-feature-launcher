@@ -46,7 +46,9 @@ import java.util.function.Supplier;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.BundleListener;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.PrototypeServiceFactory;
@@ -251,6 +253,19 @@ public abstract class AbstractRunner implements Callable<Integer> {
             this.installerTracker.open();
         }
 
+        if (this.featureSupplier != null) {
+            framework.getBundleContext().addBundleListener(new BundleListener() {
+                @Override
+                public void bundleChanged(BundleEvent event) {
+                    Bundle bundle = event.getBundle();
+                    if (bundle.getSymbolicName().equals("org.apache.sling.feature")
+                            && event.getType() == BundleEvent.STARTED) {
+                        registerFeatureService(bundle);
+                    }
+                }
+            });
+        }
+
         this.install(framework, bundlesMap);
     }
 
@@ -372,63 +387,59 @@ public abstract class AbstractRunner implements Callable<Integer> {
         }
     }
 
-    protected void finishStartup(final Framework framework) {
-        Bundle featureBundle = null;
-        for (final Bundle bundle : framework.getBundleContext().getBundles()) {
-            if (featureSupplier != null && "org.apache.sling.feature".equals(bundle.getSymbolicName())) {
-                featureBundle = bundle;
-            }
-        }
-        if (featureBundle != null) {
-            final Bundle bundle = featureBundle;
-            // the feature is registered as a prototype to give each client a copy as feature models are mutable
-            final Dictionary<String, Object> properties = new Hashtable<>();
-            properties.put("name", "org.apache.sling.feature.launcher");
-            featureBundle
-                    .getBundleContext()
-                    .registerService(
-                            new String[] {"org.apache.sling.feature.Feature"},
-                            new PrototypeServiceFactory<Object>() {
+    protected void finishStartup(final Framework framework) {}
 
-                                @Override
-                                public Object getService(
-                                        final Bundle client, final ServiceRegistration<Object> registration) {
-                                    final ClassLoader cl =
-                                            bundle.adapt(BundleWiring.class).getClassLoader();
-                                    final ClassLoader oldTCCL =
-                                            Thread.currentThread().getContextClassLoader();
-                                    Thread.currentThread().setContextClassLoader(cl);
-                                    try {
-                                        final Class<?> readerClass =
-                                                cl.loadClass("org.apache.sling.feature.io.json.FeatureJSONReader");
-                                        final Method readMethod = readerClass.getDeclaredMethod(
-                                                "read", java.io.Reader.class, String.class);
-                                        try (final StringReader reader = new StringReader(featureSupplier.get())) {
-                                            return readMethod.invoke(null, reader, null);
-                                        }
-                                    } catch (ClassNotFoundException
-                                            | NoSuchMethodException
-                                            | SecurityException
-                                            | IllegalArgumentException
-                                            | IllegalAccessException
-                                            | InvocationTargetException e) {
-                                        // ignore
-                                    } finally {
-                                        Thread.currentThread().setContextClassLoader(oldTCCL);
+    protected void registerFeatureService(Bundle featureBundle) {
+
+        logger.debug("Registering feature service");
+
+        // the feature is registered as a prototype to give each client a copy as feature models are mutable
+        final Dictionary<String, Object> properties = new Hashtable<>();
+        properties.put("name", "org.apache.sling.feature.launcher");
+        featureBundle
+                .getBundleContext()
+                .registerService(
+                        new String[] {"org.apache.sling.feature.Feature"},
+                        new PrototypeServiceFactory<Object>() {
+
+                            @Override
+                            public Object getService(
+                                    final Bundle client, final ServiceRegistration<Object> registration) {
+                                final ClassLoader cl =
+                                        featureBundle.adapt(BundleWiring.class).getClassLoader();
+                                final ClassLoader oldTCCL =
+                                        Thread.currentThread().getContextClassLoader();
+                                Thread.currentThread().setContextClassLoader(cl);
+                                try {
+                                    final Class<?> readerClass =
+                                            cl.loadClass("org.apache.sling.feature.io.json.FeatureJSONReader");
+                                    final Method readMethod =
+                                            readerClass.getDeclaredMethod("read", java.io.Reader.class, String.class);
+                                    try (final StringReader reader = new StringReader(featureSupplier.get())) {
+                                        return readMethod.invoke(null, reader, null);
                                     }
-                                    return null;
+                                } catch (ClassNotFoundException
+                                        | NoSuchMethodException
+                                        | SecurityException
+                                        | IllegalArgumentException
+                                        | IllegalAccessException
+                                        | InvocationTargetException e) {
+                                    // ignore
+                                } finally {
+                                    Thread.currentThread().setContextClassLoader(oldTCCL);
                                 }
+                                return null;
+                            }
 
-                                @Override
-                                public void ungetService(
-                                        final Bundle client,
-                                        final ServiceRegistration<Object> registration,
-                                        final Object service) {
-                                    // nothing to do
-                                }
-                            },
-                            properties);
-        }
+                            @Override
+                            public void ungetService(
+                                    final Bundle client,
+                                    final ServiceRegistration<Object> registration,
+                                    final Object service) {
+                                // nothing to do
+                            }
+                        },
+                        properties);
     }
 
     /**
