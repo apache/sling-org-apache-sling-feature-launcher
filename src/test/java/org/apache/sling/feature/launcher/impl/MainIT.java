@@ -79,16 +79,26 @@ public class MainIT {
         }
     }
 
+    private static boolean securityManagerIsSet;
+
     @BeforeClass
     public static void setUp() throws Exception {
-
-        System.setSecurityManager(new NoSystemExitSecurityManager());
+        try {
+            System.setSecurityManager(new NoSystemExitSecurityManager());
+            securityManagerIsSet = true;
+        } catch (UnsupportedOperationException e) {
+            // The security manager system is deprecated since Java 17
+            securityManagerIsSet = false;
+        }
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-
-        System.setSecurityManager(null);
+        try {
+            System.setSecurityManager(null);
+        } catch (UnsupportedOperationException e) {
+            // Not supported since Java 17
+        }
     }
 
     @Test
@@ -345,11 +355,15 @@ public class MainIT {
 
     @Test
     public void testMain_main() {
-
-        try {
-            Main.main(new String[] {});
-        } catch (SystemExitException e) {
-            assertEquals("Exit status", 1, e.status);
+        // The security manager mechanism is no longer functional in Java 17+.
+        // Without a security manager trapping the System.exit call,
+        // the whole VM would be shut down, which trips up Maven.
+        if (securityManagerIsSet) {
+            try {
+                Main.main(new String[] {});
+            } catch (SystemExitException e) {
+                assertEquals("Exit status", 1, e.status);
+            }
         }
     }
 }
