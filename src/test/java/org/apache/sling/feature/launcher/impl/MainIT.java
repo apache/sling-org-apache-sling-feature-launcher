@@ -332,19 +332,19 @@ public class MainIT {
 
     @Test
     public void testMain_main() {
-        try {
-            System.setSecurityManager(new NoSystemExitSecurityManager());
-            try {
-                Main.main(new String[] {});
-                fail("Invoking without any arguments should have failed.");
-            } catch (SystemExitException e) {
-                assertEquals("Exit status", 1, e.status);
-            }
-            System.setSecurityManager(null);
-        } catch (UnsupportedOperationException e) {
+        if (Float.valueOf(System.getProperty("java.specification.version")) >= 17.0) {
             // The security manager mechanism is no longer functional in Java 17+.
             // Without a security manager trapping the System.exit call,
             // the whole VM would be shut down, which trips up Maven.
+            return;
         }
+        System.setSecurityManager(new NoSystemExitSecurityManager());
+        try {
+            Main.main(new String[] {});
+            fail("Invoking without any arguments should have failed.");
+        } catch (SystemExitException e) {
+            assertEquals("Exit status", 1, e.status);
+        }
+        System.setSecurityManager(null);
     }
 }
