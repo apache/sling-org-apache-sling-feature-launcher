@@ -26,15 +26,17 @@ import java.util.Map;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.JavaVersion;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.sling.feature.ArtifactId;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Assume;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -77,18 +79,6 @@ public class MainIT {
             super.checkExit(status);
             throw new SystemExitException(status);
         }
-    }
-
-    @BeforeClass
-    public static void setUp() throws Exception {
-
-        System.setSecurityManager(new NoSystemExitSecurityManager());
-    }
-
-    @AfterClass
-    public static void tearDown() throws Exception {
-
-        System.setSecurityManager(null);
     }
 
     @Test
@@ -345,11 +335,18 @@ public class MainIT {
 
     @Test
     public void testMain_main() {
+        // The security manager mechanism is no longer functional after Java 17.
+        // Without a security manager trapping the System.exit call,
+        // the whole VM would be shut down, which trips up Maven.
+        Assume.assumeTrue(SystemUtils.isJavaVersionAtMost(JavaVersion.JAVA_17));
 
+        System.setSecurityManager(new NoSystemExitSecurityManager());
         try {
             Main.main(new String[] {});
+            fail("Invoking without any arguments should have failed.");
         } catch (SystemExitException e) {
             assertEquals("Exit status", 1, e.status);
         }
+        System.setSecurityManager(null);
     }
 }
