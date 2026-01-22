@@ -26,7 +26,10 @@ import java.util.Map;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.lang3.JavaVersion;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.sling.feature.ArtifactId;
+import org.junit.Assume;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -332,12 +335,11 @@ public class MainIT {
 
     @Test
     public void testMain_main() {
-        if (Float.valueOf(System.getProperty("java.specification.version")) >= 17.0) {
-            // The security manager mechanism is no longer functional in Java 17+.
-            // Without a security manager trapping the System.exit call,
-            // the whole VM would be shut down, which trips up Maven.
-            return;
-        }
+        // The security manager mechanism is no longer functional after Java 17.
+        // Without a security manager trapping the System.exit call,
+        // the whole VM would be shut down, which trips up Maven.
+        Assume.assumeTrue(SystemUtils.isJavaVersionAtMost(JavaVersion.JAVA_17));
+
         System.setSecurityManager(new NoSystemExitSecurityManager());
         try {
             Main.main(new String[] {});
