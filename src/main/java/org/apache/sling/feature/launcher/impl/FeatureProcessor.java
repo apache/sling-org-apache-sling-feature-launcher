@@ -102,6 +102,7 @@ public class FeatureProcessor {
         builderContext.addConfigsOverrides(config.getConfigClashOverrides());
         builderContext.addVariablesOverrides(config.getVariables());
         builderContext.addFrameworkPropertiesOverrides(config.getInstallation().getFrameworkProperties());
+        builderContext.setOsgiBsnCollisionDetection(config.isOsgiBsnCollisionDetectionEnabled());
         builderContext.addMergeExtensions(StreamSupport.stream(
                         Spliterators.spliteratorUnknownSize(
                                 ServiceLoader.load(MergeHandler.class).iterator(), Spliterator.ORDERED),

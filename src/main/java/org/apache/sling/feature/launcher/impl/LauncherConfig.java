@@ -63,6 +63,8 @@ public class LauncherConfig extends ArtifactManagerConfig {
 
     private volatile boolean cacheOnly = false;
 
+    private volatile boolean osgiBsnCollisionDetection;
+
     /**
      * Create a new configuration object.
      * Set the default values
@@ -134,6 +136,25 @@ public class LauncherConfig extends ArtifactManagerConfig {
 
     public void setFrameworkArtifact(final String frameworkArtifact) {
         this.frameworkArtifact = frameworkArtifact;
+    }
+
+    /**
+     * @return whether OSGi {@code Bundle-SymbolicName} collision detection is
+     *     enabled. Maps onto
+     *     {@code BuilderContext.setOsgiBsnCollisionDetection(boolean)}.
+     *     Default {@code false}.
+     *
+     * @since 1.4.0
+     */
+    public boolean isOsgiBsnCollisionDetectionEnabled() {
+        return osgiBsnCollisionDetection;
+    }
+
+    /**
+     * @since 1.4.0
+     */
+    public void setOsgiBsnCollisionDetection(final boolean enabled) {
+        this.osgiBsnCollisionDetection = enabled;
     }
 
     /**

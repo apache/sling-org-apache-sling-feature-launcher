@@ -69,6 +69,8 @@ public class Main {
 
     public static final String OPT_REPOSITORY_URLS = "u";
 
+    public static final String OPT_OSGI_BSN_COLLISION_DETECTION = "osgi-bsn-collision-detection";
+
     public static final String OPT_CONFIG_CLASH = "CC";
 
     public static final String OPT_ARTICACT_CLASH = "C";
@@ -257,6 +259,12 @@ public class Main {
                 .optionalArg(true)
                 .build();
 
+        final Option osgiBsnCollisionDetectionOption = Option.builder()
+                .longOpt(OPT_OSGI_BSN_COLLISION_DETECTION)
+                .desc("Enable OSGi Bundle-SymbolicName collision detection during aggregation. "
+                        + "Resolved via -C *:*:<rule> overrides or fails the build. Off by default.")
+                .build();
+
         options = new Options()
                 .addOption(artifactClashOverride)
                 .addOption(configClashOverride)
@@ -272,6 +280,7 @@ public class Main {
                 .addOption(extensionConfiguration)
                 .addOption(frameworkVersionOption)
                 .addOption(frameworkArtifactOption)
+                .addOption(osgiBsnCollisionDetectionOption)
                 .addOption(printInsideContainerHelp);
 
         final CommandLineParser clp = new DefaultParser();
@@ -345,6 +354,10 @@ public class Main {
             extractValueFromOption(cl, OPT_FELIX_FRAMEWORK_VERSION).ifPresent(config::setFrameworkVersion);
 
             extractValueFromOption(cl, OPT_OSGI_FRAMEWORK_ARTIFACT).ifPresent(config::setFrameworkArtifact);
+
+            if (cl.hasOption(OPT_OSGI_BSN_COLLISION_DETECTION)) {
+                config.setOsgiBsnCollisionDetection(true);
+            }
 
         } catch (final ParseException pe) {
             Main.LOG().error("Unable to parse command line: {}", pe.getMessage(), pe);
