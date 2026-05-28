@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -331,6 +332,28 @@ public class MainIT {
             return new String[] {};
         }
         return value.split(" ");
+    }
+
+    @Test
+    public void testParse_OsgiBsnCollisionDetection() {
+
+        LauncherConfig config = new LauncherConfig();
+        Main.parseArgs(config, new String[] {});
+        assertFalse(config.isOsgiBsnCollisionDetectionEnabled());
+
+        config = new LauncherConfig();
+        Main.parseArgs(config, new String[] {"--" + Main.OPT_OSGI_BSN_COLLISION_DETECTION});
+        assertTrue(config.isOsgiBsnCollisionDetectionEnabled());
+    }
+
+    @Test
+    public void testOsgiBsnCollisionDetectionConfig() {
+
+        LauncherConfig config = new LauncherConfig();
+        assertFalse(config.isOsgiBsnCollisionDetectionEnabled());
+
+        config.setOsgiBsnCollisionDetection(true);
+        assertTrue(config.isOsgiBsnCollisionDetectionEnabled());
     }
 
     @Test
