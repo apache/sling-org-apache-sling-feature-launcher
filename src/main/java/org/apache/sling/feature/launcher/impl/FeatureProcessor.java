@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -79,7 +80,7 @@ public class FeatureProcessor {
                     return f;
                 }
             } catch (IOException e) {
-                // ignore
+                logger.debug("Failed to read feature for artifact '{}': {}", id.toMvnId(), e.getMessage());
                 return null;
             }
         });
@@ -91,7 +92,11 @@ public class FeatureProcessor {
                     final ArtifactHandler handler = artifactManager.getArtifactHandler(id.toMvnUrl());
                     return handler.getLocalURL();
                 } catch (final IOException e) {
-                    // ignore
+                    logger.debug(
+                            "Failed to retrieve artifact '{}' from repositories {}: {}",
+                            id.toMvnId(),
+                            Arrays.toString(config.getRepositoryUrls()),
+                            e.getMessage());
                     return null;
                 }
             }

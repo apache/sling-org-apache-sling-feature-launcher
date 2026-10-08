@@ -161,8 +161,16 @@ public class Bootstrap {
 
                     @Override
                     public URL getArtifactFile(final ArtifactId artifact) throws IOException {
-                        final ArtifactHandler handler = artifactManager.getArtifactHandler(":" + artifact.toMvnPath());
-                        return handler.getLocalURL();
+                        try {
+                            final ArtifactHandler handler =
+                                    artifactManager.getArtifactHandler(":" + artifact.toMvnPath());
+                            return handler.getLocalURL();
+                        } catch (final IOException e) {
+                            throw new IOException(
+                                    "Artifact '" + artifact.toMvnId() + "' not found in repositories: "
+                                            + Arrays.toString(config.getRepositoryUrls()),
+                                    e);
+                        }
                     }
 
                     @Override
@@ -192,7 +200,10 @@ public class Bootstrap {
                     this.config.getInstallation().getBundleMap().clear();
                 }
             } catch (final Exception iae) {
-                throw new IllegalStateException("Error while assembling launcher: " + iae.getMessage(), iae);
+                throw new IllegalStateException(
+                        "Error while assembling launcher with repositories "
+                                + Arrays.toString(this.config.getRepositoryUrls()) + ": " + iae.getMessage(),
+                        iae);
             }
         } catch (IOException ex) {
             throw new IOException("Unable to setup artifact manager: " + ex.getMessage(), ex);
