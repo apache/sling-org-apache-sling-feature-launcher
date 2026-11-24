@@ -24,21 +24,51 @@ import java.net.URLClassLoader;
 import org.apache.sling.feature.ArtifactId;
 import org.apache.sling.feature.Feature;
 
+/**
+ * Launcher SPI interface for preparing and running an application.
+ */
 public interface Launcher {
 
+    /**
+     * Prepare the launcher.
+     *
+     * @param context the launcher prepare context
+     * @param frameworkId the artifact id of the OSGi framework
+     * @param app the feature application model
+     * @throws Exception if preparing the launcher fails
+     */
     void prepare(LauncherPrepareContext context, ArtifactId frameworkId, Feature app) throws Exception;
 
+    /**
+     * Run the launcher.
+     *
+     * @param context the launcher run context
+     * @param cl the classloader to use
+     * @return the exit code
+     * @throws Exception if launching fails
+     */
     int run(LauncherRunContext context, ClassLoader cl) throws Exception;
 
+    /**
+     * Create the class loader to be used for launching the application.
+     *
+     * @return a new {@link LauncherClassLoader}
+     */
     default LauncherClassLoader createClassLoader() {
         return new LauncherClassLoader();
     }
 
+    /**
+     * ClassLoader implementation for loading launcher classes and dependencies.
+     */
     class LauncherClassLoader extends URLClassLoader {
         static {
             ClassLoader.registerAsParallelCapable();
         }
 
+        /**
+         * Constructs a new LauncherClassLoader.
+         */
         public LauncherClassLoader() {
             super(new URL[0]);
         }

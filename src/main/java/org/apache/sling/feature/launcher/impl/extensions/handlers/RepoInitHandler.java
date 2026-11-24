@@ -27,8 +27,19 @@ import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
+/**
+ * Handler for repoinit extensions.
+ */
 @ServiceProvider(value = ExtensionHandler.class)
 public class RepoInitHandler implements ExtensionHandler {
+
+    /**
+     * Constructs a new RepoInitHandler.
+     */
+    public RepoInitHandler() {
+        // default constructor
+    }
+
     private static final AtomicInteger index = new AtomicInteger(1);
 
     @Override

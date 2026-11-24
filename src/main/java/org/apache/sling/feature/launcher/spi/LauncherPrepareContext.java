@@ -36,7 +36,19 @@ public interface LauncherPrepareContext {
      */
     Logger getLogger();
 
+    /**
+     * Add an application jar URL to the classpath.
+     *
+     * @param url the URL to add
+     */
     void addAppJar(URL url);
 
+    /**
+     * Get the file URL for an artifact.
+     *
+     * @param artifact the artifact ID
+     * @return the URL of the artifact file
+     * @throws IOException if the artifact file cannot be resolved or accessed
+     */
     URL getArtifactFile(ArtifactId artifact) throws IOException;
 }

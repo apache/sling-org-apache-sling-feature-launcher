@@ -45,6 +45,15 @@ public class FrameworkRunner extends AbstractRunner {
 
     private final Map<Integer, List<URL>> bundlesMap;
 
+    /**
+     * Constructs a new FrameworkRunner.
+     *
+     * @param frameworkProperties the framework properties
+     * @param bundlesMap the bundle map indexed by start level
+     * @param configurations the list of configurations
+     * @param installables the list of installable artifact URLs
+     * @throws Exception if initialization fails
+     */
     public FrameworkRunner(
             final Map<String, String> frameworkProperties,
             final Map<Integer, List<URL>> bundlesMap,
