@@ -27,8 +27,19 @@ import org.apache.sling.feature.ExtensionType;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionContext;
 import org.apache.sling.feature.launcher.spi.extensions.ExtensionHandler;
 
+/**
+ * Handler for content package extensions.
+ */
 @ServiceProvider(value = ExtensionHandler.class)
 public class ContentPackageHandler implements ExtensionHandler {
+
+    /**
+     * Constructs a new ContentPackageHandler.
+     */
+    public ContentPackageHandler() {
+        // default constructor
+    }
+
     @Override
     public boolean handle(ExtensionContext context, Extension extension) throws IOException {
         if (extension.getType() == ExtensionType.ARTIFACTS

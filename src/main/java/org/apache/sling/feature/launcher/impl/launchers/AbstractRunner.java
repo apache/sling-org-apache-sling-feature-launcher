@@ -88,26 +88,52 @@ public abstract class AbstractRunner implements Callable<Integer> {
 
     private final List<URL> installables;
 
+    /**
+     * Logger instance for the runner.
+     */
     protected final Logger logger;
 
     private Supplier<String> featureSupplier;
 
     private BiConsumer<URL, Map<String, String>> bundleReporter;
 
+    /**
+     * Constructs a new AbstractRunner.
+     *
+     * @param configurations the list of configurations
+     * @param installables the list of installable artifact URLs
+     */
     public AbstractRunner(final List<Object[]> configurations, final List<URL> installables) {
         this.configurations = new ArrayList<>(configurations);
         this.installables = installables;
         this.logger = LoggerFactory.getLogger("launcher");
     }
 
+    /**
+     * Set the feature supplier.
+     *
+     * @param supplier the supplier providing the feature JSON string
+     */
     public void setFeatureSupplier(final Supplier<String> supplier) {
         this.featureSupplier = supplier;
     }
 
+    /**
+     * Set the bundle reporter callback.
+     *
+     * @param reporter the consumer receiving bundle URLs and their metadata attributes
+     */
     public void setBundleReporter(final BiConsumer<URL, Map<String, String>> reporter) {
         this.bundleReporter = reporter;
     }
 
+    /**
+     * Setup the framework by configuring services and installing bundles.
+     *
+     * @param framework the OSGi framework
+     * @param bundlesMap the map of bundles indexed by start level
+     * @throws BundleException if setting up or installing bundles fails
+     */
     protected void setupFramework(final Framework framework, final Map<Integer, List<URL>> bundlesMap)
             throws BundleException {
         // check for Apache Felix CM persistence manager config
@@ -269,6 +295,16 @@ public abstract class AbstractRunner implements Callable<Integer> {
         this.install(framework, bundlesMap);
     }
 
+    /**
+     * Start the framework with a timeout.
+     *
+     * @param framework the OSGi framework
+     * @param timeout the maximum time to wait for startup
+     * @param unit the time unit of the timeout argument
+     * @return {@code true} if the framework started within the timeout, {@code false} otherwise
+     * @throws BundleException if starting the framework fails
+     * @throws InterruptedException if the wait is interrupted
+     */
     protected boolean startFramework(final Framework framework, long timeout, TimeUnit unit)
             throws BundleException, InterruptedException {
         Executor executor = Executors.newSingleThreadExecutor();
@@ -387,8 +423,20 @@ public abstract class AbstractRunner implements Callable<Integer> {
         }
     }
 
-    protected void finishStartup(final Framework framework) {}
+    /**
+     * Hook called after the framework startup has completed.
+     *
+     * @param framework the OSGi framework
+     */
+    protected void finishStartup(final Framework framework) {
+        // empty default implementation
+    }
 
+    /**
+     * Register the feature service in the OSGi service registry.
+     *
+     * @param featureBundle the bundle registering the feature service
+     */
     protected void registerFeatureService(Bundle featureBundle) {
 
         logger.debug("Registering feature service");

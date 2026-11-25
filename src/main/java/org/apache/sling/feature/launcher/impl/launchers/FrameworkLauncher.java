@@ -49,6 +49,13 @@ public class FrameworkLauncher implements Launcher {
 
     private Feature feature;
 
+    /**
+     * Constructs a new FrameworkLauncher.
+     */
+    public FrameworkLauncher() {
+        // default constructor
+    }
+
     @Override
     public void prepare(final LauncherPrepareContext context, final ArtifactId frameworkId, final Feature app)
             throws Exception {
@@ -132,6 +139,11 @@ public class FrameworkLauncher implements Launcher {
         // nothing else to do, constructor starts everything
     }
 
+    /**
+     * Get the fully qualified class name of the framework runner.
+     *
+     * @return the framework runner class name
+     */
     protected String getFrameworkRunnerClass() {
         return FrameworkRunner.class.getName();
     }
